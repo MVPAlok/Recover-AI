@@ -18,7 +18,10 @@
     "prisma:generate": "npx prisma generate --schema=database/prisma/schema.prisma",
     "prisma:validate": "npx prisma validate --schema=database/prisma/schema.prisma",
     "db": "tsx database/seed/seed.ts",
-    "db:seed": "tsx database/seed/seed.ts"
+    "db:seed": "tsx database/seed/seed.ts",
+    "detection:eval": "tsx server/src/modules/detection/evaluation-runner.ts",
+    "test:detection": "tsx server/src/modules/detection/evaluation-runner.ts",
+    "test:unit": "tsx server/src/modules/detection/__tests__/detection.test.ts"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

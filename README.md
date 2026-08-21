@@ -66,8 +66,9 @@ RecoverAI separates UI rendering, API servers, database ORM, and future intellig
 | **Decoupled AI Engine** | AI logic (`AIDecision`) completely separated from attempts | ✅ Completed |
 | **Immutable Audit Trails** | Non-cascaded logs (`onDelete: SetNull`) that persist | ✅ Completed |
 | **Synthetic Transaction Generator**| Deterministic 1,000+ transaction seed engine with customer profiles & recovery scenarios ([Phase 2 Docs](docs/architecture/phase-2-transaction-data-engine.md)) | ✅ Completed |
-| **AI Autonomous Agents** | Detection, Diagnosis, and Decision agents | 📅 Planned (Phase 3) |
-| **Razorpay Test Integration** | Real execution gateway for smart retries | 📅 Planned (Phase 4) |
+| **Detection & Scoring Engine** | Deterministic, explainable recovery scoring engine with REST API & scenario alignment ([Phase 3 Docs](docs/architecture/phase-3-detection-scoring.md)) | ✅ Completed |
+| **Diagnosis & Decision Agents**| LLM multi-agent diagnosis and recovery decision-making | 📅 Planned (Phase 4) |
+| **Razorpay Test Integration** | Real execution gateway for smart retries | 📅 Planned (Phase 5) |
 | **Redis Queues** | Asynchronous job processing for recovery actions | 📅 Planned |
 
 ---
@@ -125,6 +126,8 @@ Run these commands from the root workspace folder:
 | `npm run dev:server` | Starts the backend Express server only (reloads on changes) |
 | `npm run dev:client` | Starts the frontend client only (port 3000) |
 | `npm run db:seed` | Seeds database with synthetic transactions (`--transactions=1000 --seed=42`) |
+| `npm run detection:eval` | Runs Detection Engine evaluation against deliberate recovery scenarios |
+| `npm run test:unit` | Executes isolated unit tests for feature extraction and scoring guardrails |
 | `npm run build` | Builds client and server for production deployment |
 | `npm run lint` | Runs ESLint analysis across the workspace |
 | `npm run prisma:validate` | Validates your database schema definitions |

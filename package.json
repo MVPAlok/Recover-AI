@@ -16,10 +16,13 @@
     "build:client": "npm run build --workspace=client",
     "lint": "npm run lint --workspaces",
     "prisma:generate": "npx prisma generate --schema=database/prisma/schema.prisma",
-    "prisma:validate": "npx prisma validate --schema=database/prisma/schema.prisma"
+    "prisma:validate": "npx prisma validate --schema=database/prisma/schema.prisma",
+    "db": "tsx database/seed/seed.ts",
+    "db:seed": "tsx database/seed/seed.ts"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "prisma": "^5.19.1"
+    "prisma": "^5.19.1",
+    "tsx": "^4.19.0"
   }
 }

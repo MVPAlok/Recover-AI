@@ -65,9 +65,9 @@ RecoverAI separates UI rendering, API servers, database ORM, and future intellig
 | **Prisma PG Schema** | Core schemas (`Merchant`, `Customer`, `Transaction`, `AIDecision`, `RecoveryAttempt`, `AuditLog`) | ✅ Completed |
 | **Decoupled AI Engine** | AI logic (`AIDecision`) completely separated from attempts | ✅ Completed |
 | **Immutable Audit Trails** | Non-cascaded logs (`onDelete: SetNull`) that persist | ✅ Completed |
-| **Synthetic Transaction Generator**| Create 1,000 synthetic transaction records for sandbox testing | 🔄 Next Step |
-| **AI Autonomous Agents** | Detection, Diagnosis, and Decision agents | 📅 Planned |
-| **Razorpay Test Integration** | Real execution gateway for smart retries | 📅 Planned |
+| **Synthetic Transaction Generator**| Deterministic 1,000+ transaction seed engine with customer profiles & recovery scenarios ([Phase 2 Docs](docs/architecture/phase-2-transaction-data-engine.md)) | ✅ Completed |
+| **AI Autonomous Agents** | Detection, Diagnosis, and Decision agents | 📅 Planned (Phase 3) |
+| **Razorpay Test Integration** | Real execution gateway for smart retries | 📅 Planned (Phase 4) |
 | **Redis Queues** | Asynchronous job processing for recovery actions | 📅 Planned |
 
 ---
@@ -97,10 +97,14 @@ Open `.env` and configure your database URL:
 DATABASE_URL="postgresql://neondb_owner:<password>@ep-wispy-sun-az9ye8b1.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
 ```
 
-### 3. Database Migration
-Deploy the schema migrations to sync your Postgres database:
+### 3. Database Migration & Synthetic Seeding
+Deploy the schema migrations to sync your Postgres database and seed deterministic transaction data:
 ```bash
+# Apply schema migration
 npx prisma migrate dev --name init --schema=database/prisma/schema.prisma
+
+# Seed 1,000 synthetic transactions (deterministic seed 42)
+npm run db:seed
 ```
 
 ### 4. Running the Development Workspace
@@ -120,6 +124,7 @@ Run these commands from the root workspace folder:
 | `npm run dev` | Spins up both Vite and Express dev servers concurrently |
 | `npm run dev:server` | Starts the backend Express server only (reloads on changes) |
 | `npm run dev:client` | Starts the frontend client only (port 3000) |
+| `npm run db:seed` | Seeds database with synthetic transactions (`--transactions=1000 --seed=42`) |
 | `npm run build` | Builds client and server for production deployment |
 | `npm run lint` | Runs ESLint analysis across the workspace |
 | `npm run prisma:validate` | Validates your database schema definitions |

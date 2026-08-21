@@ -23,7 +23,9 @@
     "test:detection": "tsx server/src/modules/detection/evaluation-runner.ts",
     "test:unit": "tsx server/src/modules/detection/__tests__/detection.test.ts",
     "diagnosis:eval": "tsx server/src/modules/diagnosis/evaluation-runner.ts",
-    "test:diagnosis": "tsx server/src/modules/diagnosis/__tests__/diagnosis.test.ts"
+    "test:diagnosis": "tsx server/src/modules/diagnosis/__tests__/diagnosis.test.ts",
+    "decision:eval": "tsx server/src/modules/recovery-decision/evaluation-runner.ts",
+    "test:decision": "tsx server/src/modules/recovery-decision/__tests__/recovery-decision.test.ts"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

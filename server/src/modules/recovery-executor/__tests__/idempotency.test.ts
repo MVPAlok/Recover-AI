@@ -1,6 +1,5 @@
 import { IdempotencyService } from '../idempotency.service.js';
-import { RecoveryAttempt } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma, RecoveryAttempt } from '@prisma/client';
 
 export async function runIdempotencyTests(): Promise<void> {
   console.log('====================================================');
@@ -44,7 +43,7 @@ export async function runIdempotencyTests(): Promise<void> {
       actionType: 'RETRY',
       status: 'SUCCESS',
       reason: 'Payment recovered',
-      amountRecovered: new Decimal(2500),
+      amountRecovered: new Prisma.Decimal(2500),
       scheduledAt: null,
       executedAt: new Date(),
       createdAt: new Date(),
@@ -74,7 +73,7 @@ export async function runIdempotencyTests(): Promise<void> {
       actionType: 'WAIT',
       status: 'PENDING',
       reason: 'Wait scheduled',
-      amountRecovered: new Decimal(0),
+      amountRecovered: new Prisma.Decimal(0),
       scheduledAt: futureDate,
       executedAt: null,
       createdAt: new Date(),
@@ -102,7 +101,7 @@ export async function runIdempotencyTests(): Promise<void> {
       actionType: 'RETRY',
       status: 'FAILED',
       reason: 'Failed attempt 1',
-      amountRecovered: new Decimal(0),
+      amountRecovered: new Prisma.Decimal(0),
       scheduledAt: null,
       executedAt: new Date(),
       createdAt: new Date(),
@@ -118,7 +117,7 @@ export async function runIdempotencyTests(): Promise<void> {
       actionType: 'REMIND',
       status: 'SUCCESS',
       reason: 'Reminder sent',
-      amountRecovered: new Decimal(0),
+      amountRecovered: new Prisma.Decimal(0),
       scheduledAt: null,
       executedAt: new Date(),
       createdAt: new Date(),

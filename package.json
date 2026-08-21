@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "prisma": "^5.19.1",
+    "prisma": "^7.9.1",
     "tsx": "^4.19.0"
   }
 }

@@ -1,5 +1,4 @@
-import { RecoveryDecision, RecoveryStatus } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma, RecoveryDecision, RecoveryStatus } from '@prisma/client';
 
 export type ExecutionMode = 'simulation' | 'razorpay_test' | 'razorpay_live';
 
@@ -82,7 +81,7 @@ export interface RecoveryExecutionResult {
   action: RecoveryDecision;
   status: RecoveryStatus;
   outcomeCode: ExecutionOutcomeCode;
-  amountRecovered: number | Decimal;
+  amountRecovered: number | Prisma.Decimal;
   message: string;
   executedAt?: Date | string;
   scheduledAt?: Date | string;

@@ -25,7 +25,11 @@
     "diagnosis:eval": "tsx server/src/modules/diagnosis/evaluation-runner.ts",
     "test:diagnosis": "tsx server/src/modules/diagnosis/__tests__/diagnosis.test.ts",
     "decision:eval": "tsx server/src/modules/recovery-decision/evaluation-runner.ts",
-    "test:decision": "tsx server/src/modules/recovery-decision/__tests__/recovery-decision.test.ts"
+    "test:decision": "tsx server/src/modules/recovery-decision/__tests__/recovery-decision.test.ts",
+    "executor:eval": "tsx server/src/modules/recovery-executor/evaluation-runner.ts",
+    "test:executor": "tsx server/src/modules/recovery-executor/__tests__/recovery-executor.test.ts",
+    "test:idempotency": "tsx server/src/modules/recovery-executor/__tests__/idempotency.test.ts",
+    "test:safety": "tsx server/src/modules/recovery-executor/__tests__/safety.test.ts"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

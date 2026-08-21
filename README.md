@@ -69,7 +69,8 @@ RecoverAI separates UI rendering, API servers, database ORM, and future intellig
 | **Detection & Scoring Engine** | Deterministic, explainable recovery scoring engine with REST API & scenario alignment ([Phase 3 Docs](docs/architecture/phase-3-detection-scoring.md)) | ✅ Completed |
 | **Diagnosis Agent** | LLM-powered root-cause diagnosis agent with structured outputs, prompt injection defenses & provider abstraction ([Phase 4 Docs](docs/architecture/phase-4-diagnosis-agent.md)) | ✅ Completed |
 | **Recovery Decision Engine** | Formulates optimal recovery policies (`RETRY`, `REMIND`, `ESCALATE`, `WAIT`, `STOP`) with authoritative safety guardrails ([Phase 5 Docs](docs/architecture/phase-5-recovery-decision-engine.md)) | ✅ Completed |
-| **Razorpay Test Integration** | Real execution gateway for smart retries & payment links | 📅 Planned (Phase 6) |
+| **Recovery Executor** | Controlled execution workflow for recovery policies in simulation mode with strict guardrails, idempotency & audit logging ([Phase 6 Docs](docs/architecture/phase-6-recovery-executor.md)) | ✅ Completed |
+| **Razorpay Test Integration** | Real execution gateway for smart retries & payment links | 📅 Planned (Phase 7) |
 | **Redis Queues** | Asynchronous job processing for recovery actions | 📅 Planned |
 
 ---
@@ -133,6 +134,10 @@ Run these commands from the root workspace folder:
 | `npm run diagnosis:eval` | Runs Diagnosis Agent scenario evaluation and live batch diagnostics |
 | `npm run test:decision` | Runs 12 comprehensive unit and safety override tests for Recovery Decision Engine |
 | `npm run decision:eval` | Runs Recovery Decision scenario alignment and live batch policy evaluation |
+| `npm run test:executor` | Runs 10 comprehensive unit tests for Recovery Executor actions and outcomes |
+| `npm run test:idempotency` | Runs idempotency and duplicate prevention test suite |
+| `npm run test:safety` | Runs fail-closed safety and security guardrail tests |
+| `npm run executor:eval` | Runs E2E scenario simulation and bounded live database execution evaluation |
 | `npm run build` | Builds client and server for production deployment |
 | `npm run lint` | Runs ESLint analysis across the workspace |
 | `npm run prisma:validate` | Validates your database schema definitions |

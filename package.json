@@ -21,7 +21,9 @@
     "db:seed": "tsx database/seed/seed.ts",
     "detection:eval": "tsx server/src/modules/detection/evaluation-runner.ts",
     "test:detection": "tsx server/src/modules/detection/evaluation-runner.ts",
-    "test:unit": "tsx server/src/modules/detection/__tests__/detection.test.ts"
+    "test:unit": "tsx server/src/modules/detection/__tests__/detection.test.ts",
+    "diagnosis:eval": "tsx server/src/modules/diagnosis/evaluation-runner.ts",
+    "test:diagnosis": "tsx server/src/modules/diagnosis/__tests__/diagnosis.test.ts"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

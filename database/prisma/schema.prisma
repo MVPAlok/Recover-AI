@@ -1,0 +1,193 @@
+// RecoverAI Database Schema (Enhanced Architecture)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Merchant {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customers        Customer[]
+  transactions     Transaction[]
+  aiDecisions      AIDecision[]
+  recoveryAttempts RecoveryAttempt[]
+  auditLogs        AuditLog[]
+
+  @@map("merchants")
+}
+
+model Customer {
+  id         String   @id @default(uuid())
+  merchantId String
+
+  name  String
+  email String
+  phone String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  merchant     Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([merchantId, email])
+  @@index([merchantId])
+  @@map("customers")
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model Transaction {
+  id         String @id @default(uuid())
+  merchantId String
+  customerId String
+
+  amount   Decimal @db.Decimal(12, 2)
+  currency String  @default("INR")
+
+  status        TransactionStatus @default(PENDING)
+  paymentMethod String?
+
+  failureCode   String?
+  failureReason String?
+
+  retryCount Int @default(0)
+
+  razorpayPaymentId String?
+  razorpayOrderId   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  merchant         Merchant          @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  customer         Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  aiDecisions      AIDecision[]
+  recoveryAttempts RecoveryAttempt[]
+  auditLogs        AuditLog[]
+
+  @@index([merchantId])
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+enum RecoveryDecision {
+  RETRY
+  REMIND
+  ESCALATE
+  WAIT
+  STOP
+}
+
+enum AIAgentType {
+  DETECTION
+  DIAGNOSIS
+  RECOVERY_DECISION
+}
+
+model AIDecision {
+  id            String @id @default(uuid())
+  merchantId    String
+  transactionId String
+
+  agentType AIAgentType
+  decision  RecoveryDecision
+
+  recoveryProbability Float?
+  confidenceScore     Float?
+
+  reasoning String?
+
+  modelName     String?
+  promptVersion String?
+
+  createdAt DateTime @default(now())
+
+  merchant         Merchant          @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  transaction      Transaction       @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  recoveryAttempts RecoveryAttempt[]
+
+  @@index([merchantId])
+  @@index([transactionId])
+  @@index([agentType])
+  @@map("ai_decisions")
+}
+
+enum RecoveryStatus {
+  PENDING
+  EXECUTED
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+model RecoveryAttempt {
+  id            String  @id @default(uuid())
+  merchantId    String
+  transactionId String
+  aiDecisionId  String?
+
+  attemptNumber Int @default(1)
+
+  actionType RecoveryDecision
+  status     RecoveryStatus   @default(PENDING)
+
+  reason String?
+
+  amountRecovered Decimal @default(0) @db.Decimal(12, 2)
+
+  scheduledAt DateTime?
+  executedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  merchant    Merchant    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  aiDecision  AIDecision? @relation(fields: [aiDecisionId], references: [id], onDelete: SetNull)
+  auditLogs   AuditLog[]
+
+  @@index([merchantId])
+  @@index([transactionId])
+  @@index([status])
+  @@map("recovery_attempts")
+}
+
+model AuditLog {
+  id                String  @id @default(uuid())
+  merchantId        String
+  transactionId     String?
+  recoveryAttemptId String?
+
+  entityType String
+  entityId   String
+  action     String
+
+  actor   String?
+  details Json?
+
+  createdAt DateTime @default(now())
+
+  merchant        Merchant         @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  transaction     Transaction?     @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  recoveryAttempt RecoveryAttempt? @relation(fields: [recoveryAttemptId], references: [id], onDelete: SetNull)
+
+  @@index([merchantId])
+  @@index([transactionId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

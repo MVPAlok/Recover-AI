@@ -15,6 +15,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { CardSkeleton, TableSkeleton } from '../components/ui/Skeleton';
 import { ErrorBanner } from '../components/ui/ErrorBanner';
 import { EmptyState } from '../components/ui/EmptyState';
+import { SystemHealthCard } from '../components/ui/SystemHealthCard';
 import { fetchOverview, fetchRecoveryOpportunities, fetchRazorpayGatewayStatus } from '../services/api';
 import { DashboardOverviewMetrics, RecoveryOpportunity, RazorpayGatewayStatus } from '../types';
 
@@ -192,6 +193,9 @@ export const OverviewPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Real-time System Infrastructure Health */}
+      <SystemHealthCard />
 
       {/* High-Potential Recovery Opportunities */}
       <div className="space-y-4">

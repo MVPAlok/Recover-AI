@@ -8,6 +8,7 @@ import {
   AnalyticsData,
   AuditLogItem,
   RazorpayGatewayStatus,
+  SystemHealthData,
 } from '../types';
 
 let currentMerchantId: string | null = localStorage.getItem('recoverai_active_merchant_id');
@@ -229,4 +230,18 @@ export async function fetchAuditLogs(params: {
 
 export async function fetchRazorpayGatewayStatus(): Promise<RazorpayGatewayStatus> {
   return request<RazorpayGatewayStatus>('/api/integrations/razorpay/status');
+}
+
+export async function fetchSystemHealth(): Promise<SystemHealthData> {
+  const res = await fetch('/api/system/health', {
+    headers: currentMerchantId ? { 'x-merchant-id': currentMerchantId } : {},
+  });
+  const json = await res.json();
+  if (!res.ok && json.status === 'critical') {
+    return json;
+  }
+  if (!res.ok) {
+    throw new Error(json?.message || 'Failed to fetch system health');
+  }
+  return json;
 }

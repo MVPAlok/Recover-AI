@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import healthRoutes from './health.routes.js';
+import systemHealthRoutes from '../modules/system/system-health.routes.js';
 import { healthController } from '../controllers/health.controller.js';
 import { detectionRoutes } from '../modules/detection/index.js';
 import { diagnosisRoutes } from '../modules/diagnosis/index.js';
@@ -12,6 +13,7 @@ const router = Router();
 
 // Core Observability Endpoints
 router.use('/health', healthRoutes);
+router.use('/system', systemHealthRoutes);
 router.get('/ready', healthController.checkReadiness);
 router.get('/metrics', healthController.getMetrics);
 

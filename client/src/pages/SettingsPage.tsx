@@ -7,13 +7,13 @@ import {
   Cpu,
   Server,
   Activity,
-  RotateCw,
   BarChart2,
 } from 'lucide-react';
 import { fetchRazorpayGatewayStatus, fetchOverview, fetchReadiness, fetchMetrics } from '../services/api';
 import { RazorpayGatewayStatus, DashboardOverviewMetrics } from '../types';
 import { Skeleton } from '../components/ui/Skeleton';
 import { ErrorBanner } from '../components/ui/ErrorBanner';
+import { SystemHealthCard } from '../components/ui/SystemHealthCard';
 
 export const SettingsPage: React.FC = () => {
   const [gatewayStatus, setGatewayStatus] = useState<RazorpayGatewayStatus | null>(null);
@@ -21,12 +21,10 @@ export const SettingsPage: React.FC = () => {
   const [readiness, setReadiness] = useState<any | null>(null);
   const [metrics, setMetrics] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
     try {
-      setRefreshing(true);
       const [rzp, ov, ready, met] = await Promise.all([
         fetchRazorpayGatewayStatus(),
         fetchOverview(),
@@ -42,7 +40,6 @@ export const SettingsPage: React.FC = () => {
       setError(msg);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
@@ -70,15 +67,10 @@ export const SettingsPage: React.FC = () => {
             Real-time infrastructure health, sandbox security isolation, and active merchant profiles.
           </p>
         </div>
-        <button
-          onClick={load}
-          disabled={refreshing}
-          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 disabled:opacity-50 transition-colors"
-        >
-          <RotateCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh Health
-        </button>
       </div>
+
+      {/* Real-time System Infrastructure Health */}
+      <SystemHealthCard />
 
       {/* Live Infrastructure Readiness Status */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">

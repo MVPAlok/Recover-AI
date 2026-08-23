@@ -258,3 +258,51 @@ export interface RazorpayGatewayStatus {
   lastEventType: string | null;
   lastStatus?: string | null;
 }
+
+export type HealthStatus = 'healthy' | 'degraded' | 'unavailable' | 'not_configured' | 'test_mode' | 'unknown';
+export type OverallHealthStatus = 'healthy' | 'degraded' | 'critical';
+
+export interface ServiceHealthItem {
+  status: HealthStatus;
+  latencyMs?: number;
+  message: string;
+  details?: Record<string, unknown>;
+  model?: string;
+  fallbackActive?: boolean;
+  fallbackRate?: number;
+  mode?: string;
+  keyPrefix?: string;
+  lastProcessedAt?: string | null;
+  lastEventId?: string | null;
+  errorRate?: number;
+  totalEvents24h?: number;
+  queueDepth?: number;
+  activeJobs?: number;
+  waitingJobs?: number;
+  failedJobs?: number;
+  concurrency?: number;
+}
+
+export interface OperationalMetrics {
+  lastWebhookSecondsAgo: number | null;
+  queueDepth: number;
+  failedJobs: number;
+  aiFallbackRate: number;
+  webhookErrorRate: number;
+}
+
+export interface SystemHealthData {
+  success: boolean;
+  status: OverallHealthStatus;
+  environment: 'TEST_MODE' | 'PRODUCTION';
+  timestamp: string;
+  services: {
+    postgresql: ServiceHealthItem;
+    redis: ServiceHealthItem;
+    gemini: ServiceHealthItem;
+    razorpay: ServiceHealthItem;
+    webhookWorker: ServiceHealthItem;
+    recoveryWorker: ServiceHealthItem;
+  };
+  metrics: OperationalMetrics;
+}

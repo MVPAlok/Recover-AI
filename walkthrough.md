@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-The RecoverAI platform has been elevated to an institutional, production-grade architecture featuring an independent **`Payment` evidence ledger**, multi-tenant RBAC (`User` + `MerchantMembership`), webhook correlation tracking, strict attempt idempotency, and cryptographic financial reconciliation while maintaining Razorpay strictly in **TEST MODE**.
+The RecoverAI platform has been elevated to an institutional, production-grade architecture featuring an independent **`Payment` evidence ledger**, multi-tenant RBAC (`User` + `MerchantMembership`), webhook correlation tracking, strict attempt idempotency, cryptographic financial reconciliation, and a comprehensive **System Health & Observability** dashboard with real telemetry aggregation, while maintaining Razorpay strictly in **TEST MODE**.
 
 ---
 
@@ -35,9 +35,26 @@ The RecoverAI platform has been elevated to an institutional, production-grade a
 ### Pillar 6: Payment Evidence & Settlement Ledger UI
 - Added dedicated **Payment & Settlement Evidence Ledger** card to [`TransactionDetailPage.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/pages/TransactionDetailPage.tsx).
 
+### Pillar 7: Real-Time System Health & Observability (`/api/system/health`)
+- Added real telemetry aggregation service [`system-health.service.ts`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/server/src/modules/system/system-health.service.ts) and controller [`system-health.controller.ts`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/server/src/modules/system/system-health.controller.ts).
+- Computes real operational metrics without hardcoding:
+  - **PostgreSQL**: Real `SELECT 1` latency measurement.
+  - **Redis Queue**: Real `PING` connection & latency measurement.
+  - **Google Gemini**: Telemetry over last 24 hours (`aiFallbackRate`, structured schema readiness, average latency).
+  - **Razorpay**: Sandbox isolation validation with strict `rzp_test_` prefix guardrail.
+  - **Webhook Worker**: Error rate (`webhookErrorRate`), total events, and `lastWebhookSecondsAgo`.
+  - **Recovery Worker**: BullMQ `getRecoveryQueue()` live depth (`queueDepth`) and `failedJobs`.
+- Embedded [`SystemHealthCard.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/components/ui/SystemHealthCard.tsx) in [`OverviewPage.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/pages/OverviewPage.tsx) and [`SettingsPage.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/pages/SettingsPage.tsx) with dynamic "Updated X seconds ago" counter and 20s auto-refresh interval.
+
 ---
 
-## 2. Test Verification & Results
+## 2. Visual Proof of System Health UI
+
+![System Health Dashboard](/C:/Users/sy753/.gemini/antigravity-ide/brain/6461aa88-e876-4e82-9a7d-fd0cd9985b18/dashboard_health_refreshed_3_1787519230853.png)
+
+---
+
+## 3. Test Verification & Results
 
 ### Master Production Failure Simulation (`7/7 passed — 100%`)
 ```
@@ -58,7 +75,7 @@ The RecoverAI platform has been elevated to an institutional, production-grade a
 ====================================================
 ```
 
-### Full Multi-Phase Unit Test Suite (`100% passed`)
+### Full Multi-Phase Unit Test Suite (`58/58 passed — 100%`)
 - **Detection Unit Tests**: `8/8 passed`
 - **Diagnosis Agent Unit Tests**: `10/10 passed`
 - **Recovery Decision Engine Unit Tests**: `12/12 passed`
@@ -66,5 +83,6 @@ The RecoverAI platform has been elevated to an institutional, production-grade a
 - **Razorpay Webhook Processing Unit Tests**: `6/6 passed`
 - **Merchant Dashboard Backend Unit Tests**: `7/7 passed`
 - **Redis Queue & BullMQ Tests**: `3/3 passed`
+- **System Health & Observability Unit Tests**: `7/7 passed`
 - **Client TypeScript & Vite Production Build**: `Passed with 0 errors`
 - **Server TypeScript Typecheck (`tsc --noEmit`)**: `Passed with 0 errors`

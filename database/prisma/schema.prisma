@@ -190,3 +190,18 @@ model AuditLog {
   @@index([createdAt])
   @@map("audit_logs")
 }
+
+model RazorpayWebhookEvent {
+  id          String    @id @default(uuid())
+  eventId     String    @unique
+  eventType   String
+  payload     Json
+  processed   Boolean   @default(false)
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("razorpay_webhook_events")
+}
+

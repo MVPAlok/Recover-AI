@@ -7,6 +7,7 @@ import { IdempotencyService } from './idempotency.service.js';
 import { OutcomeService } from './outcome.service.js';
 import { RecoveryProvider } from './providers/recovery-provider.js';
 import { SimulationRecoveryProvider } from './providers/simulation-provider.js';
+import { RazorpayTestProvider } from './providers/razorpay-test.provider.js';
 import { RetryExecutor } from './executors/retry.executor.js';
 import { RemindExecutor } from './executors/remind.executor.js';
 import { EscalateExecutor } from './executors/escalate.executor.js';
@@ -21,21 +22,22 @@ import {
 
 export class RecoveryExecutorService {
   private repository: ExecutionRepository;
-  private provider: RecoveryProvider;
-  private retryExecutor: RetryExecutor;
-  private remindExecutor: RemindExecutor;
-  private escalateExecutor: EscalateExecutor;
-  private waitExecutor: WaitExecutor;
-  private stopExecutor: StopExecutor;
+  private customProvider?: RecoveryProvider;
 
   constructor(repository?: ExecutionRepository, provider?: RecoveryProvider) {
     this.repository = repository || new ExecutionRepository();
-    this.provider = provider || new SimulationRecoveryProvider();
-    this.retryExecutor = new RetryExecutor(this.provider);
-    this.remindExecutor = new RemindExecutor(this.provider);
-    this.escalateExecutor = new EscalateExecutor(this.provider);
-    this.waitExecutor = new WaitExecutor(this.provider);
-    this.stopExecutor = new StopExecutor(this.provider);
+    this.customProvider = provider;
+  }
+
+  private resolveProvider(mode?: string): RecoveryProvider {
+    if (this.customProvider) {
+      return this.customProvider;
+    }
+    const resolvedMode = (mode || ExecutionPolicy.getConfig().mode).toLowerCase();
+    if (resolvedMode === 'razorpay_test') {
+      return new RazorpayTestProvider();
+    }
+    return new SimulationRecoveryProvider();
   }
 
   /**
@@ -180,7 +182,14 @@ export class RecoveryExecutorService {
       },
     });
 
-    // 7. Execute action via corresponding ActionExecutor
+    // 7. Execute action via corresponding ActionExecutor with resolved provider
+    const activeProvider = this.resolveProvider(mode);
+    const retryExecutor = new RetryExecutor(activeProvider);
+    const remindExecutor = new RemindExecutor(activeProvider);
+    const escalateExecutor = new EscalateExecutor(activeProvider);
+    const waitExecutor = new WaitExecutor(activeProvider);
+    const stopExecutor = new StopExecutor(activeProvider);
+
     let providerResult: ProviderExecutionResult;
 
     const baseInput = {
@@ -195,7 +204,7 @@ export class RecoveryExecutorService {
 
     switch (targetDecision.decision) {
       case 'RETRY':
-        providerResult = await this.retryExecutor.execute({
+        providerResult = await retryExecutor.execute({
           ...baseInput,
           action: 'RETRY',
           paymentMethod: tx.paymentMethod,
@@ -204,7 +213,7 @@ export class RecoveryExecutorService {
         break;
 
       case 'REMIND':
-        providerResult = await this.remindExecutor.execute({
+        providerResult = await remindExecutor.execute({
           ...baseInput,
           action: 'REMIND',
           customerEmail: tx.customer?.email,
@@ -214,7 +223,7 @@ export class RecoveryExecutorService {
         break;
 
       case 'ESCALATE':
-        providerResult = await this.escalateExecutor.execute({
+        providerResult = await escalateExecutor.execute({
           ...baseInput,
           action: 'ESCALATE',
           reason: targetDecision.reasoning,
@@ -223,7 +232,7 @@ export class RecoveryExecutorService {
         break;
 
       case 'WAIT':
-        providerResult = await this.waitExecutor.execute({
+        providerResult = await waitExecutor.execute({
           ...baseInput,
           action: 'WAIT',
           waitMinutes: ExecutionPolicy.getConfig().defaultWaitMinutes,
@@ -231,7 +240,7 @@ export class RecoveryExecutorService {
         break;
 
       case 'STOP':
-        providerResult = await this.stopExecutor.execute({
+        providerResult = await stopExecutor.execute({
           ...baseInput,
           action: 'STOP',
           reason: targetDecision.reasoning,

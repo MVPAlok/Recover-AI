@@ -29,11 +29,20 @@
     "executor:eval": "tsx server/src/modules/recovery-executor/evaluation-runner.ts",
     "test:executor": "tsx server/src/modules/recovery-executor/__tests__/recovery-executor.test.ts",
     "test:idempotency": "tsx server/src/modules/recovery-executor/__tests__/idempotency.test.ts",
-    "test:safety": "tsx server/src/modules/recovery-executor/__tests__/safety.test.ts"
+    "test:safety": "tsx server/src/modules/recovery-executor/__tests__/safety.test.ts",
+    "test:razorpay": "tsx server/src/integrations/razorpay/__tests__/razorpay-client.test.ts",
+    "test:webhooks": "tsx server/src/modules/webhooks/__tests__/webhook.test.ts",
+    "test:provider-selection": "tsx server/src/modules/recovery-executor/__tests__/provider-selection.test.ts",
+    "razorpay:eval": "tsx server/src/modules/razorpay/evaluation-runner.ts"
   },
   "devDependencies": {
+    "@types/pg": "^8.23.1",
     "concurrently": "^8.2.2",
     "prisma": "^7.9.1",
     "tsx": "^4.19.0"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.9.1",
+    "pg": "^8.23.0"
   }
 }

@@ -29,7 +29,7 @@ export class ExecutionValidator {
 
     // 1. Validate Execution Mode
     const mode = executionMode || config.mode;
-    if (mode !== 'simulation') {
+    if (mode !== 'simulation' && mode !== 'razorpay_test') {
       return {
         isValid: false,
         reason: `Unsupported execution mode '${mode}'. System is configured to fail closed.`,

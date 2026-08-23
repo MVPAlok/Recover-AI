@@ -87,6 +87,7 @@ export interface RecoveryExecutionResult {
   scheduledAt?: Date | string;
   attemptNumber: number;
   isIdempotent?: boolean;
+  metadata?: Record<string, unknown>;
 }
 
 export interface BatchExecutionSummary {

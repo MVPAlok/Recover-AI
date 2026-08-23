@@ -15,7 +15,7 @@ export const DEFAULT_EXECUTION_CONFIG: ExecutionConfig = {
   decisionMaxAgeMinutes: parseInt(process.env.DECISION_MAX_AGE_MINUTES || '30', 10),
   defaultWaitMinutes: 30,
   simulationSeed: parseInt(process.env.SIMULATION_SEED || '42', 10),
-  supportedModes: ['simulation'],
+  supportedModes: ['simulation', 'razorpay_test'],
 };
 
 export class ExecutionPolicy {
@@ -34,9 +34,9 @@ export class ExecutionPolicy {
 
   public static validateExecutionMode(mode: string): ExecutionMode {
     const normalized = mode.toLowerCase() as ExecutionMode;
-    if (normalized !== 'simulation') {
+    if (normalized !== 'simulation' && normalized !== 'razorpay_test') {
       throw new Error(
-        `[ExecutionPolicy] Execution mode '${mode}' is unsupported in Phase 6. Only 'simulation' mode is permitted. System fails closed.`
+        `[ExecutionPolicy] Execution mode '${mode}' is unsupported. Only 'simulation' and 'razorpay_test' modes are permitted. System fails closed.`
       );
     }
     return normalized;

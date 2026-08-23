@@ -35,6 +35,7 @@ export class OutcomeService {
       scheduledAt: providerResult.scheduledAt,
       attemptNumber,
       isIdempotent: false,
+      metadata: providerResult.metadata,
     };
   }
 

@@ -1,5 +1,13 @@
-import { AIAgentType, Prisma, RecoveryDecision, RecoveryStatus } from '@prisma/client';
+import {
+  AIAgentType,
+  PaymentStatus,
+  Prisma,
+  RecoveryDecision,
+  RecoveryStatus,
+  TransactionRecoveryStatus,
+} from '@prisma/client';
 import { prisma } from '../../config/prisma.js';
+import { metricsService } from '../../services/metrics.service.js';
 import { RecoveryExecutorMetrics } from './execution.types.js';
 
 export class ExecutionRepository {
@@ -70,7 +78,7 @@ export class ExecutionRepository {
   }
 
   /**
-   * Creates a new RecoveryAttempt record.
+   * Creates a new RecoveryAttempt record and updates Transaction state to IN_PROGRESS.
    */
   async createRecoveryAttempt(data: {
     merchantId: string;
@@ -84,20 +92,42 @@ export class ExecutionRepository {
     scheduledAt?: Date | null;
     executedAt?: Date | null;
   }) {
-    return prisma.recoveryAttempt.create({
-      data: {
-        merchantId: data.merchantId,
-        transactionId: data.transactionId,
-        aiDecisionId: data.aiDecisionId,
-        attemptNumber: data.attemptNumber,
-        actionType: data.actionType,
-        status: data.status,
-        reason: data.reason || null,
-        amountRecovered: data.amountRecovered ?? 0,
-        scheduledAt: data.scheduledAt || null,
-        executedAt: data.executedAt || null,
-      },
-    });
+    // Financial Integrity: Execution itself does not recover revenue (amount = 0 until payment webhook confirms capture)
+    const [attempt] = await prisma.$transaction([
+      prisma.recoveryAttempt.create({
+        data: {
+          merchantId: data.merchantId,
+          transactionId: data.transactionId,
+          aiDecisionId: data.aiDecisionId,
+          attemptNumber: data.attemptNumber,
+          actionType: data.actionType,
+          status: data.status,
+          reason: data.reason || null,
+          amountRecovered: 0, // Zero until verified payment capture
+          scheduledAt: data.scheduledAt || null,
+          executedAt: data.executedAt || null,
+        },
+      }),
+      prisma.transaction.update({
+        where: { id: data.transactionId },
+        data: {
+          recoveryStatus:
+            data.actionType === 'STOP'
+              ? TransactionRecoveryStatus.CANCELLED
+              : TransactionRecoveryStatus.IN_PROGRESS,
+        },
+      }),
+    ]);
+
+    metricsService.recordExecution(
+      data.status === RecoveryStatus.SUCCESS
+        ? 'SUCCESS'
+        : data.status === RecoveryStatus.FAILED
+        ? 'FAILED'
+        : 'PENDING'
+    );
+
+    return attempt;
   }
 
   /**
@@ -108,7 +138,7 @@ export class ExecutionRepository {
     data: {
       status: RecoveryStatus;
       reason?: string | null;
-      amountRecovered: number;
+      amountRecovered?: number;
       executedAt?: Date | null;
       scheduledAt?: Date | null;
     }
@@ -118,7 +148,7 @@ export class ExecutionRepository {
       data: {
         status: data.status,
         reason: data.reason || null,
-        amountRecovered: data.amountRecovered,
+        amountRecovered: data.amountRecovered ?? 0,
         executedAt: data.executedAt || null,
         scheduledAt: data.scheduledAt || null,
       },
@@ -224,7 +254,8 @@ export class ExecutionRepository {
 
     const totalAttempts = attempts.length;
     const recoveryRate = totalAttempts > 0 ? successfulRecoveries / totalAttempts : 0;
-    const retrySuccessRate = retryAttemptsCount > 0 ? successfulRetriesCount / retryAttemptsCount : 0;
+    const retrySuccessRate =
+      retryAttemptsCount > 0 ? successfulRetriesCount / retryAttemptsCount : 0;
 
     return {
       totalAttempts,

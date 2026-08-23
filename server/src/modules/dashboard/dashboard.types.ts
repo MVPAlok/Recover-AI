@@ -1,4 +1,11 @@
-import { TransactionStatus, RecoveryDecision, RecoveryStatus } from '@prisma/client';
+import {
+  PaymentStatus,
+  Prisma,
+  RecoveryDecision,
+  RecoveryStatus,
+  TransactionRecoveryStatus,
+  TransactionStatus,
+} from '@prisma/client';
 
 export interface DashboardOverviewMetrics {
   revenueAtRisk: number;
@@ -36,6 +43,9 @@ export interface TransactionFilterParams {
   limit?: number;
   search?: string;
   status?: TransactionStatus;
+  paymentStatus?: PaymentStatus;
+  recoveryStatus?: TransactionRecoveryStatus;
+  needsAttention?: boolean;
   decision?: RecoveryDecision;
   risk?: 'LOW' | 'MEDIUM' | 'HIGH';
   startDate?: string;
@@ -51,6 +61,8 @@ export interface TransactionDetail {
   amount: number;
   currency: string;
   status: TransactionStatus;
+  paymentStatus?: PaymentStatus;
+  recoveryStatus?: TransactionRecoveryStatus;
   paymentMethod?: string | null;
   failureCode?: string | null;
   failureReason?: string | null;
@@ -88,6 +100,9 @@ export interface TransactionDetail {
     confidence?: number;
     reasoning?: string | null;
     evidence: string[];
+    modelName?: string;
+    isFallback?: boolean;
+    latencyMs?: number | null;
     createdAt: string;
   } | null;
   decision?: {
@@ -126,6 +141,7 @@ export interface RecoveryFilterParams {
   limit?: number;
   status?: RecoveryStatus;
   actionType?: RecoveryDecision;
+  needsAttention?: boolean;
   search?: string;
 }
 
@@ -159,10 +175,9 @@ export interface RecoveryOutcomeItem {
 
 export interface RazorpayGatewayStatus {
   mode: 'TEST MODE';
-  isLive: false;
-  apiConnected: boolean;
-  webhookHealthy: boolean;
+  keyConfigured: boolean;
+  webhookSecretConfigured: boolean;
+  totalWebhooksProcessed: number;
   lastWebhookAt?: string | null;
   lastEventType?: string | null;
-  totalWebhooksProcessed: number;
 }

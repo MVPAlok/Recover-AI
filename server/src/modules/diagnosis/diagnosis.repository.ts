@@ -141,6 +141,8 @@ export class DiagnosisRepository {
         reasoning: formattedReasoning,
         modelName: result.modelName,
         promptVersion: result.promptVersion,
+        isFallback: result.isFallback ?? false,
+        latencyMs: result.latencyMs ?? null,
       },
     });
   }
@@ -170,6 +172,8 @@ export class DiagnosisRepository {
         }),
         modelName: r.modelName,
         promptVersion: r.promptVersion,
+        isFallback: r.isFallback ?? false,
+        latencyMs: r.latencyMs ?? null,
       })),
       skipDuplicates: true,
     });

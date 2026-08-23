@@ -3,6 +3,7 @@ import { DiagnosisContextBuilder } from '../context-builder.js';
 import { MockLLMProvider } from '../llm/mock-llm-provider.js';
 import { OpenAIProvider } from '../llm/openai-provider.js';
 import { DiagnosisValidator } from '../diagnosis-validator.js';
+import { diagnosisResponseSchema } from '../diagnosis-schema.js';
 import { LLMProvider } from '../llm/llm-provider.js';
 import { z } from 'zod';
 
@@ -242,14 +243,12 @@ async function runDiagnosisUnitTests() {
       []
     );
 
-    let errorThrown = false;
-    try {
-      await brokenAgent.diagnose(context, 'mcht_1');
-    } catch (err) {
-      errorThrown = true;
-    }
-    assert(errorThrown, 'Zod schema validation must reject malformed model outputs');
-    console.log('  ✓ Test 8: Invalid Model Output Schema Rejection passed.');
+    const parseResult = diagnosisResponseSchema.safeParse({ invalidField: true });
+    assert(!parseResult.success, 'Zod schema validation must reject malformed model outputs');
+
+    const fallbackResult = await brokenAgent.diagnose(context, 'mcht_1');
+    assert(fallbackResult.isFallback === true, 'Agent must gracefully engage fallback when model output is invalid');
+    console.log('  ✓ Test 8: Invalid Model Output Schema Rejection & Fallback passed.');
   }
 
   // Test 9 — Missing API Key Graceful Error

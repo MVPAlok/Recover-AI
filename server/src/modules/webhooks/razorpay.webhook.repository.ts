@@ -1,4 +1,13 @@
-import { Prisma, PrismaClient, RazorpayWebhookEvent, RecoveryStatus } from '@prisma/client';
+import {
+  PaymentStatus,
+  Prisma,
+  PrismaClient,
+  RazorpayWebhookEvent,
+  RecoveryStatus,
+  TransactionRecoveryStatus,
+  TransactionStatus,
+  WebhookProcessingStatus,
+} from '@prisma/client';
 import { prisma as defaultPrisma } from '../../config/prisma.js';
 import { logger } from '../../utils/logger.js';
 
@@ -32,6 +41,7 @@ export class RazorpayWebhookRepository {
           eventId,
           eventType,
           payload: payload as unknown as Prisma.InputJsonValue,
+          status: WebhookProcessingStatus.RECEIVED,
           processed: false,
         },
       });
@@ -48,14 +58,23 @@ export class RazorpayWebhookRepository {
   }
 
   /**
-   * Marks a webhook event as processed.
+   * Updates status and processing result of a webhook event.
    */
-  async markEventProcessed(eventId: string): Promise<void> {
+  async updateWebhookEventStatus(
+    eventId: string,
+    params: {
+      status: WebhookProcessingStatus;
+      processed?: boolean;
+      errorMessage?: string;
+    }
+  ): Promise<void> {
     await this.prisma.razorpayWebhookEvent.update({
       where: { eventId },
       data: {
-        processed: true,
-        processedAt: new Date(),
+        status: params.status,
+        processed: params.processed ?? (params.status === WebhookProcessingStatus.PROCESSED),
+        errorMessage: params.errorMessage || null,
+        processedAt: params.status === WebhookProcessingStatus.PROCESSED ? new Date() : undefined,
       },
     });
   }
@@ -116,17 +135,26 @@ export class RazorpayWebhookRepository {
   }
 
   /**
-   * Updates transaction's razorpay identifiers.
+   * Updates transaction's financial and recovery state.
    */
-  async updateTransactionRazorpayIds(
+  async updateTransactionFinancialState(
     transactionId: string,
-    ids: { razorpayOrderId?: string; razorpayPaymentId?: string }
+    params: {
+      status?: TransactionStatus;
+      paymentStatus?: PaymentStatus;
+      recoveryStatus?: TransactionRecoveryStatus;
+      razorpayOrderId?: string;
+      razorpayPaymentId?: string;
+    }
   ) {
     return this.prisma.transaction.update({
       where: { id: transactionId },
       data: {
-        ...(ids.razorpayOrderId ? { razorpayOrderId: ids.razorpayOrderId } : {}),
-        ...(ids.razorpayPaymentId ? { razorpayPaymentId: ids.razorpayPaymentId } : {}),
+        ...(params.status ? { status: params.status } : {}),
+        ...(params.paymentStatus ? { paymentStatus: params.paymentStatus } : {}),
+        ...(params.recoveryStatus ? { recoveryStatus: params.recoveryStatus } : {}),
+        ...(params.razorpayOrderId ? { razorpayOrderId: params.razorpayOrderId } : {}),
+        ...(params.razorpayPaymentId ? { razorpayPaymentId: params.razorpayPaymentId } : {}),
       },
     });
   }
@@ -147,7 +175,10 @@ export class RazorpayWebhookRepository {
       data: {
         status: params.status,
         reason: params.reason,
-        amountRecovered: params.amountRecovered !== undefined ? new Prisma.Decimal(params.amountRecovered) : undefined,
+        amountRecovered:
+          params.amountRecovered !== undefined
+            ? new Prisma.Decimal(params.amountRecovered)
+            : undefined,
         executedAt: new Date(),
       },
     });

@@ -38,6 +38,8 @@ export interface DiagnosisResult {
   diagnosedAt: string;
   modelName: string;
   promptVersion: string;
+  isFallback?: boolean;
+  latencyMs?: number;
 }
 
 export interface SanitizedTransactionContext {

@@ -2,41 +2,49 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  User,
-  Mail,
-  Phone,
-  Brain,
-  Play,
   RotateCw,
-  Sparkles,
-  CheckCircle2,
+  Play,
+  Brain,
   AlertCircle,
+  CheckCircle2,
   FileText,
+  User,
+  Sparkles,
+  Cpu,
+  Layers,
 } from 'lucide-react';
-import { fetchTransactionDetail, executeRecoveryAttempt, triggerDecision, triggerDiagnosis } from '../services/api';
+import {
+  fetchTransactionDetail,
+  executeRecoveryAttempt,
+  triggerDecision,
+  triggerDiagnosis,
+} from '../services/api';
 import { TransactionDetail } from '../types';
 import { StatusBadge } from '../components/ui/StatusBadge';
-import { formatINR } from '../components/ui/MetricCard';
 import { Timeline } from '../components/ui/Timeline';
 import { Skeleton } from '../components/ui/Skeleton';
 import { ErrorBanner } from '../components/ui/ErrorBanner';
+import { formatINR } from '../components/ui/MetricCard';
 
 export const TransactionDetailPage: React.FC = () => {
-  const { transactionId } = useParams<{ transactionId: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [transaction, setTransaction] = useState<TransactionDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [executing, setExecuting] = useState(false);
   const [reEvaluating, setReEvaluating] = useState(false);
-  const [executionMessage, setExecutionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [executionMessage, setExecutionMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   const loadDetail = async () => {
-    if (!transactionId) return;
+    if (!id) return;
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchTransactionDetail(transactionId);
+      const data = await fetchTransactionDetail(id);
       setTransaction(data);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to load transaction details';
@@ -48,54 +56,52 @@ export const TransactionDetailPage: React.FC = () => {
 
   useEffect(() => {
     loadDetail();
-  }, [transactionId]);
-
-  const handleReevaluate = async () => {
-    if (!transaction) return;
-    try {
-      setReEvaluating(true);
-      setExecutionMessage(null);
-      await triggerDiagnosis(transaction.id);
-      await triggerDecision(transaction.id);
-      setExecutionMessage({
-        type: 'success',
-        text: 'AI Diagnosis & Recovery Policy re-evaluated with fresh timestamps!',
-      });
-      await loadDetail();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'AI Re-evaluation failed';
-      setExecutionMessage({ type: 'error', text: msg });
-    } finally {
-      setReEvaluating(false);
-    }
-  };
+  }, [id]);
 
   const handleExecuteRecovery = async () => {
-    if (!transaction) return;
+    if (!id || !transaction) return;
     try {
       setExecuting(true);
       setExecutionMessage(null);
-      const res = await executeRecoveryAttempt(transaction.id);
-      if (res && (res.status === 'CANCELLED' || res.status === 'FAILED')) {
+      const res = await executeRecoveryAttempt(id, transaction.decision?.id);
+
+      if (res?.status === 'SUCCESS') {
         setExecutionMessage({
-          type: 'error',
-          text: `Recovery Execution Blocked: ${res.reason || 'Guardrail policy restriction'}`,
+          type: 'success',
+          text: `Recovery action executed successfully: ${res.action} -> ${res.status} (${res.outcomeCode || 'ORDER_CREATED'})`,
         });
       } else {
         setExecutionMessage({
-          type: 'success',
-          text: `Recovery execution dispatched successfully via Razorpay Test Mode (${res?.status || 'PENDING'})!`,
+          type: 'error',
+          text: `Recovery execution ${res?.status || 'halted'}: ${res?.message || res?.outcomeCode || 'Action blocked by safety policy'}`,
         });
       }
-      // Reload details after 500ms
-      setTimeout(() => {
-        loadDetail();
-      }, 500);
+      await loadDetail();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Recovery execution failed';
       setExecutionMessage({ type: 'error', text: msg });
     } finally {
       setExecuting(false);
+    }
+  };
+
+  const handleReevaluate = async () => {
+    if (!id) return;
+    try {
+      setReEvaluating(true);
+      setExecutionMessage(null);
+      await triggerDiagnosis(id);
+      await triggerDecision(id, true);
+      setExecutionMessage({
+        type: 'success',
+        text: 'Google Gemini AI diagnosis & recovery policy re-evaluated in real time!',
+      });
+      await loadDetail();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to re-evaluate policy';
+      setExecutionMessage({ type: 'error', text: msg });
+    } finally {
+      setReEvaluating(false);
     }
   };
 
@@ -138,11 +144,17 @@ export const TransactionDetailPage: React.FC = () => {
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-xl font-bold text-white tracking-tight">
                 Transaction Lifecycle
               </h1>
               <StatusBadge type="transaction" value={transaction.status} />
+              {transaction.paymentStatus && (
+                <StatusBadge type="payment" value={transaction.paymentStatus} />
+              )}
+              {transaction.recoveryStatus && (
+                <StatusBadge type="recoveryState" value={transaction.recoveryStatus} />
+              )}
             </div>
             <span className="text-xs font-mono text-slate-400">ID: {transaction.id}</span>
           </div>
@@ -207,10 +219,10 @@ export const TransactionDetailPage: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Autonomous Recovery Flow
+                  Autonomous Recovery Lifecycle
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  End-to-end trace from initial gateway failure to AI policy resolution.
+                  End-to-end trace from initial gateway failure to cryptographic payment reconciliation.
                 </p>
               </div>
               <span className="text-[11px] font-semibold px-2.5 py-1 rounded bg-slate-800 text-slate-300">
@@ -219,6 +231,32 @@ export const TransactionDetailPage: React.FC = () => {
             </div>
 
             <Timeline transaction={transaction} />
+          </div>
+
+          {/* Card: Traceability & Correlation Chain */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-indigo-400" />
+              Traceability & Correlation Chain
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+              <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800">
+                <span className="text-slate-500 block text-[10px] uppercase font-sans font-semibold">Transaction ID</span>
+                <span className="text-slate-200">{transaction.id}</span>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800">
+                <span className="text-slate-500 block text-[10px] uppercase font-sans font-semibold">Customer ID</span>
+                <span className="text-slate-200">{transaction.customerId}</span>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800">
+                <span className="text-slate-500 block text-[10px] uppercase font-sans font-semibold">Razorpay Order ID</span>
+                <span className="text-slate-200">{transaction.razorpayOrderId || 'None (Pre-Order)'}</span>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800">
+                <span className="text-slate-500 block text-[10px] uppercase font-sans font-semibold">Razorpay Payment ID</span>
+                <span className="text-slate-200">{transaction.razorpayPaymentId || 'None (Pending)'}</span>
+              </div>
+            </div>
           </div>
 
           {/* Card: Audit Trail Logs */}
@@ -259,6 +297,14 @@ export const TransactionDetailPage: React.FC = () => {
 
             <div className="pt-3 border-t border-slate-800/80 space-y-2 text-xs">
               <div className="flex justify-between">
+                <span className="text-slate-400">Payment Status:</span>
+                <StatusBadge type="payment" value={transaction.paymentStatus || 'FAILED'} />
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Recovery Status:</span>
+                <StatusBadge type="recoveryState" value={transaction.recoveryStatus || 'NOT_STARTED'} />
+              </div>
+              <div className="flex justify-between">
                 <span className="text-slate-400">Payment Method:</span>
                 <span className="font-semibold text-slate-200">{transaction.paymentMethod || 'Card / UPI'}</span>
               </div>
@@ -278,9 +324,29 @@ export const TransactionDetailPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Brain className="w-5 h-5 text-indigo-400" />
-                <h3 className="text-sm font-bold text-white">AI Decision Explainability</h3>
+                <h3 className="text-sm font-bold text-white">AI Diagnostic Engine</h3>
               </div>
               <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
+            </div>
+
+            {/* AI Model Transparency Badge */}
+            <div className="p-3 rounded-lg bg-slate-950/90 border border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-indigo-400" />
+                <div>
+                  <span className="text-[11px] font-bold text-white block">
+                    {transaction.diagnosis?.isFallback ? 'Deterministic Fallback Engine' : 'Google Gemini AI'}
+                  </span>
+                  <span className="text-[10px] text-slate-400">
+                    Model: {transaction.diagnosis?.modelName || 'gemini-3.5-flash-lite'}
+                  </span>
+                </div>
+              </div>
+              {transaction.diagnosis?.latencyMs && (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                  {transaction.diagnosis.latencyMs}ms
+                </span>
+              )}
             </div>
 
             {/* Probability & Confidence Score */}
@@ -352,35 +418,30 @@ export const TransactionDetailPage: React.FC = () => {
             )}
           </div>
 
-          {/* Card: Customer Profile */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5" />
+          {/* Card: Customer Historical Context */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <User className="w-4 h-4 text-indigo-400" />
               Customer Profile
-            </span>
-
-            <div className="space-y-1">
-              <div className="text-sm font-bold text-white">{transaction.customer.name}</div>
-              <div className="text-xs text-slate-400 flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5 text-slate-500" />
-                {transaction.customer.email}
+            </h3>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Name:</span>
+                <span className="font-semibold text-slate-200">{transaction.customer.name}</span>
               </div>
-              {transaction.customer.phone && (
-                <div className="text-xs text-slate-400 flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-slate-500" />
-                  {transaction.customer.phone}
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-800 text-xs">
-              <div className="bg-slate-950 p-2.5 rounded-lg">
-                <span className="text-slate-500 block text-[10px]">Total Orders</span>
-                <span className="font-bold text-slate-200">{transaction.customer.totalTransactions}</span>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Email:</span>
+                <span className="font-semibold text-slate-200">{transaction.customer.email}</span>
               </div>
-              <div className="bg-slate-950 p-2.5 rounded-lg">
-                <span className="text-slate-500 block text-[10px]">Success Rate</span>
-                <span className="font-bold text-emerald-400">{transaction.customer.successRate}%</span>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Success Rate:</span>
+                <span className="font-semibold text-emerald-400">
+                  {transaction.customer.successRate?.toFixed(1) || '100'}%
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Total Transactions:</span>
+                <span className="font-semibold text-slate-200">{transaction.customer.totalTransactions}</span>
               </div>
             </div>
           </div>

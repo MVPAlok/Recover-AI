@@ -31,6 +31,17 @@ export async function checkBackendHealth() {
   return res.json();
 }
 
+export async function fetchReadiness() {
+  const res = await fetch('/api/ready');
+  return res.json();
+}
+
+export async function fetchMetrics() {
+  const res = await fetch('/api/metrics');
+  const json = await res.json();
+  return json.data;
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -73,6 +84,9 @@ export async function fetchTransactions(params: {
   limit?: number;
   search?: string;
   status?: string;
+  paymentStatus?: string;
+  recoveryStatus?: string;
+  needsAttention?: boolean;
   decision?: string;
   risk?: string;
   sortBy?: string;
@@ -83,6 +97,9 @@ export async function fetchTransactions(params: {
   if (params.limit) searchParams.set('limit', params.limit.toString());
   if (params.search) searchParams.set('search', params.search);
   if (params.status) searchParams.set('status', params.status);
+  if (params.paymentStatus) searchParams.set('paymentStatus', params.paymentStatus);
+  if (params.recoveryStatus) searchParams.set('recoveryStatus', params.recoveryStatus);
+  if (params.needsAttention) searchParams.set('needsAttention', 'true');
   if (params.decision) searchParams.set('decision', params.decision);
   if (params.risk) searchParams.set('risk', params.risk);
   if (params.sortBy) searchParams.set('sortBy', params.sortBy);
@@ -147,6 +164,7 @@ export async function fetchRecoveries(params: {
   limit?: number;
   status?: string;
   actionType?: string;
+  needsAttention?: boolean;
   search?: string;
 } = {}): Promise<{ items: RecoverySummary[]; total: number; page: number; limit: number; totalPages: number }> {
   const searchParams = new URLSearchParams();
@@ -154,6 +172,7 @@ export async function fetchRecoveries(params: {
   if (params.limit) searchParams.set('limit', params.limit.toString());
   if (params.status) searchParams.set('status', params.status);
   if (params.actionType) searchParams.set('actionType', params.actionType);
+  if (params.needsAttention) searchParams.set('needsAttention', 'true');
   if (params.search) searchParams.set('search', params.search);
 
   const res = await fetch(`/api/recoveries?${searchParams.toString()}`, {

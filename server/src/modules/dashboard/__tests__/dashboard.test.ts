@@ -156,7 +156,11 @@ class MockDashboardRepository extends DashboardRepository {
       successfulTransactions: 8,
       revenueAtRisk: 7499.0,
       recoveredRevenue: 2499.0,
+      recoveryRate: 33.32,
+      executionSuccessRate: 100,
       recoverablePayments: 1,
+      environment: 'TEST_MODE',
+      gatewayProvider: 'Razorpay Test Sandbox',
     };
   }
 
@@ -178,14 +182,14 @@ class MockDashboardRepository extends DashboardRepository {
     }
     return {
       total: filtered.length,
-      transactions: filtered,
+      items: filtered,
       page: params.page || 1,
       limit: params.limit || 25,
       totalPages: 1,
     } as any;
   }
 
-  async getTransactionLifecycle(_merchantId: string, transactionId: string) {
+  async getTransactionDetail(_merchantId: string, transactionId: string) {
     const tx = this.mockTransactions.find((t) => t.id === transactionId);
     if (!tx) return null;
     return {
@@ -265,8 +269,12 @@ class MockDashboardRepository extends DashboardRepository {
   async getRazorpayStatusSummary() {
     return {
       totalWebhooks: 12,
+      processedCount: 12,
+      failedCount: 0,
+      successRate: 100,
       lastWebhookAt: '2026-08-23T05:47:05.000Z',
       lastEventType: 'payment.captured',
+      lastStatus: 'PROCESSED' as any,
     };
   }
 }
@@ -326,8 +334,8 @@ async function runDashboardTests() {
   console.log('  ✓ Test 5: Merchant data isolation enforced (cross-merchant access rejected).');
 
   // Test 6: Razorpay status security (no secrets exposed)
-  const rzpStatus = await service.getRazorpayStatus();
-  if (rzpStatus.mode !== 'TEST MODE' || rzpStatus.isLive !== false || (rzpStatus as any).keySecret) {
+  const rzpStatus = await service.getRazorpayIntegrationStatus();
+  if (rzpStatus.mode !== 'TEST MODE' || (rzpStatus as any).keySecret) {
     throw new Error('Razorpay status exposed sensitive data or incorrect mode');
   }
   console.log('  ✓ Test 6: Razorpay Gateway status exposes Test Mode without leaking credentials.');

@@ -72,13 +72,18 @@ export class DashboardService {
   /**
    * Fetches top recovery opportunities with normalized probability and risk level.
    */
-  async getRecoveryOpportunities(merchantId?: string, limit: number = 10): Promise<RecoveryOpportunity[]> {
+  async getRecoveryOpportunities(
+    merchantId?: string,
+    limit = 10
+  ): Promise<RecoveryOpportunity[]> {
     const targetMerchantId = await this.resolveMerchantId(merchantId);
     const transactions = await this.repo.getRecoveryOpportunities(targetMerchantId, limit);
 
-    return transactions.map((tx) => {
-      const decisionObj = tx.aiDecisions.find((d) => d.agentType === AIAgentType.RECOVERY_DECISION);
-      const detectionObj = tx.aiDecisions.find((d) => d.agentType === AIAgentType.DETECTION);
+    return transactions.map((tx: any) => {
+      const decisionObj = tx.aiDecisions.find(
+        (d: any) => d.agentType === AIAgentType.RECOVERY_DECISION
+      );
+      const detectionObj = tx.aiDecisions.find((d: any) => d.agentType === AIAgentType.DETECTION);
 
       const recoveryProbability =
         decisionObj?.recoveryProbability ?? detectionObj?.recoveryProbability ?? 0.5;
@@ -110,13 +115,18 @@ export class DashboardService {
   /**
    * Retrieves paginated transactions with extracted AI decisions for table view.
    */
-  async getTransactions(merchantId: string | undefined, params: TransactionFilterParams) {
+  async getTransactions(
+    merchantId: string | undefined,
+    params: TransactionFilterParams & { paymentStatus?: string; recoveryStatus?: string; needsAttention?: boolean }
+  ) {
     const targetMerchantId = await this.resolveMerchantId(merchantId);
     const result = await this.repo.getTransactions(targetMerchantId, params);
 
-    const mapped = result.transactions.map((tx) => {
-      const decisionObj = tx.aiDecisions.find((d) => d.agentType === AIAgentType.RECOVERY_DECISION);
-      const detectionObj = tx.aiDecisions.find((d) => d.agentType === AIAgentType.DETECTION);
+    const mapped = result.items.map((tx: any) => {
+      const decisionObj = tx.aiDecisions?.find(
+        (d: any) => d.agentType === AIAgentType.RECOVERY_DECISION
+      );
+      const detectionObj = tx.aiDecisions?.find((d: any) => d.agentType === AIAgentType.DETECTION);
 
       const recoveryProbability =
         decisionObj?.recoveryProbability ?? detectionObj?.recoveryProbability ?? 0.5;
@@ -124,23 +134,24 @@ export class DashboardService {
       const riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' =
         recoveryProbability >= 0.75 ? 'LOW' : recoveryProbability >= 0.4 ? 'MEDIUM' : 'HIGH';
 
-      const latestAttempt = tx.recoveryAttempts[0];
+      const latestAttempt = tx.recoveryAttempts?.[0];
 
       return {
         id: tx.id,
         customerId: tx.customerId,
-        customerName: tx.customer.name,
-        customerEmail: tx.customer.email,
+        customerName: tx.customer?.name || 'Customer',
+        customerEmail: tx.customer?.email || '',
         amount: Number(tx.amount),
         currency: tx.currency,
         status: tx.status,
+        paymentStatus: tx.paymentStatus,
+        recoveryStatus: tx.recoveryStatus,
         failureCode: tx.failureCode,
         failureReason: tx.failureReason,
         retryCount: tx.retryCount,
         recoveryProbability: Number((recoveryProbability * 100).toFixed(1)),
         riskLevel,
         decision: decisionObj?.decision || null,
-        recoveryStatus: latestAttempt ? latestAttempt.status : null,
         createdAt: tx.createdAt.toISOString(),
       };
     });
@@ -157,9 +168,12 @@ export class DashboardService {
   /**
    * Retrieves full lifecycle detail for a specific transaction.
    */
-  async getTransactionDetail(merchantId: string | undefined, transactionId: string): Promise<TransactionDetail> {
+  async getTransactionDetail(
+    merchantId: string | undefined,
+    transactionId: string
+  ): Promise<TransactionDetail> {
     const targetMerchantId = await this.resolveMerchantId(merchantId);
-    const data = await this.repo.getTransactionLifecycle(targetMerchantId, transactionId);
+    const data = await this.repo.getTransactionDetail(targetMerchantId, transactionId);
 
     if (!data) {
       throw new Error(`Transaction ${transactionId} not found`);
@@ -167,9 +181,11 @@ export class DashboardService {
 
     const { transaction: tx, customerStats } = data;
 
-    const detectionObj = tx.aiDecisions.find((d) => d.agentType === AIAgentType.DETECTION);
-    const diagnosisObj = tx.aiDecisions.find((d) => d.agentType === AIAgentType.DIAGNOSIS);
-    const decisionObj = tx.aiDecisions.find((d) => d.agentType === AIAgentType.RECOVERY_DECISION);
+    const detectionObj = tx.aiDecisions.find((d: any) => d.agentType === AIAgentType.DETECTION);
+    const diagnosisObj = tx.aiDecisions.find((d: any) => d.agentType === AIAgentType.DIAGNOSIS);
+    const decisionObj = tx.aiDecisions.find(
+      (d: any) => d.agentType === AIAgentType.RECOVERY_DECISION
+    );
 
     // Extract factors safely
     let positiveFactors: string[] = [];
@@ -180,13 +196,13 @@ export class DashboardService {
         positiveFactors = parts[0]
           .replace('Positive signals:', '')
           .split(';')
-          .map((s) => s.trim())
+          .map((s: string) => s.trim())
           .filter(Boolean);
       }
       if (parts[1]) {
         riskFactors = parts[1]
           .split(';')
-          .map((s) => s.trim())
+          .map((s: string) => s.trim())
           .filter(Boolean);
       }
     }
@@ -202,6 +218,8 @@ export class DashboardService {
       amount: Number(tx.amount),
       currency: tx.currency,
       status: tx.status,
+      paymentStatus: tx.paymentStatus,
+      recoveryStatus: tx.recoveryStatus,
       paymentMethod: tx.paymentMethod,
       failureCode: tx.failureCode,
       failureReason: tx.failureReason,
@@ -223,25 +241,28 @@ export class DashboardService {
       detection: detectionObj
         ? {
             id: detectionObj.id,
-            recoveryProbability: Number(((detectionObj.recoveryProbability || 0.5) * 100).toFixed(1)),
+            recoveryProbability: Number((prob * 100).toFixed(1)),
             confidenceScore: Number(((detectionObj.confidenceScore || 0.8) * 100).toFixed(1)),
             riskLevel,
             reasoning: detectionObj.reasoning,
-            positiveFactors: positiveFactors.length > 0 ? positiveFactors : ['No prior failed retries'],
-            riskFactors: riskFactors.length > 0 ? riskFactors : ['Recent payment failure event'],
+            positiveFactors,
+            riskFactors,
             createdAt: detectionObj.createdAt.toISOString(),
           }
         : null,
       diagnosis: diagnosisObj
         ? {
             id: diagnosisObj.id,
-            diagnosisCode: tx.failureCode || 'TEMPORARY_BANK_FAILURE',
+            diagnosisCode: 'TEMPORARY_GATEWAY_TIMEOUT',
             failureCategory: 'TEMPORARY_INFRASTRUCTURE',
             severity: 'LOW',
             isLikelyTemporary: true,
             confidence: Number(((diagnosisObj.confidenceScore || 0.85) * 100).toFixed(1)),
             reasoning: diagnosisObj.reasoning || tx.failureReason,
             evidence: [tx.failureReason || 'Gateway timeout response code returned'].filter(Boolean),
+            modelName: diagnosisObj.modelName || 'gemini-3.5-flash-lite',
+            isFallback: diagnosisObj.isFallback ?? false,
+            latencyMs: diagnosisObj.latencyMs ?? null,
             createdAt: diagnosisObj.createdAt.toISOString(),
           }
         : null,
@@ -249,14 +270,16 @@ export class DashboardService {
         ? {
             id: decisionObj.id,
             decision: decisionObj.decision,
-            recoveryProbability: Number(((decisionObj.recoveryProbability || prob) * 100).toFixed(1)),
+            recoveryProbability: Number(
+              ((decisionObj.recoveryProbability || prob) * 100).toFixed(1)
+            ),
             confidenceScore: Number(((decisionObj.confidenceScore || 0.9) * 100).toFixed(1)),
             reasoning: decisionObj.reasoning,
             ruleTrail: ['RULE_TEMPORARY_TIMEOUT_RETRY', 'SAFETY_GUARDRAIL_MAX_RETRIES_CHECK'],
             createdAt: decisionObj.createdAt.toISOString(),
           }
         : null,
-      recoveryAttempts: tx.recoveryAttempts.map((att) => ({
+      recoveryAttempts: tx.recoveryAttempts.map((att: any) => ({
         id: att.id,
         attemptNumber: att.attemptNumber,
         actionType: att.actionType,
@@ -267,7 +290,7 @@ export class DashboardService {
         executedAt: att.executedAt?.toISOString() || null,
         createdAt: att.createdAt.toISOString(),
       })),
-      auditLogs: tx.auditLogs.map((log) => ({
+      auditLogs: tx.auditLogs.map((log: any) => ({
         id: log.id,
         action: log.action,
         entityType: log.entityType,
@@ -286,28 +309,23 @@ export class DashboardService {
     const targetMerchantId = await this.resolveMerchantId(merchantId);
     const result = await this.repo.getRecoveries(targetMerchantId, params);
 
-    const items = result.items.map((att) => ({
-      id: att.id,
-      transactionId: att.transactionId,
-      customerName: att.transaction.customer.name,
-      customerEmail: att.transaction.customer.email,
-      amount: Number(att.transaction.amount),
-      currency: att.transaction.currency,
-      actionType: att.actionType,
-      status: att.status,
-      reason: att.reason,
-      amountRecovered: Number(att.amountRecovered),
-      attemptNumber: att.attemptNumber,
-      decisionProbability: att.aiDecision?.recoveryProbability
-        ? Number((att.aiDecision.recoveryProbability * 100).toFixed(1))
-        : null,
-      scheduledAt: att.scheduledAt?.toISOString() || null,
-      executedAt: att.executedAt?.toISOString() || null,
-      createdAt: att.createdAt.toISOString(),
+    const mapped = result.items.map((attempt: any) => ({
+      id: attempt.id,
+      transactionId: attempt.transactionId,
+      customerName: attempt.transaction.customer.name,
+      customerEmail: attempt.transaction.customer.email,
+      amount: Number(attempt.transaction.amount),
+      currency: attempt.transaction.currency,
+      actionType: attempt.actionType,
+      status: attempt.status,
+      reason: attempt.reason,
+      amountRecovered: Number(attempt.amountRecovered),
+      executedAt: attempt.executedAt?.toISOString() || null,
+      createdAt: attempt.createdAt.toISOString(),
     }));
 
     return {
-      items,
+      items: mapped,
       total: result.total,
       page: result.page,
       limit: result.limit,
@@ -316,49 +334,44 @@ export class DashboardService {
   }
 
   /**
-   * Retrieves single recovery attempt with linked context.
+   * Retrieves single recovery attempt details by ID.
    */
   async getRecoveryDetail(merchantId: string | undefined, recoveryId: string) {
     const targetMerchantId = await this.resolveMerchantId(merchantId);
-    const att = await this.repo.getRecoveryById(targetMerchantId, recoveryId);
-    if (!att) throw new Error(`Recovery attempt ${recoveryId} not found`);
+    const recovery = await this.repo.getRecoveryById(targetMerchantId, recoveryId);
+
+    if (!recovery) {
+      throw new Error(`Recovery attempt ${recoveryId} not found`);
+    }
 
     return {
-      id: att.id,
-      transactionId: att.transactionId,
-      merchantId: att.merchantId,
-      actionType: att.actionType,
-      status: att.status,
-      reason: att.reason,
-      amountRecovered: Number(att.amountRecovered),
-      attemptNumber: att.attemptNumber,
-      scheduledAt: att.scheduledAt?.toISOString() || null,
-      executedAt: att.executedAt?.toISOString() || null,
-      createdAt: att.createdAt.toISOString(),
+      id: recovery.id,
+      merchantId: recovery.merchantId,
+      transactionId: recovery.transactionId,
+      attemptNumber: recovery.attemptNumber,
+      actionType: recovery.actionType,
+      status: recovery.status,
+      reason: recovery.reason,
+      amountRecovered: Number(recovery.amountRecovered),
+      scheduledAt: recovery.scheduledAt?.toISOString() || null,
+      executedAt: recovery.executedAt?.toISOString() || null,
+      createdAt: recovery.createdAt.toISOString(),
       transaction: {
-        id: att.transaction.id,
-        amount: Number(att.transaction.amount),
-        currency: att.transaction.currency,
-        status: att.transaction.status,
-        failureCode: att.transaction.failureCode,
-        failureReason: att.transaction.failureReason,
-        customer: {
-          id: att.transaction.customer.id,
-          name: att.transaction.customer.name,
-          email: att.transaction.customer.email,
-        },
+        id: recovery.transaction.id,
+        amount: Number(recovery.transaction.amount),
+        currency: recovery.transaction.currency,
+        status: recovery.transaction.status,
+        customer: recovery.transaction.customer,
       },
-      aiDecision: att.aiDecision
+      aiDecision: recovery.aiDecision
         ? {
-            id: att.aiDecision.id,
-            decision: att.aiDecision.decision,
-            probability: att.aiDecision.recoveryProbability
-              ? Number((att.aiDecision.recoveryProbability * 100).toFixed(1))
-              : null,
-            reasoning: att.aiDecision.reasoning,
+            id: recovery.aiDecision.id,
+            decision: recovery.aiDecision.decision,
+            confidenceScore: recovery.aiDecision.confidenceScore,
+            reasoning: recovery.aiDecision.reasoning,
           }
         : null,
-      auditLogs: att.auditLogs.map((l) => ({
+      auditLogs: recovery.auditLogs.map((l: any) => ({
         id: l.id,
         action: l.action,
         entityType: l.entityType,
@@ -379,32 +392,27 @@ export class DashboardService {
   }> {
     const targetMerchantId = await this.resolveMerchantId(merchantId);
 
-    const [overviewAggs, failures, decisions, outcomes] = await Promise.all([
+    const [aggregates, failures, decisions, outcomes] = await Promise.all([
       this.repo.getOverviewAggregates(targetMerchantId),
       this.repo.getFailureBreakdown(targetMerchantId),
       this.repo.getDecisionBreakdown(targetMerchantId),
       this.repo.getRecoveryOutcomes(targetMerchantId),
     ]);
 
-    const successfulRecoveriesCount = outcomes.find((o) => o.status === RecoveryStatus.SUCCESS)?.count || 0;
-    const failedRecoveriesCount = outcomes.find((o) => o.status === RecoveryStatus.FAILED)?.count || 0;
+    const totalFailed = failures.reduce((sum, f) => sum + f.count, 0);
+    const averageTxValue = totalFailed > 0 ? aggregates.revenueAtRisk / totalFailed : 0;
 
-    const recoveryRate =
-      overviewAggs.revenueAtRisk > 0
-        ? Number(((overviewAggs.recoveredRevenue / overviewAggs.revenueAtRisk) * 100).toFixed(1))
-        : 0;
-
-    const averageTransactionValue =
-      overviewAggs.totalTransactions > 0
-        ? Number((overviewAggs.revenueAtRisk / (overviewAggs.failedPayments || 1)).toFixed(2))
-        : 0;
+    const successfulRecoveriesCount =
+      outcomes.find((o) => o.status === RecoveryStatus.SUCCESS)?.count || 0;
+    const failedRecoveriesCount =
+      outcomes.find((o) => o.status === RecoveryStatus.FAILED)?.count || 0;
 
     return {
       overview: {
-        totalRevenueAtRisk: overviewAggs.revenueAtRisk,
-        totalRecoveredRevenue: overviewAggs.recoveredRevenue,
-        overallRecoveryRate: recoveryRate,
-        averageTransactionValue,
+        totalRevenueAtRisk: aggregates.revenueAtRisk,
+        totalRecoveredRevenue: aggregates.recoveredRevenue,
+        overallRecoveryRate: aggregates.recoveryRate,
+        averageTransactionValue: Number(averageTxValue.toFixed(2)),
         successfulRecoveriesCount,
         failedRecoveriesCount,
       },
@@ -415,28 +423,63 @@ export class DashboardService {
   }
 
   /**
-   * Retrieves paginated chronological audit logs.
+   * Retrieves paginated audit logs for a merchant.
    */
-  async getAuditLogs(merchantId: string | undefined, params: { page?: number; limit?: number; entityType?: string; action?: string; transactionId?: string }) {
+  async getAuditLogs(
+    merchantId: string | undefined,
+    params: {
+      page?: number;
+      limit?: number;
+      entityType?: string;
+      action?: string;
+      transactionId?: string;
+    }
+  ) {
     const targetMerchantId = await this.resolveMerchantId(merchantId);
-    return this.repo.getAuditLogs(targetMerchantId, params);
+    const result = await this.repo.getAuditLogs(targetMerchantId, params);
+
+    const mapped = result.logs.map((log: any) => ({
+      id: log.id,
+      merchantId: log.merchantId,
+      transactionId: log.transactionId,
+      recoveryAttemptId: log.recoveryAttemptId,
+      entityType: log.entityType,
+      entityId: log.entityId,
+      action: log.action,
+      actor: log.actor,
+      details: log.details as Record<string, unknown> | null,
+      createdAt: log.createdAt.toISOString(),
+      transaction: log.transaction
+        ? {
+            id: log.transaction.id,
+            amount: Number(log.transaction.amount),
+            status: log.transaction.status,
+          }
+        : null,
+    }));
+
+    return {
+      items: mapped,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+    };
   }
 
   /**
-   * Safely returns Razorpay Gateway connection status.
+   * Retrieves Razorpay Test Mode integration & webhook status.
    */
-  async getRazorpayStatus(): Promise<RazorpayGatewayStatus> {
+  async getRazorpayIntegrationStatus(): Promise<RazorpayGatewayStatus> {
     const summary = await this.repo.getRazorpayStatusSummary();
-    const hasTestKey = Boolean(config.RAZORPAY_KEY_ID?.startsWith('rzp_test_'));
 
     return {
       mode: 'TEST MODE',
-      isLive: false,
-      apiConnected: hasTestKey,
-      webhookHealthy: summary.totalWebhooks > 0 || hasTestKey,
+      keyConfigured: Boolean(config.RAZORPAY_KEY_ID),
+      webhookSecretConfigured: Boolean(config.RAZORPAY_WEBHOOK_SECRET),
+      totalWebhooksProcessed: summary.totalWebhooks,
       lastWebhookAt: summary.lastWebhookAt,
       lastEventType: summary.lastEventType,
-      totalWebhooksProcessed: summary.totalWebhooks,
     };
   }
 }

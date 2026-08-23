@@ -1,12 +1,30 @@
-export type TransactionStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
+export type TransactionStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'CANCELLED';
+export type PaymentStatus = 'UNPAID' | 'AUTHORIZED' | 'CAPTURED' | 'FAILED' | 'REFUNDED' | 'UNKNOWN';
+export type TransactionRecoveryStatus =
+  | 'NOT_STARTED'
+  | 'IN_PROGRESS'
+  | 'RECOVERED'
+  | 'NOT_RECOVERED'
+  | 'CANCELLED'
+  | 'REQUIRES_REVIEW';
 export type RecoveryDecision = 'RETRY' | 'REMIND' | 'ESCALATE' | 'WAIT' | 'STOP';
-export type RecoveryStatus = 'PENDING' | 'EXECUTED' | 'SUCCESS' | 'FAILED' | 'CANCELLED';
+export type RecoveryStatus = 'PENDING' | 'EXECUTING' | 'SUCCESS' | 'FAILED' | 'CANCELLED';
+export type WebhookProcessingStatus =
+  | 'RECEIVED'
+  | 'VERIFIED'
+  | 'PROCESSING'
+  | 'PROCESSED'
+  | 'FAILED'
+  | 'RETRYING'
+  | 'DEAD_LETTER';
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+export type UserRole = 'OWNER' | 'ADMIN' | 'ANALYST' | 'SUPPORT' | 'VIEWER';
 
 export interface Merchant {
   id: string;
   name: string;
   email: string;
+  role?: UserRole;
   createdAt?: string;
 }
 
@@ -16,8 +34,11 @@ export interface DashboardOverviewMetrics {
   failedPayments: number;
   recoverablePayments: number;
   recoveryRate: number;
+  executionSuccessRate?: number;
   totalTransactions: number;
   successfulTransactions: number;
+  environment?: string;
+  gatewayProvider?: string;
   merchant: Merchant;
 }
 
@@ -33,7 +54,7 @@ export interface RecoveryOpportunity {
   recoveryProbability: number;
   riskLevel: RiskLevel;
   decision: RecoveryDecision;
-  recoveryStatus: RecoveryStatus | 'READY';
+  recoveryStatus: TransactionRecoveryStatus | RecoveryStatus | 'READY';
   createdAt: string;
 }
 
@@ -45,13 +66,14 @@ export interface TransactionSummary {
   amount: number;
   currency: string;
   status: TransactionStatus;
+  paymentStatus?: PaymentStatus;
+  recoveryStatus?: TransactionRecoveryStatus;
   failureCode?: string | null;
   failureReason?: string | null;
   retryCount: number;
   recoveryProbability: number;
   riskLevel: RiskLevel;
   decision?: RecoveryDecision | null;
-  recoveryStatus?: RecoveryStatus | null;
   createdAt: string;
 }
 
@@ -62,6 +84,8 @@ export interface TransactionDetail {
   amount: number;
   currency: string;
   status: TransactionStatus;
+  paymentStatus?: PaymentStatus;
+  recoveryStatus?: TransactionRecoveryStatus;
   paymentMethod?: string | null;
   failureCode?: string | null;
   failureReason?: string | null;
@@ -99,6 +123,9 @@ export interface TransactionDetail {
     confidence?: number;
     reasoning?: string | null;
     evidence: string[];
+    modelName?: string;
+    isFallback?: boolean;
+    latencyMs?: number;
     createdAt: string;
   } | null;
   decision?: {
@@ -115,6 +142,7 @@ export interface TransactionDetail {
     attemptNumber: number;
     actionType: RecoveryDecision;
     status: RecoveryStatus;
+    executionStatus?: RecoveryStatus;
     reason?: string | null;
     amountRecovered: number;
     scheduledAt?: string | null;
@@ -141,13 +169,31 @@ export interface RecoverySummary {
   currency: string;
   actionType: RecoveryDecision;
   status: RecoveryStatus;
+  executionStatus?: RecoveryStatus;
+  recoveryStatus?: TransactionRecoveryStatus;
   reason?: string | null;
   amountRecovered: number;
-  attemptNumber: number;
-  decisionProbability?: number | null;
-  scheduledAt?: string | null;
   executedAt?: string | null;
   createdAt: string;
+}
+
+export interface FailureBreakdownItem {
+  failureCode: string;
+  count: number;
+  amount: number;
+  percentage: number;
+}
+
+export interface DecisionBreakdownItem {
+  decision: RecoveryDecision;
+  count: number;
+  percentage: number;
+}
+
+export interface RecoveryOutcomeItem {
+  status: RecoveryStatus;
+  count: number;
+  amountRecovered: number;
 }
 
 export interface AnalyticsData {
@@ -159,22 +205,9 @@ export interface AnalyticsData {
     successfulRecoveriesCount: number;
     failedRecoveriesCount: number;
   };
-  failures: Array<{
-    failureCode: string;
-    count: number;
-    amount: number;
-    percentage: number;
-  }>;
-  decisions: Array<{
-    decision: RecoveryDecision;
-    count: number;
-    percentage: number;
-  }>;
-  outcomes: Array<{
-    status: RecoveryStatus;
-    count: number;
-    amountRecovered: number;
-  }>;
+  failures: FailureBreakdownItem[];
+  decisions: DecisionBreakdownItem[];
+  outcomes: RecoveryOutcomeItem[];
 }
 
 export interface AuditLogItem {
@@ -193,11 +226,11 @@ export interface AuditLogItem {
 }
 
 export interface RazorpayGatewayStatus {
-  mode: 'TEST MODE';
-  isLive: false;
-  apiConnected: boolean;
-  webhookHealthy: boolean;
-  lastWebhookAt?: string | null;
-  lastEventType?: string | null;
-  totalWebhooksProcessed: number;
+  totalWebhooks: number;
+  processedCount?: number;
+  failedCount?: number;
+  successRate?: number;
+  lastWebhookAt: string | null;
+  lastEventType: string | null;
+  lastStatus?: string | null;
 }

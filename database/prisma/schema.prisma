@@ -1,4 +1,4 @@
-// RecoverAI Database Schema (Enhanced Architecture)
+// RecoverAI Database Schema (Hardened Production-Grade Architecture)
 
 generator client {
   provider = "prisma-client-js"
@@ -8,10 +8,19 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  OWNER
+  ADMIN
+  ANALYST
+  SUPPORT
+  VIEWER
+}
+
 model Merchant {
   id        String   @id @default(uuid())
   name      String
   email     String   @unique
+  role      UserRole @default(ADMIN)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -44,9 +53,29 @@ model Customer {
 }
 
 enum TransactionStatus {
+  FAILED
   PENDING
   SUCCESS
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  AUTHORIZED
+  CAPTURED
   FAILED
+  REFUNDED
+  UNKNOWN
+}
+
+enum TransactionRecoveryStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  RECOVERED
+  NOT_RECOVERED
+  CANCELLED
+  REQUIRES_REVIEW
 }
 
 model Transaction {
@@ -57,8 +86,10 @@ model Transaction {
   amount   Decimal @db.Decimal(12, 2)
   currency String  @default("INR")
 
-  status        TransactionStatus @default(PENDING)
-  paymentMethod String?
+  status         TransactionStatus         @default(FAILED)
+  paymentStatus  PaymentStatus             @default(FAILED)
+  recoveryStatus TransactionRecoveryStatus @default(NOT_STARTED)
+  paymentMethod  String?
 
   failureCode   String?
   failureReason String?
@@ -80,6 +111,10 @@ model Transaction {
   @@index([merchantId])
   @@index([customerId])
   @@index([status])
+  @@index([paymentStatus])
+  @@index([recoveryStatus])
+  @@index([razorpayOrderId])
+  @@index([razorpayPaymentId])
   @@index([createdAt])
   @@map("transactions")
 }
@@ -113,6 +148,8 @@ model AIDecision {
 
   modelName     String?
   promptVersion String?
+  isFallback    Boolean @default(false)
+  latencyMs     Int?
 
   createdAt DateTime @default(now())
 
@@ -128,7 +165,7 @@ model AIDecision {
 
 enum RecoveryStatus {
   PENDING
-  EXECUTED
+  EXECUTING
   SUCCESS
   FAILED
   CANCELLED
@@ -191,17 +228,31 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+enum WebhookProcessingStatus {
+  RECEIVED
+  VERIFIED
+  PROCESSING
+  PROCESSED
+  FAILED
+  RETRYING
+  DEAD_LETTER
+}
+
 model RazorpayWebhookEvent {
-  id          String    @id @default(uuid())
-  eventId     String    @unique
-  eventType   String
-  payload     Json
-  processed   Boolean   @default(false)
-  processedAt DateTime?
-  createdAt   DateTime  @default(now())
+  id             String                  @id @default(uuid())
+  eventId        String                  @unique
+  eventType      String
+  payload        Json
+  status         WebhookProcessingStatus @default(RECEIVED)
+  processed      Boolean                 @default(false)
+  errorMessage   String?
+  retryCount     Int                     @default(0)
+  lastRetriedAt  DateTime?
+  processedAt    DateTime?
+  createdAt      DateTime                @default(now())
 
   @@index([eventType])
+  @@index([status])
   @@index([createdAt])
   @@map("razorpay_webhook_events")
 }
-

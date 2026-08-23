@@ -4,10 +4,11 @@ import {
   TrendingUp,
   ShieldAlert,
   CheckCircle2,
-  AlertTriangle,
   ArrowRight,
   Zap,
   Sparkles,
+  RotateCw,
+  Activity,
 } from 'lucide-react';
 import { MetricCard, formatINR } from '../components/ui/MetricCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
@@ -23,6 +24,7 @@ export const OverviewPage: React.FC = () => {
   const [gatewayStatus, setGatewayStatus] = useState<RazorpayGatewayStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [secondsAgo, setSecondsAgo] = useState(0);
   const navigate = useNavigate();
 
   const loadData = async () => {
@@ -37,6 +39,7 @@ export const OverviewPage: React.FC = () => {
       setMetrics(overviewData);
       setOpportunities(oppsData);
       setGatewayStatus(rzpData);
+      setSecondsAgo(0);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to load dashboard overview';
       setError(msg);
@@ -47,9 +50,13 @@ export const OverviewPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    const interval = setInterval(() => {
+      setSecondsAgo((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  if (loading) {
+  if (loading && !metrics) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -73,26 +80,35 @@ export const OverviewPage: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* ========================================================================= */}
       {/* Top Welcome & Workflow Banner */}
-      {/* ========================================================================= */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-900/90 to-indigo-950/40 border border-slate-800 rounded-2xl p-6 shadow-sm">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-bold tracking-wide">
               AUTONOMOUS RECOVERY AGENT
             </span>
-            <span className="text-xs text-slate-400 font-mono">v1.0-prod</span>
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[11px] font-bold tracking-wide">
+              TEST MODE (SANDBOX)
+            </span>
+            <span className="text-xs text-slate-400 font-mono">v1.0-hardened</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
             Revenue Recovery Overview
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
-            RecoverAI detects failed payment transactions, diagnoses root causes, and executes automated recovery policies via Razorpay Test Mode.
+            RecoverAI detects failed payments, diagnoses root causes via Google Gemini, and executes automated recovery policies strictly in Razorpay Test Mode.
           </p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={loadData}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+          >
+            <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Updated {secondsAgo}s ago</span>
+          </button>
+
           <button
             onClick={() => navigate('/transactions')}
             className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shadow-md shadow-indigo-600/20"
@@ -103,9 +119,7 @@ export const OverviewPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ========================================================================= */}
       {/* Primary KPI Hero Grid */}
-      {/* ========================================================================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Revenue at Risk"
@@ -116,11 +130,11 @@ export const OverviewPage: React.FC = () => {
         />
 
         <MetricCard
-          title="Revenue Recovered"
+          title="Verified Test Recovery"
           value={formatINR(metrics?.recoveredRevenue || 0)}
-          subtitle="Saved by RecoverAI"
+          subtitle="Confirmed via Webhook"
           icon={CheckCircle2}
-          badge={{ text: 'Real PostgreSQL Sum', variant: 'emerald' }}
+          badge={{ text: 'PostgreSQL Ledger', variant: 'emerald' }}
         />
 
         <MetricCard
@@ -132,17 +146,15 @@ export const OverviewPage: React.FC = () => {
         />
 
         <MetricCard
-          title="Failed Payments"
-          value={metrics?.failedPayments || 0}
-          subtitle={`Across ${metrics?.totalTransactions || 0} total transactions`}
-          icon={AlertTriangle}
+          title="Execution Success"
+          value={`${metrics?.executionSuccessRate || 0}%`}
+          subtitle="Attempts dispatched successfully"
+          icon={Activity}
           badge={{ text: `${metrics?.successfulTransactions || 0} Successes`, variant: 'indigo' }}
         />
       </div>
 
-      {/* ========================================================================= */}
       {/* Gateway & Pipeline Operational Status */}
-      {/* ========================================================================= */}
       <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
@@ -164,7 +176,11 @@ export const OverviewPage: React.FC = () => {
         <div className="flex items-center gap-6 text-xs text-slate-300 shrink-0">
           <div>
             <span className="text-slate-500 block text-[10px] uppercase font-semibold">Webhooks Ingested</span>
-            <span className="font-bold text-slate-200">{gatewayStatus?.totalWebhooksProcessed || 0} Events</span>
+            <span className="font-bold text-slate-200">{gatewayStatus?.totalWebhooks || 0} Events</span>
+          </div>
+          <div>
+            <span className="text-slate-500 block text-[10px] uppercase font-semibold">Processed / Success</span>
+            <span className="font-bold text-emerald-400">{gatewayStatus?.successRate || 100}%</span>
           </div>
           <div>
             <span className="text-slate-500 block text-[10px] uppercase font-semibold">Last Webhook</span>
@@ -177,88 +193,93 @@ export const OverviewPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* Section: Recovery Opportunities */}
-      {/* ========================================================================= */}
+      {/* High-Potential Recovery Opportunities */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-white">Recovery Opportunities</h3>
+            <h3 className="text-base font-bold text-white tracking-tight">
+              High-Probability Recovery Opportunities
+            </h3>
             <p className="text-xs text-slate-400">
-              Transactions identified by Phase 3 & 4 AI as high-probability recovery candidates.
+              Transactions flagged by AI with the highest probability of successful recovery.
             </p>
           </div>
           <button
             onClick={() => navigate('/transactions?status=FAILED')}
             className="flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
           >
-            View all failed transactions
+            View all failed
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {opportunities.length === 0 ? (
           <EmptyState
-            title="No Recovery Opportunities Found"
-            description="All failed transactions have been processed or no pending high-probability failures exist."
+            title="No Active Recovery Opportunities"
+            description="All eligible failed transactions have been processed or resolved."
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {opportunities.map((opp) => (
-              <div
-                key={opp.id}
-                onClick={() => navigate(`/transactions/${opp.transactionId}`)}
-                className="bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-5 shadow-sm transition-all cursor-pointer group flex flex-col justify-between"
-              >
-                <div>
-                  {/* Card Header: Amount & Probability */}
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div>
-                      <div className="text-lg font-bold text-white group-hover:text-indigo-300 transition-colors">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-semibold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="py-3.5 px-4">Transaction</th>
+                    <th className="py-3.5 px-4">Customer</th>
+                    <th className="py-3.5 px-4">Amount</th>
+                    <th className="py-3.5 px-4">Failure Code</th>
+                    <th className="py-3.5 px-4">Recovery Likelihood</th>
+                    <th className="py-3.5 px-4">AI Policy</th>
+                    <th className="py-3.5 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                  {opportunities.map((opp) => (
+                    <tr
+                      key={opp.id}
+                      onClick={() => navigate(`/transactions/${opp.id}`)}
+                      className="hover:bg-slate-800/40 cursor-pointer transition-colors"
+                    >
+                      <td className="py-3 px-4 font-mono font-medium text-slate-200">
+                        {opp.id}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-white">{opp.customerName}</div>
+                        <div className="text-[11px] text-slate-400">{opp.customerEmail}</div>
+                      </td>
+                      <td className="py-3 px-4 font-bold text-white">
                         {formatINR(opp.amount)}
-                      </div>
-                      <span className="text-[11px] text-slate-400 font-mono">
-                        {opp.transactionId.slice(0, 16)}...
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs font-extrabold text-emerald-400 block">
-                        {opp.recoveryProbability}%
-                      </span>
-                      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">
-                        Recovery Likelihood
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Customer Info */}
-                  <div className="text-xs text-slate-300 mb-3 border-t border-slate-800/80 pt-3">
-                    <div className="font-semibold text-slate-200">{opp.customerName}</div>
-                    <div className="text-slate-400 text-[11px]">{opp.customerEmail}</div>
-                  </div>
-
-                  {/* Failure Cause */}
-                  <div className="bg-slate-950/60 rounded-lg p-2.5 mb-4 border border-slate-800/60">
-                    <div className="text-[10px] uppercase font-bold text-slate-400 mb-0.5">Failure Reason</div>
-                    <div className="text-xs text-slate-300 font-medium truncate">
-                      {opp.failureReason || opp.failureCode || 'Bank authorization timeout'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card Footer: Decision & Status */}
-                <div className="flex items-center justify-between pt-3 border-t border-slate-800/80 text-xs">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-slate-500 uppercase font-semibold">Policy:</span>
-                    <StatusBadge type="decision" value={opp.decision} />
-                  </div>
-
-                  <span className="text-[11px] font-semibold text-indigo-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-                    Details <ArrowRight className="w-3 h-3" />
-                  </span>
-                </div>
-              </div>
-            ))}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[11px]">
+                          {opp.failureCode || 'GENERIC_DECLINE'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-emerald-400">{opp.recoveryProbability}%</span>
+                          <StatusBadge type="risk" value={opp.riskLevel} />
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <StatusBadge type="decision" value={opp.decision} />
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/transactions/${opp.id}`);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors"
+                        >
+                          Review & Execute
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

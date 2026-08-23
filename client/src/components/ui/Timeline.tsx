@@ -107,7 +107,7 @@ export const Timeline: React.FC<TimelineProps> = ({ transaction }) => {
         : isFailed
         ? 'payment.failed event processed'
         : 'Listening on /api/webhooks/razorpay',
-      status: latestAttempt?.status === 'EXECUTED' ? 'PENDING' : latestAttempt ? 'COMPLETED' : 'PENDING',
+      status: (latestAttempt && (isRecovered || isFailed)) ? 'COMPLETED' : 'PENDING',
       timestamp: latestAttempt?.executedAt || latestAttempt?.createdAt,
       icon: Radio,
       active: Boolean(latestAttempt && latestAttempt.status !== 'PENDING'),

@@ -213,7 +213,7 @@ export class DashboardController {
 
       res.status(200).json({
         success: true,
-        data: result.logs,
+        data: result.items,
         meta: {
           total: result.total,
           page: result.page,
@@ -233,7 +233,7 @@ export class DashboardController {
    */
   getRazorpayStatus = async (_req: Request, res: Response): Promise<void> => {
     try {
-      const status = await this.service.getRazorpayStatus();
+      const status = await this.service.getRazorpayIntegrationStatus();
       res.status(200).json({ success: true, data: status });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);

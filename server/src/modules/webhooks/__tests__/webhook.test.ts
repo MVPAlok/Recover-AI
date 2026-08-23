@@ -93,6 +93,14 @@ export async function runWebhookTests(): Promise<void> {
       const existing = recordedEvents.get(eventId);
       if (existing) existing.processed = true;
     },
+    async updateWebhookEventStatus(eventId: string, params: any) {
+      const existing = recordedEvents.get(eventId);
+      if (existing) {
+        existing.status = params.status;
+        existing.processed = params.processed ?? (params.status === 'PROCESSED');
+      }
+    },
+    async updateTransactionFinancialState(txId: string, params: any) {},
     async findTransactionForWebhook({ orderId, transactionId }: any) {
       if (transactionId === 'tx_success_1' || orderId === 'order_success_1') {
         return {

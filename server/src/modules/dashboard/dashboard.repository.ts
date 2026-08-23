@@ -1,6 +1,15 @@
-import { AIAgentType, PrismaClient, RecoveryDecision, RecoveryStatus, TransactionStatus } from '@prisma/client';
+import {
+  AIAgentType,
+  PaymentStatus,
+  PrismaClient,
+  RecoveryDecision,
+  RecoveryStatus,
+  TransactionRecoveryStatus,
+  TransactionStatus,
+  WebhookProcessingStatus,
+} from '@prisma/client';
 import { prisma } from '../../config/prisma.js';
-import { TransactionFilterParams, RecoveryFilterParams } from './dashboard.types.js';
+import { RecoveryFilterParams, TransactionFilterParams } from './dashboard.types.js';
 
 export class DashboardRepository {
   private db: PrismaClient;
@@ -28,6 +37,7 @@ export class DashboardRepository {
         id: true,
         name: true,
         email: true,
+        role: true,
         createdAt: true,
       },
       orderBy: { name: 'asc' },
@@ -35,7 +45,7 @@ export class DashboardRepository {
   }
 
   /**
-   * Aggregates overview metrics for a merchant.
+   * Aggregates overview metrics for a merchant with strict financial formulas.
    */
   async getOverviewAggregates(merchantId: string) {
     const [
@@ -45,6 +55,8 @@ export class DashboardRepository {
       failedTransactionsSum,
       recoveredSumResult,
       recoverableDecisionsCount,
+      totalExecutionAttempts,
+      successfulExecutionsCount,
     ] = await Promise.all([
       this.db.transaction.count({ where: { merchantId } }),
       this.db.transaction.count({ where: { merchantId, status: TransactionStatus.FAILED } }),
@@ -53,8 +65,15 @@ export class DashboardRepository {
         where: { merchantId, status: TransactionStatus.FAILED },
         _sum: { amount: true },
       }),
+      // Strict Financial Source of Truth: Sum amountRecovered from confirmed SUCCESS recovery attempts
       this.db.recoveryAttempt.aggregate({
-        where: { merchantId, status: RecoveryStatus.SUCCESS },
+        where: {
+          merchantId,
+          status: RecoveryStatus.SUCCESS,
+          transaction: {
+            recoveryStatus: TransactionRecoveryStatus.RECOVERED,
+          },
+        },
         _sum: { amountRecovered: true },
       }),
       this.db.aIDecision.count({
@@ -64,10 +83,20 @@ export class DashboardRepository {
           decision: { in: [RecoveryDecision.RETRY, RecoveryDecision.REMIND] },
         },
       }),
+      this.db.recoveryAttempt.count({ where: { merchantId } }),
+      this.db.recoveryAttempt.count({
+        where: { merchantId, status: RecoveryStatus.SUCCESS },
+      }),
     ]);
 
     const revenueAtRisk = Number(failedTransactionsSum._sum.amount || 0);
     const recoveredRevenue = Number(recoveredSumResult._sum.amountRecovered || 0);
+    const recoveryRate =
+      revenueAtRisk > 0 ? Number(((recoveredRevenue / revenueAtRisk) * 100).toFixed(2)) : 0;
+    const executionSuccessRate =
+      totalExecutionAttempts > 0
+        ? Number(((successfulExecutionsCount / totalExecutionAttempts) * 100).toFixed(2))
+        : 0;
 
     return {
       totalTransactions,
@@ -75,18 +104,23 @@ export class DashboardRepository {
       successfulTransactions: successfulTransactionsCount,
       revenueAtRisk,
       recoveredRevenue,
+      recoveryRate,
+      executionSuccessRate,
       recoverablePayments: recoverableDecisionsCount,
+      environment: 'TEST_MODE',
+      gatewayProvider: 'Razorpay Test Sandbox',
     };
   }
 
   /**
    * Retrieves high-potential recovery opportunities.
    */
-  async getRecoveryOpportunities(merchantId: string, limit: number = 10) {
+  async getRecoveryOpportunities(merchantId: string, limit = 10) {
     return this.db.transaction.findMany({
       where: {
         merchantId,
         status: TransactionStatus.FAILED,
+        recoveryStatus: { in: [TransactionRecoveryStatus.NOT_STARTED, TransactionRecoveryStatus.IN_PROGRESS] },
       },
       include: {
         customer: true,
@@ -107,25 +141,55 @@ export class DashboardRepository {
   /**
    * Retrieves paginated transactions with dynamic filters.
    */
-  async getTransactions(merchantId: string, params: TransactionFilterParams) {
+  async getTransactions(merchantId: string, params: TransactionFilterParams & { paymentStatus?: string; recoveryStatus?: string; needsAttention?: boolean }) {
     const {
       page = 1,
       limit = 25,
       search,
       status,
+      paymentStatus,
+      recoveryStatus,
+      needsAttention,
       decision,
-      startDate,
-      endDate,
       sortBy = 'createdAt',
       sortOrder = 'desc',
     } = params;
 
     const skip = (page - 1) * limit;
-
     const whereClause: any = { merchantId };
 
     if (status) {
       whereClause.status = status;
+    }
+
+    if (paymentStatus) {
+      whereClause.paymentStatus = paymentStatus;
+    }
+
+    if (recoveryStatus) {
+      whereClause.recoveryStatus = recoveryStatus;
+    }
+
+    if (needsAttention) {
+      whereClause.OR = [
+        { recoveryStatus: TransactionRecoveryStatus.REQUIRES_REVIEW },
+        {
+          AND: [
+            { status: TransactionStatus.FAILED },
+            { retryCount: { gte: 3 } },
+            { recoveryStatus: { not: TransactionRecoveryStatus.RECOVERED } },
+          ],
+        },
+      ];
+    }
+
+    if (decision) {
+      whereClause.aiDecisions = {
+        some: {
+          agentType: AIAgentType.RECOVERY_DECISION,
+          decision: decision as RecoveryDecision,
+        },
+      };
     }
 
     if (search) {
@@ -138,30 +202,16 @@ export class DashboardRepository {
       ];
     }
 
-    if (startDate || endDate) {
-      whereClause.createdAt = {};
-      if (startDate) whereClause.createdAt.gte = new Date(startDate);
-      if (endDate) whereClause.createdAt.lte = new Date(endDate);
-    }
-
-    if (decision) {
-      whereClause.aiDecisions = {
-        some: {
-          agentType: AIAgentType.RECOVERY_DECISION,
-          decision,
-        },
-      };
-    }
-
-    const [total, transactions] = await Promise.all([
+    const [total, items] = await Promise.all([
       this.db.transaction.count({ where: whereClause }),
       this.db.transaction.findMany({
         where: whereClause,
         include: {
           customer: true,
           aiDecisions: {
+            where: { agentType: AIAgentType.RECOVERY_DECISION },
             orderBy: { createdAt: 'desc' },
-            take: 3,
+            take: 1,
           },
           recoveryAttempts: {
             orderBy: { createdAt: 'desc' },
@@ -174,22 +224,29 @@ export class DashboardRepository {
       }),
     ]);
 
-    return { total, transactions, page, limit, totalPages: Math.ceil(total / limit) };
+    return {
+      total,
+      items,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   /**
-   * Retrieves full transaction lifecycle by ID.
+   * Retrieves single transaction by ID with full lifecycle context.
    */
-  async getTransactionLifecycle(merchantId: string, transactionId: string) {
+  async getTransactionDetail(merchantId: string, id: string) {
     const transaction = await this.db.transaction.findFirst({
-      where: { id: transactionId, merchantId },
+      where: { id, merchantId },
       include: {
         customer: true,
+        merchant: true,
         aiDecisions: {
           orderBy: { createdAt: 'asc' },
         },
         recoveryAttempts: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: { attemptNumber: 'asc' },
         },
         auditLogs: {
           orderBy: { createdAt: 'asc' },
@@ -199,11 +256,15 @@ export class DashboardRepository {
 
     if (!transaction) return null;
 
-    // Aggregate customer historical stats
+    // Customer historical stats
     const [customerTotal, customerSuccess, customerFailed] = await Promise.all([
       this.db.transaction.count({ where: { customerId: transaction.customerId } }),
-      this.db.transaction.count({ where: { customerId: transaction.customerId, status: TransactionStatus.SUCCESS } }),
-      this.db.transaction.count({ where: { customerId: transaction.customerId, status: TransactionStatus.FAILED } }),
+      this.db.transaction.count({
+        where: { customerId: transaction.customerId, status: TransactionStatus.SUCCESS },
+      }),
+      this.db.transaction.count({
+        where: { customerId: transaction.customerId, status: TransactionStatus.FAILED },
+      }),
     ]);
 
     return {
@@ -220,14 +281,32 @@ export class DashboardRepository {
   /**
    * Retrieves paginated recovery attempts.
    */
-  async getRecoveries(merchantId: string, params: RecoveryFilterParams) {
-    const { page = 1, limit = 25, status, actionType, search } = params;
+  async getRecoveries(merchantId: string, params: RecoveryFilterParams & { needsAttention?: boolean }) {
+    const { page = 1, limit = 25, status, actionType, search, needsAttention } = params;
     const skip = (page - 1) * limit;
 
     const whereClause: any = { merchantId };
 
     if (status) whereClause.status = status;
     if (actionType) whereClause.actionType = actionType;
+
+    if (needsAttention) {
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+      whereClause.OR = [
+        {
+          AND: [
+            { status: RecoveryStatus.PENDING },
+            { createdAt: { lte: thirtyMinutesAgo } },
+          ],
+        },
+        {
+          transaction: {
+            recoveryStatus: TransactionRecoveryStatus.REQUIRES_REVIEW,
+          },
+        },
+      ];
+    }
+
     if (search) {
       whereClause.OR = [
         { id: { contains: search, mode: 'insensitive' } },
@@ -344,7 +423,16 @@ export class DashboardRepository {
   /**
    * Retrieves paginated audit logs.
    */
-  async getAuditLogs(merchantId: string, params: { page?: number; limit?: number; entityType?: string; action?: string; transactionId?: string }) {
+  async getAuditLogs(
+    merchantId: string,
+    params: {
+      page?: number;
+      limit?: number;
+      entityType?: string;
+      action?: string;
+      transactionId?: string;
+    }
+  ) {
     const { page = 1, limit = 50, entityType, action, transactionId } = params;
     const skip = (page - 1) * limit;
 
@@ -372,20 +460,33 @@ export class DashboardRepository {
   }
 
   /**
-   * Retrieves Razorpay webhook status summary.
+   * Retrieves Razorpay webhook status summary with health stats.
    */
   async getRazorpayStatusSummary() {
-    const [totalWebhooks, lastWebhook] = await Promise.all([
+    const [totalWebhooks, processedCount, failedCount, lastWebhook] = await Promise.all([
       this.db.razorpayWebhookEvent.count(),
+      this.db.razorpayWebhookEvent.count({
+        where: { status: WebhookProcessingStatus.PROCESSED },
+      }),
+      this.db.razorpayWebhookEvent.count({
+        where: { status: WebhookProcessingStatus.FAILED },
+      }),
       this.db.razorpayWebhookEvent.findFirst({
         orderBy: { createdAt: 'desc' },
       }),
     ]);
 
+    const successRate =
+      totalWebhooks > 0 ? Number(((processedCount / totalWebhooks) * 100).toFixed(2)) : 100;
+
     return {
       totalWebhooks,
+      processedCount,
+      failedCount,
+      successRate,
       lastWebhookAt: lastWebhook?.createdAt ? lastWebhook.createdAt.toISOString() : null,
       lastEventType: lastWebhook?.eventType || null,
+      lastStatus: lastWebhook?.status || null,
     };
   }
 }

@@ -10,16 +10,16 @@ import {
   PauseCircle,
   Ban,
 } from 'lucide-react';
-import { RecoveryDecision, RecoveryStatus, RiskLevel } from '../../types';
+import { RecoveryDecision, RecoveryStatus, RiskLevel, PaymentStatus, TransactionRecoveryStatus } from '../../types';
 
 interface StatusBadgeProps {
-  type: 'transaction' | 'decision' | 'recovery' | 'risk';
-  value: string;
+  type: 'transaction' | 'decision' | 'recovery' | 'payment' | 'recoveryState' | 'execution' | 'risk';
+  value?: string | null;
   className?: string;
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, value, className = '' }) => {
-  const normalized = value?.toUpperCase();
+export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, value = '', className = '' }) => {
+  const normalized = (value || '').toUpperCase();
 
   // Transaction Status
   if (type === 'transaction') {
@@ -39,12 +39,96 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, value, className
         </span>
       );
     }
+    if (normalized === 'REFUNDED') {
+      return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 ${className}`}>
+          <RotateCw className="w-3.5 h-3.5" />
+          Refunded
+        </span>
+      );
+    }
     return (
       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 ${className}`}>
         <Clock className="w-3.5 h-3.5" />
         Pending
       </span>
     );
+  }
+
+  // Payment Status
+  if (type === 'payment') {
+    switch (normalized as PaymentStatus) {
+      case 'CAPTURED':
+        return (
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 ${className}`}>
+            <CheckCircle2 className="w-3 h-3" />
+            CAPTURED
+          </span>
+        );
+      case 'AUTHORIZED':
+        return (
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 ${className}`}>
+            <Clock className="w-3 h-3" />
+            AUTHORIZED
+          </span>
+        );
+      case 'UNPAID':
+        return (
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20 ${className}`}>
+            <Clock className="w-3 h-3" />
+            UNPAID
+          </span>
+        );
+      case 'FAILED':
+      default:
+        return (
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20 ${className}`}>
+            <XCircle className="w-3 h-3" />
+            FAILED
+          </span>
+        );
+    }
+  }
+
+  // Recovery State (Financial Outcome)
+  if (type === 'recoveryState') {
+    switch (normalized as TransactionRecoveryStatus) {
+      case 'RECOVERED':
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 ${className}`}>
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            RECOVERED
+          </span>
+        );
+      case 'IN_PROGRESS':
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-300 border border-blue-500/20 ${className}`}>
+            <RotateCw className="w-3.5 h-3.5 animate-spin" />
+            IN PROGRESS
+          </span>
+        );
+      case 'REQUIRES_REVIEW':
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20 ${className}`}>
+            <AlertTriangle className="w-3.5 h-3.5" />
+            NEEDS REVIEW
+          </span>
+        );
+      case 'NOT_RECOVERED':
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20 ${className}`}>
+            <XCircle className="w-3.5 h-3.5" />
+            NOT RECOVERED
+          </span>
+        );
+      case 'NOT_STARTED':
+      default:
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700 ${className}`}>
+            NOT STARTED
+          </span>
+        );
+    }
   }
 
   // Recovery Decision
@@ -90,27 +174,20 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, value, className
   }
 
   // Recovery Execution Status
-  if (type === 'recovery') {
-    switch (normalized as RecoveryStatus | 'READY') {
+  if (type === 'recovery' || type === 'execution') {
+    switch (normalized as RecoveryStatus) {
       case 'SUCCESS':
         return (
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 ${className}`}>
             <CheckCircle2 className="w-3.5 h-3.5" />
-            Recovered
-          </span>
-        );
-      case 'EXECUTED':
-        return (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 ${className}`}>
-            <RotateCw className="w-3.5 h-3.5" />
             Executed
           </span>
         );
-      case 'PENDING':
+      case 'FAILED':
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 ${className}`}>
-            <Clock className="w-3.5 h-3.5" />
-            Pending
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20 ${className}`}>
+            <XCircle className="w-3.5 h-3.5" />
+            Failed
           </span>
         );
       case 'CANCELLED':
@@ -120,19 +197,19 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, value, className
             Cancelled
           </span>
         );
-      case 'FAILED':
+      case 'EXECUTING':
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20 ${className}`}>
-            <XCircle className="w-3.5 h-3.5" />
-            Attempt Failed
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-300 border border-blue-500/20 ${className}`}>
+            <RotateCw className="w-3.5 h-3.5 animate-spin" />
+            Executing
           </span>
         );
-      case 'READY':
+      case 'PENDING':
       default:
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 ${className}`}>
-            <AlertTriangle className="w-3.5 h-3.5" />
-            Ready for Recovery
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20 ${className}`}>
+            <Clock className="w-3.5 h-3.5" />
+            Pending
           </span>
         );
     }
@@ -143,25 +220,29 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ type, value, className
     switch (normalized as RiskLevel) {
       case 'LOW':
         return (
-          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 ${className}`}>
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 ${className}`}>
             Low Risk
           </span>
         );
-      case 'MEDIUM':
+      case 'HIGH':
         return (
-          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 ${className}`}>
-            Medium Risk
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20 ${className}`}>
+            High Risk
           </span>
         );
-      case 'HIGH':
+      case 'MEDIUM':
       default:
         return (
-          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20 ${className}`}>
-            High Risk
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 ${className}`}>
+            Medium Risk
           </span>
         );
     }
   }
 
-  return <span className={`px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-300 ${className}`}>{value}</span>;
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 ${className}`}>
+      {value}
+    </span>
+  );
 };

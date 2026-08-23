@@ -14,9 +14,19 @@ declare global {
 
 function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
+
   const pool = new pg.Pool({
     connectionString: connectionString || 'postgresql://postgres:postgres@localhost:5432/recoverai',
+    ssl: connectionString?.includes('neon.tech') ? { rejectUnauthorized: false } : undefined,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
   });
+
+  pool.on('error', (err) => {
+    console.warn('[Postgres Pool Warning]:', err.message);
+  });
+
   const adapter = new PrismaPg(pool);
   return new PrismaClient({
     adapter,

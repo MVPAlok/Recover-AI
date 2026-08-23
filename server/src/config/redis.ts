@@ -6,8 +6,15 @@ export const redisConfig = {
   host: process.env.REDIS_HOST || 'localhost',
   port: Number(process.env.REDIS_PORT) || 6379,
   password: process.env.REDIS_PASSWORD || undefined,
-  maxRetriesPerRequest: null, // Required by BullMQ
+  maxRetriesPerRequest: null,
   enableReadyCheck: false,
+  lazyConnect: true,
+  retryStrategy: (times: number) => {
+    if (process.env.ENABLE_REDIS !== 'true' || times > 2) {
+      return null; // Stop retrying immediately if Redis is disabled or failed twice
+    }
+    return Math.min(times * 500, 2000);
+  },
 };
 
 let redisConnection: Redis | undefined;
@@ -20,16 +27,21 @@ export function getRedisConnection(): Redis {
         maxRetriesPerRequest: null,
         enableReadyCheck: false,
         lazyConnect: true,
+        retryStrategy: (times: number) => {
+          if (process.env.ENABLE_REDIS !== 'true' || times > 2) {
+            return null;
+          }
+          return Math.min(times * 500, 2000);
+        },
       });
     } else {
-      redisConnection = new Redis({
-        ...redisConfig,
-        lazyConnect: true,
-      });
+      redisConnection = new Redis(redisConfig);
     }
 
     redisConnection.on('error', (err) => {
-      logger.warn(`[Redis] Connection warning/error: ${err.message}`);
+      if (process.env.ENABLE_REDIS === 'true') {
+        logger.warn(`[Redis] Connection warning: ${err.message}`);
+      }
     });
 
     redisConnection.on('connect', () => {

@@ -26,7 +26,15 @@ Supported Recovery Actions:
 - WAIT: Transient situation requiring delay before retry window or observing customer state.
 - STOP: Hard limit reached (retries >= 3, expired instrument, repeated insufficient funds, low probability < 20%).
 
-Note: Your recommendation is ADVISORY. Authoritative hard business safety rules will validate and may override your recommendation.`;
+Note: Your recommendation is ADVISORY. Authoritative hard business safety rules will validate and may override your recommendation.
+
+You must output ONLY a valid JSON object matching the following structure exactly (all keys required):
+{
+  "recommendedAction": "RETRY", // Choose from: RETRY, REMIND, ESCALATE, WAIT, STOP
+  "confidence": 0.95, // Number between 0.0 and 1.0
+  "reasoning": "Clear explanation justifying the recovery strategy", // Minimum 10 chars
+  "supportingFactors": ["Factor 1", "Factor 2"] // Array of strings
+}`;
 
       const userPrompt = `Analyze the following failed payment case:
 

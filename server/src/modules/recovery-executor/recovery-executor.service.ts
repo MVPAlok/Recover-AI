@@ -13,6 +13,7 @@ import { RemindExecutor } from './executors/remind.executor.js';
 import { EscalateExecutor } from './executors/escalate.executor.js';
 import { WaitExecutor } from './executors/wait.executor.js';
 import { StopExecutor } from './executors/stop.executor.js';
+import { DecisionService } from '../recovery-decision/decision.service.js';
 import {
   BatchExecutionSummary,
   ProviderExecutionResult,
@@ -88,12 +89,40 @@ export class RecoveryExecutorService {
         : 0) + 1;
 
     // 3. Pre-execution guardrails and validation
-    const validation = ExecutionValidator.validateExecution({
+    let validation = ExecutionValidator.validateExecution({
       transaction: tx,
       merchant: tx.merchant,
       decision,
       executionMode: mode,
     });
+
+    // Auto-refresh stale decisions so interactive merchant recovery execution succeeds seamlessly
+    if (!validation.isValid && validation.outcomeCode === 'STALE_DECISION_BLOCKED') {
+      logger.info(
+        `[RecoveryExecutor] Phase 5 decision is stale for transaction ${transactionId}. Auto-refreshing fresh decision...`
+      );
+      try {
+        const decisionService = new DecisionService();
+        await decisionService.evaluateTransaction(transactionId, true, false);
+
+        // Re-fetch transaction and refreshed decision
+        const refreshedTx = await this.repository.getTransactionWithDetails(transactionId);
+        if (refreshedTx) {
+          decision =
+            refreshedTx.aiDecisions.find((d) => d.agentType === AIAgentType.RECOVERY_DECISION) || null;
+          validation = ExecutionValidator.validateExecution({
+            transaction: refreshedTx,
+            merchant: refreshedTx.merchant,
+            decision,
+            executionMode: mode,
+          });
+        }
+      } catch (refreshErr: any) {
+        logger.warn(
+          `[RecoveryExecutor] Failed to auto-refresh decision for ${transactionId}: ${refreshErr.message}`
+        );
+      }
+    }
 
     if (!validation.isValid) {
       logger.warn(

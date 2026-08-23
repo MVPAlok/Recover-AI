@@ -13,7 +13,7 @@ import {
   AlertCircle,
   FileText,
 } from 'lucide-react';
-import { fetchTransactionDetail, executeRecoveryAttempt } from '../services/api';
+import { fetchTransactionDetail, executeRecoveryAttempt, triggerDecision, triggerDiagnosis } from '../services/api';
 import { TransactionDetail } from '../types';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { formatINR } from '../components/ui/MetricCard';
@@ -23,12 +23,13 @@ import { ErrorBanner } from '../components/ui/ErrorBanner';
 
 export const TransactionDetailPage: React.FC = () => {
   const { transactionId } = useParams<{ transactionId: string }>();
+  const navigate = useNavigate();
   const [transaction, setTransaction] = useState<TransactionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [executing, setExecuting] = useState(false);
+  const [reEvaluating, setReEvaluating] = useState(false);
   const [executionMessage, setExecutionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   const loadDetail = async () => {
     if (!transactionId) return;
@@ -38,7 +39,7 @@ export const TransactionDetailPage: React.FC = () => {
       const data = await fetchTransactionDetail(transactionId);
       setTransaction(data);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Transaction not found';
+      const msg = err instanceof Error ? err.message : 'Failed to load transaction details';
       setError(msg);
     } finally {
       setLoading(false);
@@ -49,20 +50,47 @@ export const TransactionDetailPage: React.FC = () => {
     loadDetail();
   }, [transactionId]);
 
+  const handleReevaluate = async () => {
+    if (!transaction) return;
+    try {
+      setReEvaluating(true);
+      setExecutionMessage(null);
+      await triggerDiagnosis(transaction.id);
+      await triggerDecision(transaction.id);
+      setExecutionMessage({
+        type: 'success',
+        text: 'AI Diagnosis & Recovery Policy re-evaluated with fresh timestamps!',
+      });
+      await loadDetail();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'AI Re-evaluation failed';
+      setExecutionMessage({ type: 'error', text: msg });
+    } finally {
+      setReEvaluating(false);
+    }
+  };
+
   const handleExecuteRecovery = async () => {
     if (!transaction) return;
     try {
       setExecuting(true);
       setExecutionMessage(null);
-      await executeRecoveryAttempt(transaction.id, transaction.decision?.id);
-      setExecutionMessage({
-        type: 'success',
-        text: 'Recovery execution dispatched successfully via Razorpay Test Mode!',
-      });
-      // Reload details after 1s
+      const res = await executeRecoveryAttempt(transaction.id);
+      if (res && (res.status === 'CANCELLED' || res.status === 'FAILED')) {
+        setExecutionMessage({
+          type: 'error',
+          text: `Recovery Execution Blocked: ${res.reason || 'Guardrail policy restriction'}`,
+        });
+      } else {
+        setExecutionMessage({
+          type: 'success',
+          text: `Recovery execution dispatched successfully via Razorpay Test Mode (${res?.status || 'PENDING'})!`,
+        });
+      }
+      // Reload details after 500ms
       setTimeout(() => {
         loadDetail();
-      }, 1000);
+      }, 500);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Recovery execution failed';
       setExecutionMessage({ type: 'error', text: msg });
@@ -120,9 +148,18 @@ export const TransactionDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Recovery Action Button */}
+        {/* Recovery Action Buttons */}
         {transaction.status === 'FAILED' && (
           <div className="flex items-center gap-3">
+            <button
+              disabled={reEvaluating || executing}
+              onClick={handleReevaluate}
+              className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600 disabled:opacity-50 disabled:pointer-events-none transition-all"
+            >
+              <RotateCw className={`w-3.5 h-3.5 text-indigo-400 ${reEvaluating ? 'animate-spin' : ''}`} />
+              {reEvaluating ? 'Analyzing...' : 'Re-Evaluate AI Policy'}
+            </button>
+
             <button
               disabled={executing || transaction.retryCount >= 3}
               onClick={handleExecuteRecovery}

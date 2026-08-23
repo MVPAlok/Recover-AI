@@ -110,9 +110,28 @@ export async function fetchTransactionDetail(id: string): Promise<TransactionDet
 }
 
 export async function executeRecoveryAttempt(transactionId: string, decisionId?: string, executionMode?: string) {
-  return request(`/api/recovery-executor/${transactionId}/execute`, {
+  return request<any>(`/api/recovery-executor/${transactionId}/execute`, {
     method: 'POST',
     body: JSON.stringify({ decisionId, executionMode }),
+  });
+}
+
+export async function triggerDecision(transactionId: string, includeLLMAdvisory = false) {
+  return request<any>(`/api/recovery-decision/${transactionId}/decide`, {
+    method: 'POST',
+    body: JSON.stringify({ includeLLMAdvisory }),
+  });
+}
+
+export async function triggerDiagnosis(transactionId: string) {
+  return request<any>(`/api/diagnosis/${transactionId}/analyze`, {
+    method: 'POST',
+  });
+}
+
+export async function triggerDetection(transactionId: string) {
+  return request<any>(`/api/detection/${transactionId}/analyze`, {
+    method: 'POST',
   });
 }
 

@@ -16,6 +16,23 @@ interface TimelineProps {
   transaction: TransactionDetail;
 }
 
+function parseReasoning(raw?: string | null): string {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed.reasoning) return parsed.reasoning;
+      if (parsed.diagnosisCode) {
+        return `Root cause: ${parsed.diagnosisCode} (${parsed.failureCategory || 'INFRASTRUCTURE'}). ${parsed.recommendedNextStep ? `Recommended: ${parsed.recommendedNextStep}` : ''}`;
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return raw;
+}
+
 export const Timeline: React.FC<TimelineProps> = ({ transaction }) => {
   const latestAttempt = transaction.recoveryAttempts[transaction.recoveryAttempts.length - 1];
   const isRecovered = latestAttempt?.status === 'SUCCESS';
@@ -37,7 +54,7 @@ export const Timeline: React.FC<TimelineProps> = ({ transaction }) => {
       subtitle: transaction.detection
         ? `Recovery Likelihood: ${transaction.detection.recoveryProbability}% (${transaction.detection.riskLevel} Risk)`
         : 'Detection pending evaluation',
-      description: transaction.detection?.reasoning || 'Evaluating customer payment patterns and failure codes.',
+      description: parseReasoning(transaction.detection?.reasoning) || 'Evaluating customer payment patterns and failure codes.',
       status: transaction.detection ? 'COMPLETED' : 'PENDING',
       timestamp: transaction.detection?.createdAt,
       icon: Activity,
@@ -49,7 +66,7 @@ export const Timeline: React.FC<TimelineProps> = ({ transaction }) => {
       subtitle: transaction.diagnosis
         ? `Diagnosis: ${transaction.diagnosis.diagnosisCode || 'Temporary Infrastructure Failure'}`
         : 'Diagnosis agent pending',
-      description: transaction.diagnosis?.reasoning || transaction.failureReason || 'Analyzing root cause signals.',
+      description: parseReasoning(transaction.diagnosis?.reasoning) || transaction.failureReason || 'Analyzing root cause signals.',
       status: transaction.diagnosis ? 'COMPLETED' : 'PENDING',
       timestamp: transaction.diagnosis?.createdAt,
       icon: Brain,
@@ -61,7 +78,7 @@ export const Timeline: React.FC<TimelineProps> = ({ transaction }) => {
       subtitle: transaction.decision
         ? `Policy Approved: ${transaction.decision.decision} (Confidence: ${transaction.decision.confidenceScore}%)`
         : 'Decision pending formulation',
-      description: transaction.decision?.reasoning || 'Evaluating safety guardrails and retry limits.',
+      description: parseReasoning(transaction.decision?.reasoning) || 'Evaluating safety guardrails and retry limits.',
       status: transaction.decision ? 'COMPLETED' : 'PENDING',
       timestamp: transaction.decision?.createdAt,
       icon: ShieldCheck,

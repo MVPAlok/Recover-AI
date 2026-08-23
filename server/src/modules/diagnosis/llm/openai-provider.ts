@@ -44,7 +44,8 @@ export class OpenAIProvider implements LLMProvider {
     const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      const response = await fetch(`${this.baseURL}/chat/completions`, {
+      const normalizedBaseURL = this.baseURL.replace(/\/+$/, '');
+      const response = await fetch(`${normalizedBaseURL}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

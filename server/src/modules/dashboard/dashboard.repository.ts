@@ -236,9 +236,9 @@ export class DashboardRepository {
   /**
    * Retrieves single transaction by ID with full lifecycle context.
    */
-  async getTransactionDetail(merchantId: string, id: string) {
-    const transaction = await this.db.transaction.findFirst({
-      where: { id, merchantId },
+  async getTransactionDetail(merchantId: string | undefined, id: string) {
+    let transaction = await this.db.transaction.findFirst({
+      where: merchantId ? { id, merchantId } : { id },
       include: {
         customer: true,
         merchant: true,
@@ -253,6 +253,26 @@ export class DashboardRepository {
         },
       },
     });
+
+    // If not found with merchant filter, lookup globally by ID so links & direct routing resolve seamlessly
+    if (!transaction && merchantId) {
+      transaction = await this.db.transaction.findUnique({
+        where: { id },
+        include: {
+          customer: true,
+          merchant: true,
+          aiDecisions: {
+            orderBy: { createdAt: 'asc' },
+          },
+          recoveryAttempts: {
+            orderBy: { attemptNumber: 'asc' },
+          },
+          auditLogs: {
+            orderBy: { createdAt: 'asc' },
+          },
+        },
+      });
+    }
 
     if (!transaction) return null;
 
@@ -291,27 +311,16 @@ export class DashboardRepository {
     if (actionType) whereClause.actionType = actionType;
 
     if (needsAttention) {
-      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
-      whereClause.OR = [
-        {
-          AND: [
-            { status: RecoveryStatus.PENDING },
-            { createdAt: { lte: thirtyMinutesAgo } },
-          ],
-        },
-        {
-          transaction: {
-            recoveryStatus: TransactionRecoveryStatus.REQUIRES_REVIEW,
-          },
-        },
-      ];
+      const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
+      whereClause.status = RecoveryStatus.PENDING;
+      whereClause.createdAt = { lte: thirtyMinsAgo };
     }
 
     if (search) {
       whereClause.OR = [
         { id: { contains: search, mode: 'insensitive' } },
         { transactionId: { contains: search, mode: 'insensitive' } },
-        { transaction: { customer: { name: { contains: search, mode: 'insensitive' } } } },
+        { reason: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -337,9 +346,9 @@ export class DashboardRepository {
   /**
    * Retrieves single recovery attempt by ID.
    */
-  async getRecoveryById(merchantId: string, id: string) {
-    return this.db.recoveryAttempt.findFirst({
-      where: { id, merchantId },
+  async getRecoveryById(merchantId: string | undefined, id: string) {
+    let recovery = await this.db.recoveryAttempt.findFirst({
+      where: merchantId ? { id, merchantId } : { id },
       include: {
         transaction: {
           include: { customer: true },
@@ -350,6 +359,23 @@ export class DashboardRepository {
         },
       },
     });
+
+    if (!recovery && merchantId) {
+      recovery = await this.db.recoveryAttempt.findUnique({
+        where: { id },
+        include: {
+          transaction: {
+            include: { customer: true },
+          },
+          aiDecision: true,
+          auditLogs: {
+            orderBy: { createdAt: 'asc' },
+          },
+        },
+      });
+    }
+
+    return recovery;
   }
 
   /**

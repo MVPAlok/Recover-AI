@@ -34,7 +34,8 @@ function parseReasoning(raw?: string | null): string {
 }
 
 export const Timeline: React.FC<TimelineProps> = ({ transaction }) => {
-  const latestAttempt = transaction.recoveryAttempts[transaction.recoveryAttempts.length - 1];
+  const attempts = transaction.recoveryAttempts || [];
+  const latestAttempt = attempts[attempts.length - 1];
   const isRecovered = latestAttempt?.status === 'SUCCESS';
   const isFailed = latestAttempt?.status === 'FAILED';
 

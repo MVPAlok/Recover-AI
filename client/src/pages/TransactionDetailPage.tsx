@@ -226,7 +226,7 @@ export const TransactionDetailPage: React.FC = () => {
                 </p>
               </div>
               <span className="text-[11px] font-semibold px-2.5 py-1 rounded bg-slate-800 text-slate-300">
-                {transaction.recoveryAttempts.length} Execution Attempts
+                {(transaction.recoveryAttempts || []).length} Execution Attempts
               </span>
             </div>
 
@@ -266,11 +266,11 @@ export const TransactionDetailPage: React.FC = () => {
               Immutable Audit Trail
             </h3>
 
-            {transaction.auditLogs.length === 0 ? (
+            {(!transaction.auditLogs || transaction.auditLogs.length === 0) ? (
               <p className="text-xs text-slate-500">No audit events recorded for this transaction yet.</p>
             ) : (
               <div className="space-y-3 font-mono text-xs">
-                {transaction.auditLogs.map((log) => (
+                {(transaction.auditLogs || []).map((log) => (
                   <div key={log.id} className="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 flex items-start justify-between gap-3">
                     <div>
                       <div className="text-slate-200 font-semibold">{log.action}</div>
@@ -427,21 +427,21 @@ export const TransactionDetailPage: React.FC = () => {
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-slate-400">Name:</span>
-                <span className="font-semibold text-slate-200">{transaction.customer.name}</span>
+                <span className="font-semibold text-slate-200">{transaction.customer?.name || 'Customer'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Email:</span>
-                <span className="font-semibold text-slate-200">{transaction.customer.email}</span>
+                <span className="font-semibold text-slate-200">{transaction.customer?.email || 'N/A'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Success Rate:</span>
                 <span className="font-semibold text-emerald-400">
-                  {transaction.customer.successRate?.toFixed(1) || '100'}%
+                  {transaction.customer?.successRate !== undefined ? transaction.customer.successRate.toFixed(1) : '100'}%
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Total Transactions:</span>
-                <span className="font-semibold text-slate-200">{transaction.customer.totalTransactions}</span>
+                <span className="font-semibold text-slate-200">{transaction.customer?.totalTransactions ?? 0}</span>
               </div>
             </div>
           </div>

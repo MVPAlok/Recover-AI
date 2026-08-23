@@ -172,8 +172,7 @@ export class DashboardService {
     merchantId: string | undefined,
     transactionId: string
   ): Promise<TransactionDetail> {
-    const targetMerchantId = await this.resolveMerchantId(merchantId);
-    const data = await this.repo.getTransactionDetail(targetMerchantId, transactionId);
+    const data = await this.repo.getTransactionDetail(merchantId, transactionId);
 
     if (!data) {
       throw new Error(`Transaction ${transactionId} not found`);
@@ -337,8 +336,7 @@ export class DashboardService {
    * Retrieves single recovery attempt details by ID.
    */
   async getRecoveryDetail(merchantId: string | undefined, recoveryId: string) {
-    const targetMerchantId = await this.resolveMerchantId(merchantId);
-    const recovery = await this.repo.getRecoveryById(targetMerchantId, recoveryId);
+    const recovery = await this.repo.getRecoveryById(merchantId, recoveryId);
 
     if (!recovery) {
       throw new Error(`Recovery attempt ${recoveryId} not found`);

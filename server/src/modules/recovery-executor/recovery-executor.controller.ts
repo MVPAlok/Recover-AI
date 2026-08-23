@@ -46,6 +46,54 @@ export class RecoveryExecutorController {
   };
 
   /**
+   * POST /api/recovery-executor/:transactionId/enqueue
+   * Asynchronously enqueues an approved Phase 5 decision into the Redis queue.
+   */
+  enqueueTransaction = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { transactionId } = req.params;
+      const { decisionId, executionMode } = req.body || {};
+
+      if (!transactionId) {
+        res.status(400).json({
+          success: false,
+          error: 'Transaction ID is required in URL parameter',
+        });
+        return;
+      }
+
+      // Import dynamically to avoid top-level load errors if redis is offline
+      const { enqueueRecoveryJob } = await import('../queue/recovery.queue.js');
+
+      const jobId = await enqueueRecoveryJob({
+        transactionId,
+        decisionId,
+        executionMode,
+        enqueuedAt: new Date().toISOString(),
+      });
+
+      res.status(202).json({
+        success: true,
+        message: 'Recovery execution job enqueued successfully',
+        data: {
+          jobId,
+          transactionId,
+          status: 'QUEUED',
+        },
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(`[RecoveryExecutorController] Error in enqueueTransaction: ${message}`);
+      res.status(500).json({
+        success: false,
+        error: message,
+      });
+    }
+  };
+
+
+
+  /**
    * GET /api/recovery-executor/:transactionId
    * Inspects the latest execution/attempt result. Side-effect free.
    */

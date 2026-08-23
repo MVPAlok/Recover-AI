@@ -33,6 +33,8 @@
     "test:razorpay": "tsx server/src/integrations/razorpay/__tests__/razorpay-client.test.ts",
     "test:webhooks": "tsx server/src/modules/webhooks/__tests__/webhook.test.ts",
     "test:provider-selection": "tsx server/src/modules/recovery-executor/__tests__/provider-selection.test.ts",
+    "test:queue": "tsx server/src/modules/queue/__tests__/queue.test.ts",
+    "queue:eval": "tsx server/src/modules/queue/evaluation-runner.ts",
     "razorpay:eval": "tsx server/src/modules/razorpay/evaluation-runner.ts"
   },
   "devDependencies": {

@@ -27,7 +27,8 @@ import { ErrorBanner } from '../components/ui/ErrorBanner';
 import { formatINR } from '../components/ui/MetricCard';
 
 export const TransactionDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id, transactionId } = useParams<{ id?: string; transactionId?: string }>();
+  const effectiveId = transactionId || id;
   const navigate = useNavigate();
   const [transaction, setTransaction] = useState<TransactionDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,11 +41,15 @@ export const TransactionDetailPage: React.FC = () => {
   } | null>(null);
 
   const loadDetail = async () => {
-    if (!id) return;
+    if (!effectiveId) {
+      setLoading(false);
+      setError('Transaction ID not specified');
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchTransactionDetail(id);
+      const data = await fetchTransactionDetail(effectiveId);
       setTransaction(data);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to load transaction details';
@@ -56,14 +61,14 @@ export const TransactionDetailPage: React.FC = () => {
 
   useEffect(() => {
     loadDetail();
-  }, [id]);
+  }, [effectiveId]);
 
   const handleExecuteRecovery = async () => {
-    if (!id || !transaction) return;
+    if (!effectiveId || !transaction) return;
     try {
       setExecuting(true);
       setExecutionMessage(null);
-      const res = await executeRecoveryAttempt(id, transaction.decision?.id);
+      const res = await executeRecoveryAttempt(effectiveId, transaction.decision?.id);
 
       if (res?.status === 'SUCCESS') {
         setExecutionMessage({
@@ -86,12 +91,12 @@ export const TransactionDetailPage: React.FC = () => {
   };
 
   const handleReevaluate = async () => {
-    if (!id) return;
+    if (!effectiveId) return;
     try {
       setReEvaluating(true);
       setExecutionMessage(null);
-      await triggerDiagnosis(id);
-      await triggerDecision(id, true);
+      await triggerDiagnosis(effectiveId);
+      await triggerDecision(effectiveId, true);
       setExecutionMessage({
         type: 'success',
         text: 'Google Gemini AI diagnosis & recovery policy re-evaluated in real time!',

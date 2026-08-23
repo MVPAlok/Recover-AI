@@ -10,44 +10,53 @@ export const redisConfig = {
   enableReadyCheck: false,
   lazyConnect: true,
   retryStrategy: (times: number) => {
-    if (process.env.ENABLE_REDIS !== 'true' || times > 2) {
-      return null; // Stop retrying immediately if Redis is disabled or failed twice
+    if (process.env.ENABLE_REDIS !== 'true' || times > 5) {
+      return null;
     }
     return Math.min(times * 500, 2000);
   },
 };
 
+export function createRedisConnection(): Redis {
+  const redisUrl = config?.REDIS_URL || process.env.REDIS_URL;
+  let client: Redis;
+
+  if (redisUrl) {
+    client = new Redis(redisUrl, {
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      lazyConnect: true,
+      tls: redisUrl.startsWith('rediss://') ? { rejectUnauthorized: false } : undefined,
+      retryStrategy: (times: number) => {
+        if (process.env.ENABLE_REDIS !== 'true' || times > 5) {
+          return null;
+        }
+        return Math.min(times * 500, 2000);
+      },
+    });
+  } else {
+    client = new Redis(redisConfig);
+  }
+
+  client.on('error', (err) => {
+    if (process.env.ENABLE_REDIS === 'true') {
+      logger.warn(`[Redis] Connection warning: ${err.message}`);
+    }
+  });
+
+  client.on('connect', () => {
+    logger.info('[Redis] Connected successfully.');
+  });
+
+  return client;
+}
+
 let redisConnection: Redis | undefined;
 
 export function getRedisConnection(): Redis {
   if (!redisConnection) {
-    const redisUrl = config?.REDIS_URL || process.env.REDIS_URL;
-    if (redisUrl) {
-      redisConnection = new Redis(redisUrl, {
-        maxRetriesPerRequest: null,
-        enableReadyCheck: false,
-        lazyConnect: true,
-        retryStrategy: (times: number) => {
-          if (process.env.ENABLE_REDIS !== 'true' || times > 2) {
-            return null;
-          }
-          return Math.min(times * 500, 2000);
-        },
-      });
-    } else {
-      redisConnection = new Redis(redisConfig);
-    }
-
-    redisConnection.on('error', (err) => {
-      if (process.env.ENABLE_REDIS === 'true') {
-        logger.warn(`[Redis] Connection warning: ${err.message}`);
-      }
-    });
-
-    redisConnection.on('connect', () => {
-      logger.info('[Redis] Connected successfully.');
-    });
+    redisConnection = createRedisConnection();
   }
-
   return redisConnection;
 }
+

@@ -1,5 +1,5 @@
 import { Queue, Worker, Job } from 'bullmq';
-import { getRedisConnection } from '../../config/redis.js';
+import { createRedisConnection } from '../../config/redis.js';
 import { RecoveryExecutorService } from '../recovery-executor/recovery-executor.service.js';
 import { RecoveryExecutionJobData, RecoveryJobResult } from './queue.types.js';
 import { logger } from '../../utils/logger.js';
@@ -15,7 +15,7 @@ let executorService: RecoveryExecutorService | undefined;
  */
 export function getRecoveryQueue(): Queue<RecoveryExecutionJobData, RecoveryJobResult> {
   if (!recoveryQueue) {
-    const connection = getRedisConnection();
+    const connection = createRedisConnection();
     recoveryQueue = new Queue<RecoveryExecutionJobData, RecoveryJobResult>(RECOVERY_QUEUE_NAME, {
       connection,
       defaultJobOptions: {
@@ -37,7 +37,7 @@ export function getRecoveryQueue(): Queue<RecoveryExecutionJobData, RecoveryJobR
  */
 export function startRecoveryWorker(): Worker<RecoveryExecutionJobData, RecoveryJobResult> {
   if (!recoveryWorker) {
-    const connection = getRedisConnection();
+    const connection = createRedisConnection();
     executorService = executorService || new RecoveryExecutorService();
 
     recoveryWorker = new Worker<RecoveryExecutionJobData, RecoveryJobResult>(

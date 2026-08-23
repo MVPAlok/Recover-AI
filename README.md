@@ -71,7 +71,7 @@ RecoverAI separates UI rendering, API servers, database ORM, and future intellig
 | **Recovery Decision Engine** | Formulates optimal recovery policies (`RETRY`, `REMIND`, `ESCALATE`, `WAIT`, `STOP`) with authoritative safety guardrails ([Phase 5 Docs](docs/architecture/phase-5-recovery-decision-engine.md)) | ✅ Completed |
 | **Recovery Executor** | Controlled execution workflow for recovery policies in simulation mode with strict guardrails, idempotency & audit logging ([Phase 6 Docs](docs/architecture/phase-6-recovery-executor.md)) | ✅ Completed |
 | **Razorpay Test Integration** | Real gateway test mode orders, customer reminder links, HMAC raw-body webhook verification & idempotency ([Phase 7 Docs](docs/architecture/phase-7-razorpay-test-integration.md)) | ✅ Completed |
-| **Redis Queues** | Asynchronous job processing for recovery actions with BullMQ & exponential backoff ([Phase 8 Docs](docs/architecture/phase-8-redis-queues.md)) | ✅ Completed |
+| **Merchant Dashboard** | Production-quality React fintech UI, transaction explorer, lifecycle timeline, AI explainability & analytics ([Phase 8 Docs](docs/architecture/phase-8-merchant-dashboard.md)) | ✅ Completed |
 
 ---
 

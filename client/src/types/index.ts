@@ -1,5 +1,8 @@
+export * from './dashboard';
+
 export interface ApiHealthResponse {
-  success: boolean;
-  service: string;
   status: string;
+  timestamp: string;
+  uptime: number;
+  environment: string;
 }

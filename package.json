@@ -35,6 +35,7 @@
     "test:provider-selection": "tsx server/src/modules/recovery-executor/__tests__/provider-selection.test.ts",
     "test:queue": "tsx server/src/modules/queue/__tests__/queue.test.ts",
     "queue:eval": "tsx server/src/modules/queue/evaluation-runner.ts",
+    "test:dashboard": "tsx server/src/modules/dashboard/__tests__/dashboard.test.ts",
     "razorpay:eval": "tsx server/src/modules/razorpay/evaluation-runner.ts"
   },
   "devDependencies": {

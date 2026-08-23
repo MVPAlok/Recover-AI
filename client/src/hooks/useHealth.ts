@@ -9,11 +9,11 @@ export function useHealth() {
 
   useEffect(() => {
     checkBackendHealth()
-      .then((res) => {
+      .then((res: ApiHealthResponse) => {
         setData(res);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch((err: Error) => {
         setError(err.message || 'Error connecting to server');
         setLoading(false);
       });

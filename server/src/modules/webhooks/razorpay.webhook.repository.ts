@@ -22,8 +22,24 @@ export class RazorpayWebhookRepository {
     eventId: string;
     eventType: string;
     payload: Record<string, unknown>;
+    signatureVerified?: boolean;
+    merchantId?: string;
+    transactionId?: string;
+    razorpayOrderId?: string;
+    razorpayPaymentId?: string;
+    correlationId?: string;
   }): Promise<{ event: RazorpayWebhookEvent; isDuplicate: boolean }> {
-    const { eventId, eventType, payload } = params;
+    const {
+      eventId,
+      eventType,
+      payload,
+      signatureVerified = true,
+      merchantId,
+      transactionId,
+      razorpayOrderId,
+      razorpayPaymentId,
+      correlationId,
+    } = params;
 
     // Check if event already exists
     const existing = await this.prisma.razorpayWebhookEvent.findUnique({
@@ -42,7 +58,12 @@ export class RazorpayWebhookRepository {
           eventType,
           payload: payload as unknown as Prisma.InputJsonValue,
           status: WebhookProcessingStatus.RECEIVED,
-          processed: false,
+          signatureVerified,
+          merchantId,
+          transactionId,
+          razorpayOrderId,
+          razorpayPaymentId,
+          correlationId,
         },
       });
       return { event: created, isDuplicate: false };
@@ -58,13 +79,17 @@ export class RazorpayWebhookRepository {
   }
 
   /**
-   * Updates status and processing result of a webhook event.
+   * Updates status, correlation, and processing result of a webhook event.
    */
   async updateWebhookEventStatus(
     eventId: string,
     params: {
       status: WebhookProcessingStatus;
-      processed?: boolean;
+      merchantId?: string;
+      transactionId?: string;
+      razorpayOrderId?: string;
+      razorpayPaymentId?: string;
+      correlationId?: string;
       errorMessage?: string;
     }
   ): Promise<void> {
@@ -72,7 +97,11 @@ export class RazorpayWebhookRepository {
       where: { eventId },
       data: {
         status: params.status,
-        processed: params.processed ?? (params.status === WebhookProcessingStatus.PROCESSED),
+        merchantId: params.merchantId,
+        transactionId: params.transactionId,
+        razorpayOrderId: params.razorpayOrderId,
+        razorpayPaymentId: params.razorpayPaymentId,
+        correlationId: params.correlationId,
         errorMessage: params.errorMessage || null,
         processedAt: params.status === WebhookProcessingStatus.PROCESSED ? new Date() : undefined,
       },
@@ -135,6 +164,98 @@ export class RazorpayWebhookRepository {
   }
 
   /**
+   * Records a reconciled payment in the Payment ledger (authoritative revenue source of truth).
+   */
+  async recordReconciledPayment(params: {
+    merchantId: string;
+    transactionId: string;
+    recoveryAttemptId?: string;
+    razorpayOrderId?: string;
+    razorpayPaymentId?: string;
+    amount: number;
+    currency?: string;
+    capturedAmount: number;
+    correlationId?: string;
+  }) {
+    const {
+      merchantId,
+      transactionId,
+      recoveryAttemptId,
+      razorpayOrderId,
+      razorpayPaymentId,
+      amount,
+      currency = 'INR',
+      capturedAmount,
+      correlationId,
+    } = params;
+
+    return this.prisma.payment.create({
+      data: {
+        merchantId,
+        transactionId,
+        recoveryAttemptId,
+        razorpayOrderId,
+        razorpayPaymentId,
+        amount: new Prisma.Decimal(amount),
+        currency,
+        status: PaymentStatus.CAPTURED,
+        capturedAmount: new Prisma.Decimal(capturedAmount),
+        verified: true,
+        reconciled: true,
+        correlationId,
+      },
+    });
+  }
+
+  /**
+   * Records a failed payment in the Payment ledger.
+   */
+  async recordFailedPayment(params: {
+    merchantId: string;
+    transactionId: string;
+    recoveryAttemptId?: string;
+    razorpayOrderId?: string;
+    razorpayPaymentId?: string;
+    amount: number;
+    currency?: string;
+    failureCode?: string;
+    failureReason?: string;
+    correlationId?: string;
+  }) {
+    const {
+      merchantId,
+      transactionId,
+      recoveryAttemptId,
+      razorpayOrderId,
+      razorpayPaymentId,
+      amount,
+      currency = 'INR',
+      failureCode,
+      failureReason,
+      correlationId,
+    } = params;
+
+    return this.prisma.payment.create({
+      data: {
+        merchantId,
+        transactionId,
+        recoveryAttemptId,
+        razorpayOrderId,
+        razorpayPaymentId,
+        amount: new Prisma.Decimal(amount),
+        currency,
+        status: PaymentStatus.FAILED,
+        capturedAmount: new Prisma.Decimal(0),
+        verified: true,
+        reconciled: false,
+        failureCode,
+        failureReason,
+        correlationId,
+      },
+    });
+  }
+
+  /**
    * Updates transaction's financial and recovery state.
    */
   async updateTransactionFinancialState(
@@ -145,6 +266,7 @@ export class RazorpayWebhookRepository {
       recoveryStatus?: TransactionRecoveryStatus;
       razorpayOrderId?: string;
       razorpayPaymentId?: string;
+      correlationId?: string;
     }
   ) {
     return this.prisma.transaction.update({
@@ -155,6 +277,7 @@ export class RazorpayWebhookRepository {
         ...(params.recoveryStatus ? { recoveryStatus: params.recoveryStatus } : {}),
         ...(params.razorpayOrderId ? { razorpayOrderId: params.razorpayOrderId } : {}),
         ...(params.razorpayPaymentId ? { razorpayPaymentId: params.razorpayPaymentId } : {}),
+        ...(params.correlationId ? { correlationId: params.correlationId } : {}),
       },
     });
   }
@@ -168,6 +291,9 @@ export class RazorpayWebhookRepository {
       status: RecoveryStatus;
       reason?: string;
       amountRecovered?: number;
+      completedAt?: Date;
+      failedAt?: Date;
+      cancelledAt?: Date;
     }
   ) {
     return this.prisma.recoveryAttempt.update({
@@ -180,12 +306,15 @@ export class RazorpayWebhookRepository {
             ? new Prisma.Decimal(params.amountRecovered)
             : undefined,
         executedAt: new Date(),
+        completedAt: params.completedAt,
+        failedAt: params.failedAt,
+        cancelledAt: params.cancelledAt,
       },
     });
   }
 
   /**
-   * Records an audit log for gateway webhook event lifecycle.
+   * Records an immutable audit log for gateway webhook event lifecycle.
    */
   async createAuditLog(params: {
     merchantId: string;
@@ -193,6 +322,9 @@ export class RazorpayWebhookRepository {
     recoveryAttemptId?: string;
     action: string;
     actor?: string;
+    actorType?: string;
+    requestId?: string;
+    correlationId?: string;
     details?: Record<string, unknown>;
   }) {
     return this.prisma.auditLog.create({
@@ -204,6 +336,9 @@ export class RazorpayWebhookRepository {
         entityId: params.transactionId || 'WEBHOOK_EVENT',
         action: params.action,
         actor: params.actor || 'RAZORPAY_GATEWAY',
+        actorType: params.actorType || 'WEBHOOK',
+        requestId: params.requestId,
+        correlationId: params.correlationId,
         details: (params.details || {}) as unknown as Prisma.InputJsonValue,
       },
     });

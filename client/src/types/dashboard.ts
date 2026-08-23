@@ -1,5 +1,12 @@
 export type TransactionStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'CANCELLED';
-export type PaymentStatus = 'UNPAID' | 'AUTHORIZED' | 'CAPTURED' | 'FAILED' | 'REFUNDED' | 'UNKNOWN';
+export type PaymentStatus =
+  | 'UNKNOWN'
+  | 'CREATED'
+  | 'PENDING'
+  | 'AUTHORIZED'
+  | 'CAPTURED'
+  | 'FAILED'
+  | 'REFUNDED';
 export type TransactionRecoveryStatus =
   | 'NOT_STARTED'
   | 'IN_PROGRESS'
@@ -19,6 +26,22 @@ export type WebhookProcessingStatus =
   | 'DEAD_LETTER';
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 export type UserRole = 'OWNER' | 'ADMIN' | 'ANALYST' | 'SUPPORT' | 'VIEWER';
+
+export interface PaymentItem {
+  id: string;
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  capturedAmount?: number | null;
+  verified: boolean;
+  reconciled: boolean;
+  razorpayOrderId?: string | null;
+  razorpayPaymentId?: string | null;
+  failureCode?: string | null;
+  failureReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface Merchant {
   id: string;
@@ -149,6 +172,7 @@ export interface TransactionDetail {
     executedAt?: string | null;
     createdAt: string;
   }>;
+  payments?: PaymentItem[];
   auditLogs: Array<{
     id: string;
     action: string;

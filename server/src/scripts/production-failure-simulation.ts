@@ -64,7 +64,7 @@ async function runProductionFailureSimulation() {
       amount: testAmount,
       currency: 'INR',
       status: TransactionStatus.FAILED,
-      paymentStatus: PaymentStatus.UNPAID,
+      paymentStatus: PaymentStatus.FAILED,
       recoveryStatus: TransactionRecoveryStatus.NOT_STARTED,
       failureCode: 'BANK_TIMEOUT',
       failureReason: 'Customer bank gateway timed out during OTP authentication',
@@ -186,8 +186,18 @@ async function runProductionFailureSimulation() {
     if (updatedTx?.paymentStatus !== PaymentStatus.CAPTURED) {
       throw new Error(`Expected paymentStatus CAPTURED, got ${updatedTx?.paymentStatus}`);
     }
-    if (updatedTx?.status !== TransactionStatus.SUCCESS) {
-      throw new Error(`Expected status SUCCESS, got ${updatedTx?.status}`);
+    // Assert Payment Ledger Entry Created and Reconciled
+    const paymentRecord = await prisma.payment.findFirst({
+      where: { transactionId: testTxId, reconciled: true },
+    });
+    if (!paymentRecord) {
+      throw new Error('Payment ledger record not created/reconciled upon payment.captured');
+    }
+    if (paymentRecord.verified !== true || paymentRecord.status !== PaymentStatus.CAPTURED) {
+      throw new Error(`Expected Payment status CAPTURED & verified true, got ${paymentRecord.status}`);
+    }
+    if (paymentRecord.capturedAmount?.toNumber() !== testAmount) {
+      throw new Error(`Expected capturedAmount ${testAmount}, got ${paymentRecord.capturedAmount}`);
     }
   });
 
@@ -228,7 +238,50 @@ async function runProductionFailureSimulation() {
   });
 
   // -------------------------------------------------------------
-  // Test 4: Gemini LLM Fallback Transparency
+  // Test 4: Recovery Attempt Idempotency (@@unique([transactionId, attemptNumber]))
+  // -------------------------------------------------------------
+  await assertTest('Database Enforces Attempt Idempotency (Prevents Duplicate Attempt Numbers)', async () => {
+    let threwDuplicateError = false;
+    try {
+      await prisma.recoveryAttempt.create({
+        data: {
+          merchantId: merchant.id,
+          transactionId: testTxId,
+          attemptNumber: 1, // Same attempt number as already exists
+          actionType: RecoveryDecision.RETRY,
+          status: RecoveryStatus.PENDING,
+          amountRecovered: 0,
+        },
+      });
+    } catch (err: any) {
+      if (err.code === 'P2002' || err.message?.includes('Unique constraint')) {
+        threwDuplicateError = true;
+      }
+    }
+
+    if (!threwDuplicateError) {
+      throw new Error('Database allowed duplicate (transactionId, attemptNumber) tuple!');
+    }
+  });
+
+  // -------------------------------------------------------------
+  // Test 5: RBAC User and MerchantMembership Association
+  // -------------------------------------------------------------
+  await assertTest('Multi-Tenant RBAC Users and MerchantMemberships are Operational', async () => {
+    const memberships = await prisma.merchantMembership.findMany({
+      where: { merchantId: merchant.id },
+      include: { user: true },
+    });
+    if (memberships.length === 0) {
+      throw new Error('No merchant memberships found for active merchant');
+    }
+    if (!memberships[0].user?.email) {
+      throw new Error('MerchantMembership user relationship missing');
+    }
+  });
+
+  // -------------------------------------------------------------
+  // Test 6: Gemini LLM Fallback Transparency
   // -------------------------------------------------------------
   await assertTest('AI Diagnosis Gracefully Engages Deterministic Fallback on LLM Timeout', async () => {
     // Instantiate agent with unreachable dummy provider to simulate timeout/outage
@@ -288,7 +341,7 @@ async function runProductionFailureSimulation() {
   });
 
   // -------------------------------------------------------------
-  // Test 5: Infrastructure Readiness & Observability
+  // Test 7: Infrastructure Readiness & Observability
   // -------------------------------------------------------------
   await assertTest('System Readiness (/ready) and Metrics (/metrics) Respond Accurately', async () => {
     const readiness = await healthService.getReadinessStatus();

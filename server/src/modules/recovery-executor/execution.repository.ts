@@ -91,6 +91,8 @@ export class ExecutionRepository {
     amountRecovered?: number;
     scheduledAt?: Date | null;
     executedAt?: Date | null;
+    idempotencyKey?: string | null;
+    correlationId?: string | null;
   }) {
     // Financial Integrity: Execution itself does not recover revenue (amount = 0 until payment webhook confirms capture)
     const [attempt] = await prisma.$transaction([
@@ -106,6 +108,9 @@ export class ExecutionRepository {
           amountRecovered: 0, // Zero until verified payment capture
           scheduledAt: data.scheduledAt || null,
           executedAt: data.executedAt || null,
+          startedAt: new Date(),
+          idempotencyKey: data.idempotencyKey || `rec_att_${data.transactionId}_${data.attemptNumber}_${Date.now()}`,
+          correlationId: data.correlationId || null,
         },
       }),
       prisma.transaction.update({

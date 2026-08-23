@@ -12,6 +12,8 @@ import {
   Sparkles,
   Cpu,
   Layers,
+  ShieldCheck,
+  CreditCard,
 } from 'lucide-react';
 import {
   fetchTransactionDetail,
@@ -262,6 +264,64 @@ export const TransactionDetailPage: React.FC = () => {
                 <span className="text-slate-200">{transaction.razorpayPaymentId || 'None (Pending)'}</span>
               </div>
             </div>
+          </div>
+
+          {/* Card: Payment & Settlement Evidence Ledger (Authoritative Source of Financial Truth) */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-emerald-400" />
+                Payment & Settlement Evidence Ledger
+              </h3>
+              <span className="text-[11px] font-semibold px-2.5 py-1 rounded bg-emerald-950/70 border border-emerald-800/60 text-emerald-400 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Evidence-Based Source of Truth
+              </span>
+            </div>
+
+            {(!transaction.payments || transaction.payments.length === 0) ? (
+              <div className="p-4 rounded-lg bg-slate-950/60 border border-slate-800/80 text-xs text-slate-400">
+                No external payment attempts recorded in ledger yet. Revenue recognition awaits verified gateway capture.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {transaction.payments.map((p) => (
+                  <div
+                    key={p.id}
+                    className="p-3.5 rounded-lg bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-white text-sm">{formatINR(p.amount)}</span>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            p.status === 'CAPTURED'
+                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/80'
+                              : p.status === 'PENDING' || p.status === 'CREATED'
+                              ? 'bg-cyan-950 text-cyan-300 border border-cyan-800/80'
+                              : 'bg-rose-950 text-rose-300 border border-rose-800/80'
+                          }`}
+                        >
+                          {p.status}
+                        </span>
+                        {p.reconciled && (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-950 text-indigo-300 border border-indigo-800/60">
+                            Reconciled ✓
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-slate-400 text-[11px] font-mono">
+                        Order: <span className="text-slate-300">{p.razorpayOrderId || 'N/A'}</span> | Payment: <span className="text-slate-300">{p.razorpayPaymentId || 'Pending'}</span>
+                      </div>
+                    </div>
+                    <div className="text-right sm:text-right shrink-0 text-[11px] text-slate-500">
+                      <div>Captured: <span className="text-emerald-400 font-semibold">{formatINR(p.capturedAmount ?? 0)}</span></div>
+                      <div>{new Date(p.createdAt).toLocaleTimeString()}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Card: Audit Trail Logs */}

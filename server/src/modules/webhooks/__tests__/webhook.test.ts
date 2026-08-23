@@ -137,6 +137,12 @@ export async function runWebhookTests(): Promise<void> {
       }
       return null;
     },
+    async recordReconciledPayment(params: any) {
+      return { id: `payment_${Date.now()}`, ...params, verified: true, reconciled: true };
+    },
+    async recordFailedPayment(params: any) {
+      return { id: `payment_${Date.now()}`, ...params, verified: true, reconciled: false };
+    },
     async updateTransactionRazorpayIds(txId: string, ids: any) {},
     async updateRecoveryAttemptStatus(attemptId: string, params: any) {
       updatedAttempts.set(attemptId, params);

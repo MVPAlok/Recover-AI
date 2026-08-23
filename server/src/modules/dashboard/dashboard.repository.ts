@@ -65,16 +65,15 @@ export class DashboardRepository {
         where: { merchantId, status: TransactionStatus.FAILED },
         _sum: { amount: true },
       }),
-      // Strict Financial Source of Truth: Sum amountRecovered from confirmed SUCCESS recovery attempts
-      this.db.recoveryAttempt.aggregate({
+      // Strict Financial Source of Truth: Sum capturedAmount from verified and reconciled payments
+      this.db.payment.aggregate({
         where: {
           merchantId,
-          status: RecoveryStatus.SUCCESS,
-          transaction: {
-            recoveryStatus: TransactionRecoveryStatus.RECOVERED,
-          },
+          verified: true,
+          reconciled: true,
+          status: PaymentStatus.CAPTURED,
         },
-        _sum: { amountRecovered: true },
+        _sum: { capturedAmount: true },
       }),
       this.db.aIDecision.count({
         where: {
@@ -90,7 +89,7 @@ export class DashboardRepository {
     ]);
 
     const revenueAtRisk = Number(failedTransactionsSum._sum.amount || 0);
-    const recoveredRevenue = Number(recoveredSumResult._sum.amountRecovered || 0);
+    const recoveredRevenue = Number(recoveredSumResult._sum.capturedAmount || 0);
     const recoveryRate =
       revenueAtRisk > 0 ? Number(((recoveredRevenue / revenueAtRisk) * 100).toFixed(2)) : 0;
     const executionSuccessRate =
@@ -242,6 +241,9 @@ export class DashboardRepository {
       include: {
         customer: true,
         merchant: true,
+        payments: {
+          orderBy: { createdAt: 'desc' },
+        },
         aiDecisions: {
           orderBy: { createdAt: 'asc' },
         },
@@ -261,6 +263,9 @@ export class DashboardRepository {
         include: {
           customer: true,
           merchant: true,
+          payments: {
+            orderBy: { createdAt: 'desc' },
+          },
           aiDecisions: {
             orderBy: { createdAt: 'asc' },
           },
@@ -420,11 +425,13 @@ export class DashboardRepository {
 
     const totalDecisions = decisions.reduce((sum, d) => sum + d._count.id, 0);
 
-    return decisions.map((d) => ({
-      decision: d.decision,
-      count: d._count.id,
-      percentage: totalDecisions > 0 ? (d._count.id / totalDecisions) * 100 : 0,
-    }));
+    return decisions
+      .filter((d) => d.decision !== null)
+      .map((d) => ({
+        decision: d.decision as RecoveryDecision,
+        count: d._count.id,
+        percentage: totalDecisions > 0 ? (d._count.id / totalDecisions) * 100 : 0,
+      }));
   }
 
   /**

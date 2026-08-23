@@ -43,14 +43,27 @@ export class RazorpayWebhookService {
     // 1. Validate signature & payload
     const validation = this.validator.validate(params);
 
+    const payment = validation.payload.payload?.payment?.entity;
+    const order = validation.payload.payload?.order?.entity;
+    const orderId = payment?.order_id || order?.id;
+    const paymentId = payment?.id;
+    const transactionId =
+      payment?.notes?.transactionId ||
+      order?.notes?.transactionId ||
+      (validation.payload.payload as any)?.payment_link?.entity?.notes?.transactionId;
+
     // 2. Persist event for idempotency
     const { event, isDuplicate } = await this.repository.recordWebhookEvent({
       eventId: validation.eventId,
       eventType: validation.eventType,
       payload: validation.payload as unknown as Record<string, unknown>,
+      signatureVerified: true,
+      transactionId,
+      razorpayOrderId: orderId,
+      razorpayPaymentId: paymentId,
     });
 
-    if (isDuplicate && event.processed) {
+    if (isDuplicate && event.status === WebhookProcessingStatus.PROCESSED) {
       logger.info(
         `[RazorpayWebhookService] Duplicate webhook event ${validation.eventId} already processed. Ignoring.`
       );
@@ -71,20 +84,25 @@ export class RazorpayWebhookService {
       if (result.status === 'PROCESSED' || result.status === 'DUPLICATE_IGNORED') {
         await this.repository.updateWebhookEventStatus(validation.eventId, {
           status: WebhookProcessingStatus.PROCESSED,
-          processed: true,
+          merchantId: (result as any).merchantId,
+          transactionId: result.transactionId || transactionId,
+          razorpayOrderId: orderId,
+          razorpayPaymentId: paymentId,
         });
         metricsService.recordWebhook({ status: 'PROCESSED' });
       } else if (result.status === 'AMOUNT_MISMATCH') {
         await this.repository.updateWebhookEventStatus(validation.eventId, {
           status: WebhookProcessingStatus.FAILED,
-          processed: false,
+          transactionId: result.transactionId || transactionId,
+          razorpayOrderId: orderId,
+          razorpayPaymentId: paymentId,
           errorMessage: result.message,
         });
         metricsService.recordWebhook({ status: 'AMOUNT_MISMATCH' });
       } else {
         await this.repository.updateWebhookEventStatus(validation.eventId, {
           status: WebhookProcessingStatus.PROCESSED,
-          processed: true,
+          transactionId: result.transactionId || transactionId,
         });
         metricsService.recordWebhook({ status: 'PROCESSED' });
       }
@@ -94,7 +112,6 @@ export class RazorpayWebhookService {
       const errorMessage = err instanceof Error ? err.message : String(err);
       await this.repository.updateWebhookEventStatus(validation.eventId, {
         status: WebhookProcessingStatus.FAILED,
-        processed: false,
         errorMessage,
       });
       metricsService.recordWebhook({ status: 'FAILED' });
@@ -159,8 +176,8 @@ export class RazorpayWebhookService {
             status: TransactionStatus.FAILED,
             paymentStatus: PaymentStatus.AUTHORIZED,
             recoveryStatus: TransactionRecoveryStatus.REQUIRES_REVIEW,
-            razorpayOrderId: orderId,
             razorpayPaymentId: paymentId,
+            razorpayOrderId: orderId,
           });
 
           await this.repository.createAuditLog({
@@ -169,11 +186,12 @@ export class RazorpayWebhookService {
             recoveryAttemptId: latestAttempt?.id,
             action: 'FINANCIAL_AMOUNT_MISMATCH_BLOCKED',
             details: {
+              expectedAmount: expectedAmountRupees,
+              capturedAmount: capturedAmountRupees,
+              razorpayPaymentId: paymentId,
+              razorpayOrderId: orderId,
               eventId,
-              capturedAmountRupees,
-              expectedAmountRupees,
-              paymentId,
-              orderId,
+              guardrail: 'STRICT_RECONCILIATION_GATEWAY_CHECK',
             },
           });
 
@@ -182,38 +200,55 @@ export class RazorpayWebhookService {
             eventId,
             eventType,
             transactionId: tx.id,
-            message: `Amount mismatch: captured ₹${capturedAmountRupees} does not match expected ₹${expectedAmountRupees}. Recovery blocked and flagged for review.`,
+            message: `Amount mismatch: expected ₹${expectedAmountRupees}, received ₹${capturedAmountRupees}. Flagged as REQUIRES_REVIEW.`,
           };
         }
 
-        // Valid Capture Confirmed: Reconcile financial state atomically
+        // Exact amount verified! Record authoritative Payment ledger entry
+        await this.repository.recordReconciledPayment({
+          merchantId: tx.merchantId,
+          transactionId: tx.id,
+          recoveryAttemptId: latestAttempt?.id,
+          razorpayOrderId: orderId,
+          razorpayPaymentId: paymentId,
+          amount: expectedAmountRupees,
+          capturedAmount: capturedAmountRupees,
+          currency: tx.currency,
+        });
+
+        // Update Transaction to SUCCESS + CAPTURED + RECOVERED
         await this.repository.updateTransactionFinancialState(tx.id, {
           status: TransactionStatus.SUCCESS,
           paymentStatus: PaymentStatus.CAPTURED,
           recoveryStatus: TransactionRecoveryStatus.RECOVERED,
-          razorpayOrderId: orderId,
           razorpayPaymentId: paymentId,
+          razorpayOrderId: orderId,
         });
 
+        // Update RecoveryAttempt to SUCCESS
         if (latestAttempt) {
           await this.repository.updateRecoveryAttemptStatus(latestAttempt.id, {
             status: RecoveryStatus.SUCCESS,
-            reason: `Payment recovery confirmed via Razorpay Test Webhook (${paymentId}).`,
+            reason: `Payment captured & verified via Razorpay Test Mode (${paymentId}).`,
             amountRecovered: capturedAmountRupees,
+            completedAt: new Date(),
           });
         }
 
+        // Record Audit Trail
         await this.repository.createAuditLog({
           merchantId: tx.merchantId,
           transactionId: tx.id,
           recoveryAttemptId: latestAttempt?.id,
           action: 'PAYMENT_RECOVERY_CONFIRMED',
           details: {
-            eventId,
-            paymentId,
-            orderId,
             amountRecovered: capturedAmountRupees,
-            method: payment?.method,
+            paymentStatus: 'CAPTURED',
+            recoveryStatus: 'RECOVERED',
+            razorpayPaymentId: paymentId,
+            razorpayOrderId: orderId,
+            paymentMethod: payment?.method || 'card',
+            eventId,
           },
         });
 
@@ -222,27 +257,41 @@ export class RazorpayWebhookService {
           eventId,
           eventType,
           transactionId: tx.id,
-          message: `Payment recovery successfully confirmed for transaction ${tx.id} (amount: ₹${capturedAmountRupees}).`,
+          message: `Payment ₹${capturedAmountRupees} captured & reconciled successfully.`,
         };
       }
 
       case 'payment.failed': {
-        const errorReason =
-          payment?.error_description || payment?.error_reason || 'Payment failed on Razorpay gateway';
+        const failureReason =
+          payment?.error_description || payment?.error_reason || 'Payment failed at gateway';
+        const failureCode = payment?.error_code || 'GATEWAY_DECLINE';
 
-        await this.repository.updateTransactionFinancialState(tx.id, {
-          status: TransactionStatus.FAILED,
-          paymentStatus: PaymentStatus.FAILED,
-          recoveryStatus: TransactionRecoveryStatus.NOT_RECOVERED,
+        // Record failed attempt in Payment ledger
+        await this.repository.recordFailedPayment({
+          merchantId: tx.merchantId,
+          transactionId: tx.id,
+          recoveryAttemptId: latestAttempt?.id,
           razorpayOrderId: orderId,
           razorpayPaymentId: paymentId,
+          amount: tx.amount.toNumber(),
+          currency: tx.currency,
+          failureCode,
+          failureReason,
+        });
+
+        await this.repository.updateTransactionFinancialState(tx.id, {
+          paymentStatus: PaymentStatus.FAILED,
+          recoveryStatus: TransactionRecoveryStatus.NOT_RECOVERED,
+          razorpayPaymentId: paymentId,
+          razorpayOrderId: orderId,
         });
 
         if (latestAttempt) {
           await this.repository.updateRecoveryAttemptStatus(latestAttempt.id, {
             status: RecoveryStatus.FAILED,
-            reason: `Razorpay Test payment failed: ${errorReason}`,
+            reason: `Payment failed at gateway: ${failureReason}`,
             amountRecovered: 0,
+            failedAt: new Date(),
           });
         }
 
@@ -252,11 +301,11 @@ export class RazorpayWebhookService {
           recoveryAttemptId: latestAttempt?.id,
           action: 'PAYMENT_RECOVERY_FAILED',
           details: {
+            failureCode,
+            failureReason,
+            razorpayPaymentId: paymentId,
+            razorpayOrderId: orderId,
             eventId,
-            paymentId,
-            orderId,
-            errorCode: payment?.error_code,
-            errorDescription: errorReason,
           },
         });
 
@@ -265,43 +314,17 @@ export class RazorpayWebhookService {
           eventId,
           eventType,
           transactionId: tx.id,
-          message: `Recorded payment failure event for transaction ${tx.id}.`,
-        };
-      }
-
-      case 'payment.authorized': {
-        await this.repository.updateTransactionFinancialState(tx.id, {
-          paymentStatus: PaymentStatus.AUTHORIZED,
-          recoveryStatus: TransactionRecoveryStatus.IN_PROGRESS,
-          razorpayOrderId: orderId,
-          razorpayPaymentId: paymentId,
-        });
-
-        await this.repository.createAuditLog({
-          merchantId: tx.merchantId,
-          transactionId: tx.id,
-          recoveryAttemptId: latestAttempt?.id,
-          action: 'PAYMENT_AUTHORIZED_PENDING_CAPTURE',
-          details: { eventId, paymentId, orderId },
-        });
-
-        return {
-          status: 'PROCESSED',
-          eventId,
-          eventType,
-          transactionId: tx.id,
-          message: `Payment authorized for transaction ${tx.id}. Awaiting capture confirmation.`,
+          message: `Payment failed processed: ${failureReason}`,
         };
       }
 
       default: {
-        logger.info(`[RazorpayWebhookService] Unhandled event type: ${eventType}`);
         return {
           status: 'UNHANDLED_EVENT',
           eventId,
           eventType,
           transactionId: tx.id,
-          message: `Webhook event '${eventType}' acknowledged with no action.`,
+          message: `Unhandled event type ${eventType}`,
         };
       }
     }

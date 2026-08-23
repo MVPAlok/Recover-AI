@@ -1,4 +1,4 @@
-import { AIAgentType, AIDecision, Transaction } from '@prisma/client';
+import { AIAgentType, AIDecision, RecoveryDecision, Transaction } from '@prisma/client';
 import { logger } from '../../utils/logger.js';
 import { ExecutionRepository } from './execution.repository.js';
 import { ExecutionPolicy } from './execution-policy.js';
@@ -144,12 +144,13 @@ export class RecoveryExecutorService {
 
       // If decision exists, create a CANCELLED attempt to record the block
       if (decision) {
+        const actionType = decision.decision || RecoveryDecision.RETRY;
         const blockedAttempt = await this.repository.createRecoveryAttempt({
           merchantId: tx.merchantId,
           transactionId: tx.id,
           aiDecisionId: decision.id,
           attemptNumber: nextAttemptNumber,
-          actionType: decision.decision,
+          actionType,
           status: 'CANCELLED',
           reason: validation.reason,
           amountRecovered: 0,
@@ -159,7 +160,7 @@ export class RecoveryExecutorService {
           recoveryAttemptId: blockedAttempt.id,
           transactionId: tx.id,
           aiDecisionId: decision.id,
-          action: decision.decision,
+          action: actionType,
           reason: validation.reason,
           outcomeCode: validation.outcomeCode,
           attemptNumber: nextAttemptNumber,
@@ -171,6 +172,7 @@ export class RecoveryExecutorService {
 
     // At this point, decision is guaranteed to be non-null and valid
     const targetDecision = decision!;
+    const actionType = targetDecision.decision || RecoveryDecision.RETRY;
 
     // 4. Idempotency Check
     const idempotency = IdempotencyService.checkExistingAttempt(
@@ -191,7 +193,7 @@ export class RecoveryExecutorService {
       transactionId: tx.id,
       aiDecisionId: targetDecision.id,
       attemptNumber: nextAttemptNumber,
-      actionType: targetDecision.decision,
+      actionType,
       status: 'PENDING',
       reason: 'Execution initiated',
       amountRecovered: 0,

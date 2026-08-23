@@ -268,7 +268,7 @@ export class DashboardService {
       decision: decisionObj
         ? {
             id: decisionObj.id,
-            decision: decisionObj.decision,
+            decision: decisionObj.decision || RecoveryDecision.RETRY,
             recoveryProbability: Number(
               ((decisionObj.recoveryProbability || prob) * 100).toFixed(1)
             ),
@@ -278,7 +278,7 @@ export class DashboardService {
             createdAt: decisionObj.createdAt.toISOString(),
           }
         : null,
-      recoveryAttempts: tx.recoveryAttempts.map((att: any) => ({
+      recoveryAttempts: (tx.recoveryAttempts || []).map((att: any) => ({
         id: att.id,
         attemptNumber: att.attemptNumber,
         actionType: att.actionType,
@@ -289,7 +289,22 @@ export class DashboardService {
         executedAt: att.executedAt?.toISOString() || null,
         createdAt: att.createdAt.toISOString(),
       })),
-      auditLogs: tx.auditLogs.map((log: any) => ({
+      payments: (tx.payments || []).map((p: any) => ({
+        id: p.id,
+        amount: Number(p.amount),
+        currency: p.currency,
+        status: p.status,
+        capturedAmount: p.capturedAmount !== null && p.capturedAmount !== undefined ? Number(p.capturedAmount) : null,
+        verified: p.verified,
+        reconciled: p.reconciled,
+        razorpayOrderId: p.razorpayOrderId,
+        razorpayPaymentId: p.razorpayPaymentId,
+        failureCode: p.failureCode,
+        failureReason: p.failureReason,
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+      })),
+      auditLogs: (tx.auditLogs || []).map((log: any) => ({
         id: log.id,
         action: log.action,
         entityType: log.entityType,

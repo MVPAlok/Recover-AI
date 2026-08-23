@@ -16,6 +16,18 @@ enum UserRole {
   VIEWER
 }
 
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships MerchantMembership[]
+
+  @@map("users")
+}
+
 model Merchant {
   id        String   @id @default(uuid())
   name      String
@@ -24,13 +36,31 @@ model Merchant {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  memberships      MerchantMembership[]
   customers        Customer[]
   transactions     Transaction[]
+  payments         Payment[]
   aiDecisions      AIDecision[]
   recoveryAttempts RecoveryAttempt[]
   auditLogs        AuditLog[]
 
   @@map("merchants")
+}
+
+model MerchantMembership {
+  id         String   @id @default(uuid())
+  merchantId String
+  userId     String
+  role       UserRole @default(VIEWER)
+  createdAt  DateTime @default(now())
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([merchantId, userId])
+  @@index([merchantId])
+  @@index([userId])
+  @@map("merchant_memberships")
 }
 
 model Customer {
@@ -61,12 +91,13 @@ enum TransactionStatus {
 }
 
 enum PaymentStatus {
-  UNPAID
+  UNKNOWN
+  CREATED
+  PENDING
   AUTHORIZED
   CAPTURED
   FAILED
   REFUNDED
-  UNKNOWN
 }
 
 enum TransactionRecoveryStatus {
@@ -95,15 +126,18 @@ model Transaction {
   failureReason String?
 
   retryCount Int @default(0)
+  maxRetries Int @default(3)
 
   razorpayPaymentId String?
   razorpayOrderId   String?
+  correlationId     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   merchant         Merchant          @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   customer         Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  payments         Payment[]
   aiDecisions      AIDecision[]
   recoveryAttempts RecoveryAttempt[]
   auditLogs        AuditLog[]
@@ -115,6 +149,7 @@ model Transaction {
   @@index([recoveryStatus])
   @@index([razorpayOrderId])
   @@index([razorpayPaymentId])
+  @@index([correlationId])
   @@index([createdAt])
   @@map("transactions")
 }
@@ -139,10 +174,15 @@ model AIDecision {
   transactionId String
 
   agentType AIAgentType
-  decision  RecoveryDecision
+  decision  RecoveryDecision?
 
   recoveryProbability Float?
   confidenceScore     Float?
+
+  failureCategory String?
+  rootCause       String?
+  riskLevel       String?
+  riskFactors     Json?
 
   reasoning String?
 
@@ -150,6 +190,7 @@ model AIDecision {
   promptVersion String?
   isFallback    Boolean @default(false)
   latencyMs     Int?
+  correlationId String?
 
   createdAt DateTime @default(now())
 
@@ -160,6 +201,7 @@ model AIDecision {
   @@index([merchantId])
   @@index([transactionId])
   @@index([agentType])
+  @@index([correlationId])
   @@map("ai_decisions")
 }
 
@@ -177,7 +219,8 @@ model RecoveryAttempt {
   transactionId String
   aiDecisionId  String?
 
-  attemptNumber Int @default(1)
+  attemptNumber  Int     @default(1)
+  idempotencyKey String? @unique
 
   actionType RecoveryDecision
   status     RecoveryStatus   @default(PENDING)
@@ -188,6 +231,12 @@ model RecoveryAttempt {
 
   scheduledAt DateTime?
   executedAt  DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  failedAt    DateTime?
+  cancelledAt DateTime?
+
+  correlationId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -195,12 +244,56 @@ model RecoveryAttempt {
   merchant    Merchant    @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   aiDecision  AIDecision? @relation(fields: [aiDecisionId], references: [id], onDelete: SetNull)
+  payments    Payment[]
   auditLogs   AuditLog[]
 
+  @@unique([transactionId, attemptNumber])
   @@index([merchantId])
   @@index([transactionId])
   @@index([status])
+  @@index([correlationId])
   @@map("recovery_attempts")
+}
+
+model Payment {
+  id                String  @id @default(uuid())
+  merchantId        String
+  transactionId     String
+  recoveryAttemptId String?
+
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+
+  amount   Decimal @db.Decimal(12, 2)
+  currency String  @default("INR")
+
+  status         PaymentStatus @default(UNKNOWN)
+  capturedAmount Decimal?      @db.Decimal(12, 2)
+
+  verified   Boolean @default(false)
+  reconciled Boolean @default(false)
+
+  failureCode   String?
+  failureReason String?
+  idempotencyKey String? @unique
+  correlationId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  merchant        Merchant         @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  transaction     Transaction      @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  recoveryAttempt RecoveryAttempt? @relation(fields: [recoveryAttemptId], references: [id], onDelete: SetNull)
+
+  @@index([merchantId])
+  @@index([transactionId])
+  @@index([recoveryAttemptId])
+  @@index([razorpayOrderId])
+  @@index([razorpayPaymentId])
+  @@index([status])
+  @@index([reconciled])
+  @@index([correlationId])
+  @@map("payments")
 }
 
 model AuditLog {
@@ -213,8 +306,13 @@ model AuditLog {
   entityId   String
   action     String
 
-  actor   String?
-  details Json?
+  actor         String?
+  actorType     String?
+  requestId     String?
+  correlationId String?
+  ipAddress     String?
+  userAgent     String?
+  details       Json?
 
   createdAt DateTime @default(now())
 
@@ -224,6 +322,7 @@ model AuditLog {
 
   @@index([merchantId])
   @@index([transactionId])
+  @@index([correlationId])
   @@index([createdAt])
   @@map("audit_logs")
 }
@@ -239,20 +338,34 @@ enum WebhookProcessingStatus {
 }
 
 model RazorpayWebhookEvent {
-  id             String                  @id @default(uuid())
-  eventId        String                  @unique
-  eventType      String
-  payload        Json
-  status         WebhookProcessingStatus @default(RECEIVED)
-  processed      Boolean                 @default(false)
+  id                String                  @id @default(uuid())
+  eventId           String                  @unique
+  eventType         String
+  payload           Json
+  status            WebhookProcessingStatus @default(RECEIVED)
+  signatureVerified Boolean                 @default(false)
+
+  merchantId        String?
+  transactionId     String?
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+
   errorMessage   String?
   retryCount     Int                     @default(0)
   lastRetriedAt  DateTime?
   processedAt    DateTime?
-  createdAt      DateTime                @default(now())
+  correlationId  String?
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId])
   @@index([eventType])
   @@index([status])
+  @@index([transactionId])
+  @@index([razorpayOrderId])
+  @@index([razorpayPaymentId])
+  @@index([correlationId])
   @@index([createdAt])
   @@map("razorpay_webhook_events")
 }

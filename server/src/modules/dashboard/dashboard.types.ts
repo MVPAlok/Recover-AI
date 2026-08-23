@@ -125,6 +125,21 @@ export interface TransactionDetail {
     executedAt?: string | null;
     createdAt: string;
   }>;
+  payments?: Array<{
+    id: string;
+    amount: number;
+    currency: string;
+    status: PaymentStatus;
+    capturedAmount?: number | null;
+    verified: boolean;
+    reconciled: boolean;
+    razorpayOrderId?: string | null;
+    razorpayPaymentId?: string | null;
+    failureCode?: string | null;
+    failureReason?: string | null;
+    createdAt: string;
+    updatedAt: string;
+  }>;
   auditLogs: Array<{
     id: string;
     action: string;

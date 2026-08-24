@@ -1,8 +1,8 @@
-# Master Production Hardening — Walkthrough & Verification Report
+# Master Production Hardening & Phase 9 — Walkthrough & Verification Report
 
 ## Executive Summary
 
-The RecoverAI platform has been elevated to an institutional, production-grade architecture featuring an independent **`Payment` evidence ledger**, multi-tenant RBAC (`User` + `MerchantMembership`), webhook correlation tracking, strict attempt idempotency, cryptographic financial reconciliation, and a comprehensive **System Health & Observability** dashboard with real telemetry aggregation, while maintaining Razorpay strictly in **TEST MODE**.
+The RecoverAI platform has been elevated to an institutional, production-grade architecture featuring an independent **`Payment` evidence ledger**, multi-tenant RBAC (`User` + `MerchantMembership`), webhook correlation tracking, strict attempt idempotency, cryptographic financial reconciliation, a live **System Health & Observability** dashboard, and now a complete **Phase 9: Public Landing Page & Product Website** with clear routing separation, interactive lifecycle simulator, and zero fake data.
 
 ---
 
@@ -37,20 +37,35 @@ The RecoverAI platform has been elevated to an institutional, production-grade a
 
 ### Pillar 7: Real-Time System Health & Observability (`/api/system/health`)
 - Added real telemetry aggregation service [`system-health.service.ts`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/server/src/modules/system/system-health.service.ts) and controller [`system-health.controller.ts`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/server/src/modules/system/system-health.controller.ts).
-- Computes real operational metrics without hardcoding:
-  - **PostgreSQL**: Real `SELECT 1` latency measurement.
-  - **Redis Queue**: Real `PING` connection & latency measurement.
-  - **Google Gemini**: Telemetry over last 24 hours (`aiFallbackRate`, structured schema readiness, average latency).
-  - **Razorpay**: Sandbox isolation validation with strict `rzp_test_` prefix guardrail.
-  - **Webhook Worker**: Error rate (`webhookErrorRate`), total events, and `lastWebhookSecondsAgo`.
-  - **Recovery Worker**: BullMQ `getRecoveryQueue()` live depth (`queueDepth`) and `failedJobs`.
-- Embedded [`SystemHealthCard.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/components/ui/SystemHealthCard.tsx) in [`OverviewPage.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/pages/OverviewPage.tsx) and [`SettingsPage.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/pages/SettingsPage.tsx) with dynamic "Updated X seconds ago" counter and 20s auto-refresh interval.
+- Computes real operational metrics without hardcoding: PostgreSQL / Redis latency, Gemini fallback rate, Webhook error rate, and BullMQ queue depth.
+
+### Pillar 8: Phase 9 — Public Landing Page & Product Website
+- **Public Routing Group** under [`PublicLayout.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/layouts/PublicLayout.tsx):
+  - `/` $\rightarrow$ [`LandingPage.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/pages/public/LandingPage.tsx) (Hero, 4 Pillars, Problem section, 6-stage engine, Interactive lifecycle simulator, Differentiators table, Gemini fallback, Payment ledger, Security pillars, System health preview, Use cases, CTAs).
+  - `/features` $\rightarrow$ [`FeaturesPage.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/pages/public/FeaturesPage.tsx)
+  - `/how-it-works` $\rightarrow$ [`HowItWorksPage.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/pages/public/HowItWorksPage.tsx) (6 stages + Recovery Timelines Matrix).
+  - `/security` $\rightarrow$ [`SecurityPage.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/pages/public/SecurityPage.tsx) (Zero-trust architecture, HMAC timing-safe comparison, attempt idempotency locks).
+  - `/login` $\rightarrow$ [`LoginPage.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/pages/public/LoginPage.tsx)
+  - `/signup` $\rightarrow$ [`SignupPage.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/pages/public/SignupPage.tsx)
+  - `/onboarding` $\rightarrow$ [`OnboardingPage.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/pages/public/OnboardingPage.tsx) (4-step gateway connection wizard).
+- **Authenticated Routing Group** strictly preserved under [`DashboardLayout.tsx`](file:///c:/Users/sy753/OneDrive/Pictures/AIML/AI%20Recover/client/src/layouts/DashboardLayout.tsx):
+  - `/dashboard`, `/transactions`, `/transactions/:id`, `/recoveries`, `/analytics`, `/audit-log`, `/settings`.
 
 ---
 
-## 2. Visual Proof of System Health UI
+## 2. Visual Proof of Phase 9 Public Website
 
-![System Health Dashboard](/C:/Users/sy753/.gemini/antigravity-ide/brain/6461aa88-e876-4e82-9a7d-fd0cd9985b18/dashboard_health_refreshed_3_1787519230853.png)
+````carousel
+![Public Landing Page Hero](/C:/Users/sy753/.gemini/antigravity-ide/brain/6461aa88-e876-4e82-9a7d-fd0cd9985b18/landing_page_hero_1787590220620.png)
+<!-- slide -->
+![Interactive Lifecycle Simulator](/C:/Users/sy753/.gemini/antigravity-ide/brain/6461aa88-e876-4e82-9a7d-fd0cd9985b18/demo_scenario_1_1787590258469.png)
+<!-- slide -->
+![6-Stage Engine & Retention Table](/C:/Users/sy753/.gemini/antigravity-ide/brain/6461aa88-e876-4e82-9a7d-fd0cd9985b18/how_it_works_3_1787590337530.png)
+<!-- slide -->
+![Security & Governance Architecture](/C:/Users/sy753/.gemini/antigravity-ide/brain/6461aa88-e876-4e82-9a7d-fd0cd9985b18/security_page_1787590354310.png)
+<!-- slide -->
+![Merchant Dashboard Workspace](/C:/Users/sy753/.gemini/antigravity-ide/brain/6461aa88-e876-4e82-9a7d-fd0cd9985b18/dashboard_page_1787590392193.png)
+````
 
 ---
 

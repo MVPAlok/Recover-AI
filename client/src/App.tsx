@@ -1,6 +1,14 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { PublicLayout } from './layouts/PublicLayout';
 import { DashboardLayout } from './layouts/DashboardLayout';
+import { LandingPage } from './pages/public/LandingPage';
+import { FeaturesPage } from './pages/public/FeaturesPage';
+import { HowItWorksPage } from './pages/public/HowItWorksPage';
+import { SecurityPage } from './pages/public/SecurityPage';
+import { LoginPage } from './pages/public/LoginPage';
+import { SignupPage } from './pages/public/SignupPage';
+import { OnboardingPage } from './pages/public/OnboardingPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { TransactionsPage } from './pages/TransactionsPage';
 import { TransactionDetailPage } from './pages/TransactionDetailPage';
@@ -13,8 +21,19 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
+        {/* Public Routes */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/how-it-works" element={<HowItWorksPage />} />
+          <Route path="/security" element={<SecurityPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
+        </Route>
+
+        {/* Authenticated Merchant Dashboard Routes */}
         <Route element={<DashboardLayout />}>
-          <Route path="/" element={<OverviewPage />} />
           <Route path="/dashboard" element={<OverviewPage />} />
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/transactions/:transactionId" element={<TransactionDetailPage />} />
@@ -24,7 +43,9 @@ const App: React.FC = () => {
           <Route path="/audit-log" element={<AuditLogPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+        {/* Wildcard Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

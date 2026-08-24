@@ -8,20 +8,19 @@ import {
   ShieldCheck,
   Lock,
   ExternalLink,
+  LogOut,
 } from 'lucide-react';
-import { getActiveMerchantId } from '../services/api';
+import { getActiveMerchantId, clearSession } from '../services/api';
 
 export const PublicLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const isAuthenticated = Boolean(getActiveMerchantId());
+  const [authStatus, setAuthStatus] = useState<string | null>(getActiveMerchantId());
 
-  const handleCtaClick = () => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    } else {
-      navigate('/signup');
-    }
+  const handleSignOut = () => {
+    clearSession();
+    setAuthStatus(null);
+    navigate('/');
   };
 
   const navLinks = [
@@ -78,14 +77,23 @@ export const PublicLayout: React.FC = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
-            {isAuthenticated ? (
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30 border border-indigo-500/30 text-xs font-semibold transition-all shadow-sm"
-              >
-                Open Dashboard
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+            {authStatus ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30 border border-indigo-500/30 text-xs font-semibold transition-all shadow-sm"
+                >
+                  Open Dashboard
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  title="Sign Out of Session"
+                  className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-900 border border-slate-800 transition-colors text-xs flex items-center gap-1"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
             ) : (
               <>
                 <NavLink
@@ -94,13 +102,13 @@ export const PublicLayout: React.FC = () => {
                 >
                   Sign In
                 </NavLink>
-                <button
-                  onClick={handleCtaClick}
+                <NavLink
+                  to="/signup"
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all shadow-md shadow-emerald-900/30 active:scale-95"
                 >
                   Get Started
                   <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                </NavLink>
               </>
             )}
           </div>
@@ -140,17 +148,28 @@ export const PublicLayout: React.FC = () => {
               </a>
             </nav>
             <div className="pt-3 border-t border-slate-800/80 flex flex-col gap-2">
-              {isAuthenticated ? (
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    navigate('/dashboard');
-                  }}
-                  className="w-full py-2.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center gap-2"
-                >
-                  Open Dashboard
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+              {authStatus ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      navigate('/dashboard');
+                    }}
+                    className="w-full py-2.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center gap-2"
+                  >
+                    Open Dashboard
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleSignOut();
+                    }}
+                    className="w-full py-2 rounded-lg text-center text-xs font-semibold text-rose-400 hover:bg-rose-500/10 border border-slate-800"
+                  >
+                    Sign Out of Workspace
+                  </button>
+                </>
               ) : (
                 <>
                   <NavLink
@@ -160,16 +179,14 @@ export const PublicLayout: React.FC = () => {
                   >
                     Sign In
                   </NavLink>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      handleCtaClick();
-                    }}
+                  <NavLink
+                    to="/signup"
+                    onClick={() => setMobileMenuOpen(false)}
                     className="w-full py-2.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-md shadow-emerald-900/30"
                   >
                     Get Started
                     <ArrowRight className="w-4 h-4" />
-                  </button>
+                  </NavLink>
                 </>
               )}
             </div>

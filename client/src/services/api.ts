@@ -13,6 +13,31 @@ import {
 
 let currentMerchantId: string | null = localStorage.getItem('recoverai_active_merchant_id');
 
+export interface OnboardingProfile {
+  businessName: string;
+  email: string;
+  currency: string;
+  gatewayKey?: string;
+  policyProfile?: 'BALANCED' | 'AGGRESSIVE' | 'CONSERVATIVE';
+}
+
+export function setOnboardingProfile(profile: OnboardingProfile | null) {
+  if (profile) {
+    sessionStorage.setItem('recoverai_onboarding_profile', JSON.stringify(profile));
+  } else {
+    sessionStorage.removeItem('recoverai_onboarding_profile');
+  }
+}
+
+export function getOnboardingProfile(): OnboardingProfile | null {
+  try {
+    const raw = sessionStorage.getItem('recoverai_onboarding_profile');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function setActiveMerchantId(merchantId: string | null) {
   currentMerchantId = merchantId;
   if (merchantId) {
@@ -20,6 +45,12 @@ export function setActiveMerchantId(merchantId: string | null) {
   } else {
     localStorage.removeItem('recoverai_active_merchant_id');
   }
+}
+
+export function clearSession() {
+  currentMerchantId = null;
+  localStorage.removeItem('recoverai_active_merchant_id');
+  sessionStorage.removeItem('recoverai_onboarding_profile');
 }
 
 export function getActiveMerchantId(): string | null {

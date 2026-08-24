@@ -13,8 +13,10 @@ import {
   Store,
   ChevronDown,
   Zap,
+  Globe,
+  LogOut,
 } from 'lucide-react';
-import { fetchMerchants, setActiveMerchantId, getActiveMerchantId } from '../services/api';
+import { fetchMerchants, setActiveMerchantId, getActiveMerchantId, clearSession } from '../services/api';
 import { Merchant } from '../types';
 
 export const DashboardLayout: React.FC = () => {
@@ -108,7 +110,7 @@ export const DashboardLayout: React.FC = () => {
           </nav>
         </div>
 
-        {/* Sidebar Footer: System Status */}
+        {/* Sidebar Footer: System Status & Public Navigation */}
         <div className="pt-4 border-t border-slate-800/80 space-y-3">
           {/* Razorpay Test Mode Badge */}
           <div className="bg-slate-900 border border-slate-800 rounded-lg p-3">
@@ -122,6 +124,26 @@ export const DashboardLayout: React.FC = () => {
               </span>
             </div>
             <p className="text-[11px] text-slate-400">Razorpay sandbox connected. Real money isolated.</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <NavLink
+              to="/"
+              className="flex-1 px-3 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <Globe className="w-3.5 h-3.5 text-cyan-400" />
+              Public Site
+            </NavLink>
+            <button
+              onClick={() => {
+                clearSession();
+                navigate('/');
+              }}
+              title="Sign Out"
+              className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 hover:text-rose-400 border border-slate-800 text-slate-400 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </aside>
@@ -238,6 +260,17 @@ export const DashboardLayout: React.FC = () => {
                       {activeMerchant?.id === m.id && <span className="text-[10px]">Active</span>}
                     </button>
                   ))}
+                  <div className="border-t border-slate-800 my-1"></div>
+                  <button
+                    onClick={() => {
+                      clearSession();
+                      navigate('/');
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium text-rose-400 hover:bg-rose-500/10 flex items-center gap-2"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out of Workspace</span>
+                  </button>
                 </div>
               )}
             </div>

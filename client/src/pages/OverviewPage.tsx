@@ -120,6 +120,21 @@ export const OverviewPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Demo Sandbox Mode Security & Tenant Isolation Notice */}
+      <div className="p-4 rounded-xl bg-indigo-950/20 border border-indigo-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-sm">
+        <div className="flex items-start sm:items-center gap-2.5 text-slate-300">
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse mt-0.5 sm:mt-0 shrink-0" />
+          <div>
+            <strong className="text-amber-400 font-semibold tracking-wide uppercase mr-1">Demo Sandbox Mode:</strong>
+            <span>You are viewing a controlled evaluation workspace with synthetic payment data. Production workspaces are accessible only to authenticated team members.</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 font-mono text-[11px] text-indigo-300 bg-indigo-950/40 px-2.5 py-1 rounded-lg border border-indigo-500/30 shrink-0 self-start sm:self-auto">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+          <span>TENANT ISOLATED</span>
+        </div>
+      </div>
+
       {/* Primary KPI Hero Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard

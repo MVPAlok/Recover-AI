@@ -50,50 +50,40 @@ export const LoginPage: React.FC = () => {
 
         {/* 1-Click Quick Login Cards for Demo Sandbox */}
         <div className="space-y-2">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
-            One-Click Demo Sandbox Access
+          <div className="flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
+            <span>Demo Sandbox Evaluation Access</span>
+            <span className="text-amber-400 font-bold">TEST MODE</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              onClick={() => handleSelectMerchantAndLogin('merchant_test_001')}
-              className="p-3.5 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 hover:border-indigo-500/50 text-left transition-all group flex flex-col justify-between space-y-2"
-            >
-              <div>
-                <div className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">
-                  Apex Retail India
-                </div>
-                <div className="text-[10px] text-slate-400 font-mono">finance@apexretail.in</div>
-              </div>
-              <div className="flex items-center justify-between text-[10px] font-mono pt-1">
-                <span className="text-emerald-400 font-semibold">OWNER ROLE</span>
-                <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-indigo-400 transition-transform group-hover:translate-x-1" />
-              </div>
-            </button>
 
-            <button
-              type="button"
-              onClick={() => handleSelectMerchantAndLogin('merchant_test_002')}
-              className="p-3.5 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 hover:border-cyan-500/50 text-left transition-all group flex flex-col justify-between space-y-2"
-            >
-              <div>
-                <div className="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors">
-                  TechMart Global
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {merchants.slice(0, 2).map((m, idx) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => handleSelectMerchantAndLogin(m.id)}
+                className="p-3.5 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 hover:border-indigo-500/50 text-left transition-all group flex flex-col justify-between space-y-2"
+              >
+                <div>
+                  <div className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">
+                    {m.name}
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-mono truncate">{m.email}</div>
                 </div>
-                <div className="text-[10px] text-slate-400 font-mono">ops@techmart.com</div>
-              </div>
-              <div className="flex items-center justify-between text-[10px] font-mono pt-1">
-                <span className="text-cyan-400 font-semibold">ADMIN ROLE</span>
-                <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-cyan-400 transition-transform group-hover:translate-x-1" />
-              </div>
-            </button>
+                <div className="flex items-center justify-between text-[10px] font-mono pt-1">
+                  <span className={idx === 0 ? "text-emerald-400 font-semibold" : "text-cyan-400 font-semibold"}>
+                    {m.role || (idx === 0 ? "OWNER" : "ADMIN")} ROLE
+                  </span>
+                  <ArrowRight className="w-3 h-3 text-slate-500 group-hover:text-indigo-400 transition-transform group-hover:translate-x-1" />
+                </div>
+              </button>
+            ))}
           </div>
         </div>
 
         <div className="relative flex py-1 items-center">
           <div className="flex-grow border-t border-slate-800"></div>
           <span className="flex-shrink mx-4 text-[10px] font-mono uppercase text-slate-500">
-            or choose from all seeded workspaces
+            or select an active sandbox workspace
           </span>
           <div className="flex-grow border-t border-slate-800"></div>
         </div>

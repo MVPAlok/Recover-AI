@@ -48,6 +48,28 @@ export class DashboardRepository {
       },
     });
 
+    // Create or find User and link MerchantMembership with OWNER role
+    try {
+      let user = await this.db.user.findUnique({ where: { email: uniqueEmail } });
+      if (!user) {
+        user = await this.db.user.create({
+          data: {
+            email: uniqueEmail,
+            name: data.name.trim() || 'Merchant Owner',
+          },
+        });
+      }
+      await this.db.merchantMembership.create({
+        data: {
+          merchantId: merchant.id,
+          userId: user.id,
+          role: 'OWNER',
+        },
+      });
+    } catch (err) {
+      // Non-blocking for sandbox seed
+    }
+
     const now = new Date();
     const currency = data.currency || 'INR';
 

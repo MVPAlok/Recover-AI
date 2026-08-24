@@ -1,38 +1,107 @@
 # 💸 RecoverAI — Autonomous AI Payment Recovery Platform
 
 <div align="center">
-  <img src="https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react" alt="React 18" />
-  <img src="https://img.shields.io/badge/Express-Node-green?style=for-the-badge&logo=express" alt="Express" />
-  <img src="https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript" alt="TypeScript 5" />
+  <img src="https://img.shields.io/badge/React-18.3-blue?style=for-the-badge&logo=react" alt="React 18" />
+  <img src="https://img.shields.io/badge/Express-4.19-green?style=for-the-badge&logo=express" alt="Express" />
+  <img src="https://img.shields.io/badge/TypeScript-5.5-blue?style=for-the-badge&logo=typescript" alt="TypeScript 5" />
   <img src="https://img.shields.io/badge/Tailwind--CSS-3.4-cyan?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS" />
   <img src="https://img.shields.io/badge/Prisma-5.22-darkblue?style=for-the-badge&logo=prisma" alt="Prisma" />
-  <img src="https://img.shields.io/badge/PostgreSQL-Neon-blue?style=for-the-badge&logo=postgresql" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/PostgreSQL-Neon%20Serverless-blue?style=for-the-badge&logo=postgresql" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Redis-Upstash%20%2B%20BullMQ-red?style=for-the-badge&logo=redis" alt="Redis" />
   <img src="https://img.shields.io/badge/Google%20Gemini-3.5%20Flash-purple?style=for-the-badge&logo=google" alt="Gemini" />
-  <img src="https://img.shields.io/badge/Razorpay-Test%20Mode-blue?style=for-the-badge&logo=razorpay" alt="Razorpay" />
+  <img src="https://img.shields.io/badge/Razorpay-Strict%20Test%20Mode-blue?style=for-the-badge&logo=razorpay" alt="Razorpay" />
+  <img src="https://img.shields.io/badge/Tests-58%2F58%20Passing%20(100%25)-brightgreen?style=for-the-badge" alt="Tests" />
+  <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License" />
 </div>
 
 <br />
 
 **RecoverAI** is an institutional-grade, autonomous revenue recovery platform designed to detect, diagnose, and recover lost merchant revenue from failed payment transactions. 
 
-Utilizing structured diagnostic agents powered by Google Gemini, deterministic policy safety engines, Upstash Redis background queues, and Razorpay Test Mode webhooks, RecoverAI transforms passive churn into recovered revenue while maintaining a cryptographically reconciled financial ledger.
+By combining multi-agent LLM diagnostics (Google Gemini), deterministic policy guardrails, Upstash Redis background queues, and Razorpay Test Mode webhooks, RecoverAI transforms passive churn into recovered revenue while maintaining a cryptographically reconciled financial ledger.
 
 ---
 
-## 📌 Problem & Core Value Proposition
+## 📑 Table of Contents
 
-Every year, merchants lose billions in revenue due to payment failures—caused by card expirations, temporary bank timeouts, 3D-Secure drop-offs, or false-positive fraud flags. Traditional recovery systems rely on static, generic email chains that irritate customers and yield low retention.
+- [Problem Statement & Solution](#-problem-statement--solution)
+- [RecoverAI vs. Legacy Dunning Systems](#-recoverai-vs-legacy-dunning-systems)
+- [System Architecture & Lifecycle](#-system-architecture--lifecycle)
+- [Recovery Timelines by Policy Strategy](#-recovery-timelines-by-policy-strategy)
+- [Monorepo Project Structure](#-monorepo-project-structure)
+- [Core Subsystems & Phase Roadmap](#-core-subsystems--phase-roadmap)
+- [REST API & Webhook Reference](#-rest-api--webhook-reference)
+- [Local Development Setup](#-local-development-setup)
+- [Automated Testing & Verification](#-automated-testing--verification)
+- [Security & Sandbox Invariants](#-security--sandbox-invariants)
 
-**RecoverAI** replaces manual outreach with an autonomous 8-phase pipeline:
-1. **Real-time Detection & Recovery Probability Scoring**: Evaluates candidate transactions based on historical customer spend and payment signals.
+---
+
+## 📌 Problem Statement & Solution
+
+Every year, digital merchants lose up to **9% of total revenue** due to payment failures—caused by temporary bank timeouts, 3D-Secure drop-offs, OTP latency, or false-positive fraud flags.
+
+Traditional payment recovery relies on static, generic email dunning cycles that alienate customers, trigger card network penalties, and report false-positive recoveries.
+
+**RecoverAI** solves this through an autonomous 8-phase architecture:
+1. **Real-time Detection & Probability Scoring**: Evaluates recoverable revenue using transaction features and prior customer spend.
 2. **AI-Powered Root Cause Diagnosis**: Leverages Google Gemini with structured JSON schema outputs and transparent deterministic fallback.
-3. **Authoritative Decision Engine**: Enforces hard policy safety rules (`RETRY`, `REMIND`, `WAIT`, `ESCALATE`, `STOP`) that override LLM hallucinations.
-4. **Cryptographic Financial Reconciliation**: Implements a dedicated `Payment` ledger where revenue is credited **if and only if** a signed Razorpay `payment.captured` webhook matches the exact transaction amount.
+3. **Authoritative Decision Engine**: Enforces hard safety rules (`RETRY`, `REMIND`, `WAIT`, `ESCALATE`, `STOP`) that override LLM hallucinations.
+4. **Cryptographic Financial Reconciliation**: Implements a dedicated PostgreSQL `Payment` ledger where revenue is credited **if and only if** a signed Razorpay `payment.captured` webhook matches the exact transaction amount.
 
 ---
 
-## ⏱️ Recovery Timelines & Payment Retention by Policy Strategy
+## ⚖️ RecoverAI vs. Legacy Dunning Systems
+
+| Feature / Capability | Legacy Dunning (Stripe Billing / Chargebee) | **RecoverAI Autonomous Platform** |
+| :--- | :--- | :--- |
+| **Recovery Strategy** | Static timed intervals (e.g. Day 1, Day 3, Day 5) | **Dynamic, Root-Cause-Aware Policy** (`RETRY`, `WAIT`, `REMIND`, `ESCALATE`, `STOP`) |
+| **Failure Diagnosis** | Generic raw gateway error strings | **Google Gemini AI Root Cause Analysis** with structured JSON output |
+| **Hallucination Protection** | N/A (Rule only) | **Authoritative Deterministic Safety Rules** (Hard guardrails override AI when unsafe) |
+| **Financial Source of Truth** | Prematurely claims recovery on attempt trigger | **Cryptographic `Payment` Ledger** (Confirmed strictly upon HMAC SHA-256 webhook capture) |
+| **Observability** | Basic server logs | **Real-Time System Telemetry Dashboard** (Live PG/Redis latencies, queue depth, AI fallback rate) |
+| **Background Processing** | Cron job batch polling | **Upstash Redis + BullMQ Queue** with concurrency = 5 and exponential backoff |
+| **Tenant Isolation** | Single-tenant or shared state | **Multi-Tenant RBAC** (`User` + `MerchantMembership` with granular roles) |
+
+---
+
+## 🏗️ System Architecture & Lifecycle
+
+```mermaid
+flowchart TD
+    subgraph Ingestion ["1. INGESTION & DETECTION"]
+        TxFail[Failed Payment Transaction] --> DetScore[Detection & Scoring Engine]
+        DetScore -->|Recovery Probability %| DiagAgent[Diagnosis Agent - Google Gemini]
+    end
+
+    subgraph Intelligence ["2. INTELLIGENCE & POLICY"]
+        DiagAgent -->|Root Cause & Category| PolicyEngine[Recovery Decision Policy Engine]
+        PolicyEngine -->|Hard Safety Guardrails| SafeAction{Authoritative Decision}
+    end
+
+    subgraph Execution ["3. BACKGROUND EXECUTION"]
+        SafeAction -->|Immediate Retry| BullMQ[BullMQ Queue - Upstash Redis]
+        SafeAction -->|Cooldown Window| WaitSched[Scheduled Delay Window]
+        SafeAction -->|Auth Drop-off| RemindLink[Customer Payment Link]
+        SafeAction -->|Hard Block / Max Retries| StopBlock[Cancelled - Risk Safety]
+        BullMQ --> RazorpayTest[Razorpay Test Mode Provider]
+    end
+
+    subgraph Settlement ["4. CRYPTOGRAPHIC SETTLEMENT"]
+        RazorpayTest -->|payment.captured| Webhook[HMAC SHA-256 Webhook Ingestion]
+        Webhook -->|Amount Match Verification| PayLedger[(PostgreSQL Payment Ledger)]
+        PayLedger -->|Verified Recovered Revenue| Dashboard[Merchant Operations UI]
+    end
+
+    style TxFail fill:#881337,stroke:#f43f5e,stroke-width:2px,color:#fff
+    style SafeAction fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,color:#fff
+    style PayLedger fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff
+    style Dashboard fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff
+```
+
+---
+
+## ⏱️ Recovery Timelines by Policy Strategy
 
 Payment recovery does not follow a static timeline. Instead, execution timing and customer retention are dynamically tuned to the **failure root cause**:
 
@@ -40,7 +109,6 @@ Payment recovery does not follow a static timeline. Instead, execution timing an
 +---------------------------------------------------------------------------------------------------+
 |                                 RECOVERAI DECISION LIFECYCLE                                      |
 +---------------------------------------------------------------------------------------------------+
-|                                                                                                   |
 |   Failed Payment ---> Detection Score ---> AI Diagnosis (Gemini) ---> Authoritative Policy Engine |
 |                                                                                |                  |
 |          +----------------------+--------------------+-------------------------+                  |
@@ -61,11 +129,11 @@ Payment recovery does not follow a static timeline. Instead, execution timing an
 +---------------------------------------------------------------------------------------------------+
 ```
 
-### Policy Timeline Matrix
+### Policy Timeline & Retention Matrix
 
 | Policy Action | Root Cause & Failure Category | Typical Recovery Window | How It Works & Lifecycle | Retention Benchmark |
 | :--- | :--- | :---: | :--- | :---: |
-| **`RETRY`** *(Smart Retry)* | Bank Gateway Timeout, Temporary Infrastructure Failure, Network Drop | **0 – 5 Minutes** | Immediately dispatches a background retry order to Razorpay. As soon as the customer or bank captures the transaction, webhook confirms settlement. | **70% – 85%** of temporary failures |
+| **`RETRY`** *(Smart Retry)* | Bank Gateway Timeout, Temporary Infrastructure Failure, Network Drop | **0 – 5 Minutes** | Dispatches a background retry order to Razorpay. As soon as the customer or bank captures the transaction, webhook confirms settlement. | **70% – 85%** of temporary failures |
 | **`WAIT`** *(Cooldown Window)* | Bank Server Congestion, UPI Peak Hour Spike, High Churn Risk | **15 – 30 Minutes** | Halts immediate retries to prevent duplicate friction. Schedules a cooldown window (`defaultWaitMinutes = 30`) and retries once bank rails stabilize. | **50% – 65%** of transient failures |
 | **`REMIND`** *(Customer Link)* | 3D-Secure Drop-off, OTP Timeout, Authentication Failure | **1 – 24 Hours** | Dispatches a customized payment recovery link via Email/SMS. Amount is recovered when the customer clicks the link and authenticates. | **35% – 55%** of drop-offs |
 | **`ESCALATE`** *(Manual Review)* | High-Value VIP Transaction, Unclassified Error, Low Confidence | **2 – 12 Hours** | Flags the transaction in the dashboard for manual agent/merchant support review. | **40% – 60%** of escalated volume |
@@ -76,54 +144,47 @@ Payment recovery does not follow a static timeline. Instead, execution timing an
 
 ---
 
-## 🏗️ System Architecture & Stack
+## 🗂️ Monorepo Project Structure
 
 ```text
-                               +----------------------------+
-                               |   React 18 + Vite UI       |  (Port 3000)
-                               |  - Recovery Center         |
-                               |  - Transaction Explorer    |
-                               |  - System Health Dashboard |
-                               |  - Payment Ledger Card     |
-                               +--------------+-------------+
-                                              |
-                                              | REST JSON / Observability
-                                              v
-                               +----------------------------+
-                               |    Express API Server      |  (Port 5000)
-                               |  - Policy Engine           |
-                               |  - Gemini AI Diagnostics   |
-                               |  - Webhook Ingestion       |
-                               |  - RBAC Multi-Tenant Auth  |
-                               +----+---------+--------+----+
-                                    |         |        |
-                   BullMQ Job Queue |         |        | Neon Serverless
-                                    v         |        v
-                       +------------+----+    |    +---+-----------+
-                       | Upstash Redis   |    |    |  PostgreSQL   |
-                       | - Recovery Queue|    |    |  - Payment    |
-                       | - Worker (x5)   |    |    |  - AuditLog   |
-                       +-----------------+    |    +---------------+
-                                              |
-                                              v
-                                   +----------+----------+
-                                   |  Razorpay Test Mode |  (Sandbox Isolation)
-                                   |  - Orders & Links   |
-                                   |  - HMAC Webhooks    |
-                                   +---------------------+
+Recover_AI/
+├── client/                                # React 18 + Vite Frontend Dashboard
+│   ├── src/components/ui/                 # MetricCard, SystemHealthCard, StatusBadge, Skeleton
+│   ├── src/pages/                         # OverviewPage, RecoveryCenterPage, TransactionDetailPage, SettingsPage
+│   ├── src/services/                      # Typed REST API Client & Webhook Triggers
+│   └── src/types/                         # TypeScript interfaces for financial ledger & observability
+│
+├── server/                                # Express REST API Backend
+│   ├── src/modules/
+│   │   ├── detection/                     # Phase 3: Recovery Probability Scoring Engine
+│   │   ├── diagnosis/                     # Phase 4: Gemini LLM Root-Cause Diagnostics
+│   │   ├── recovery-decision/             # Phase 5: Deterministic Decision Policy Engine
+│   │   ├── recovery-executor/             # Phase 6: BullMQ Queue Executor & Providers
+│   │   ├── webhooks/                      # Phase 7: Razorpay Webhook Ingestion & HMAC Validator
+│   │   ├── dashboard/                     # Phase 8: Merchant Operations & Analytics Aggregator
+│   │   ├── queue/                         # BullMQ Redis Queue Worker (concurrency = 5)
+│   │   └── system/                        # Real-Time System Health & Telemetry Subsystem
+│   ├── src/integrations/razorpay/         # Strict Test Mode Razorpay Client
+│   └── src/scripts/                       # Master Production Failure Simulation Engine
+│
+├── database/                              # PostgreSQL Layer via Prisma ORM
+│   ├── prisma/schema.prisma               # Multi-Tenant RBAC, Payment Ledger, AuditLog
+│   └── seed/seed.ts                       # Deterministic 1,000 synthetic transaction generator
+│
+└── docs/architecture/                     # Comprehensive Technical Architecture Specifications
+    ├── phase-2-transaction-data-engine.md
+    ├── phase-3-detection-scoring.md
+    ├── phase-4-diagnosis-agent.md
+    ├── phase-5-recovery-decision-engine.md
+    ├── phase-6-recovery-executor.md
+    ├── phase-7-razorpay-test-integration.md
+    ├── phase-8-merchant-dashboard.md
+    └── system-health.md
 ```
-
-### Stack Components
-- **Frontend (Client)**: React 18, Vite, React Router 6, Tailwind CSS 3.4, Lucide Icons.
-- **Backend (Server)**: Express, TypeScript, Zod Input Validation, Cors, Helmet.
-- **Queue Layer**: BullMQ + Upstash Redis (`recovery-execution-queue` with concurrency = 5).
-- **Intelligence Layer**: Google Gemini (`gemini-3.5-flash-lite`) with transparent deterministic fallback.
-- **Payment Gateway**: Razorpay Test Mode Sandbox (`rzp_test_...`) with HMAC SHA-256 verification.
-- **Database & ORM**: Prisma 5.22, PostgreSQL (Hosted via Neon Serverless Postgres).
 
 ---
 
-## 🚦 System Capabilities & Phase Roadmap
+## 🚦 Core Subsystems & Phase Roadmap
 
 | Phase / Feature | Architectural Description | Status |
 | :--- | :--- | :---: |
@@ -140,29 +201,70 @@ Payment recovery does not follow a static timeline. Instead, execution timing an
 
 ---
 
+## 🔌 REST API & Webhook Reference
+
+### Core Endpoints
+
+| Method | Endpoint | Description | Auth / Headers |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/system/health` | Deep real-time multi-service health and telemetry snapshot | `x-merchant-id` (optional) |
+| `GET` | `/api/dashboard/overview` | Primary merchant KPI aggregates (Revenue at Risk, Recovered, Recovery Rate) | `x-merchant-id` |
+| `GET` | `/api/recoveries` | Filterable list of recovery attempts with "Needs Attention" queue | `x-merchant-id` |
+| `GET` | `/api/transactions/:id` | Full transaction detail, AI reasoning factors, timeline, and `Payment` ledger | `x-merchant-id` |
+| `POST` | `/api/recovery-executor/:id/execute` | Dispatches recovery action for candidate transaction | `x-merchant-id` |
+| `POST` | `/api/webhooks/razorpay` | Ingests Razorpay webhook events with HMAC SHA-256 verification | `x-razorpay-signature` |
+| `GET` | `/api/ready` | Deep infrastructure readiness probe for container orchestrators | None |
+
+### Sample System Health Payload (`GET /api/system/health`)
+```json
+{
+  "success": true,
+  "status": "healthy",
+  "environment": "TEST_MODE",
+  "timestamp": "2026-08-24T15:30:00.000Z",
+  "services": {
+    "postgresql": { "status": "healthy", "latencyMs": 114, "message": "PostgreSQL connection healthy" },
+    "redis": { "status": "healthy", "latencyMs": 294, "message": "Redis queue operational" },
+    "gemini": { "status": "healthy", "model": "gemini-3.5-flash-lite", "fallbackActive": false, "fallbackRate": 0.0 },
+    "razorpay": { "status": "healthy", "mode": "test", "keyPrefix": "rzp_test" },
+    "webhookWorker": { "status": "healthy", "errorRate": 0.0, "totalEvents24h": 18 },
+    "recoveryWorker": { "status": "healthy", "queueDepth": 0, "failedJobs": 0, "concurrency": 5 }
+  },
+  "metrics": {
+    "lastWebhookSecondsAgo": 23,
+    "queueDepth": 0,
+    "failedJobs": 0,
+    "aiFallbackRate": 0.0,
+    "webhookErrorRate": 0.0
+  }
+}
+```
+
+---
+
 ## 🛠️ Local Development Setup
 
 ### Prerequisites
-- Node.js (version 18 or above)
-- npm (version 9 or above)
-- PostgreSQL Database instance (e.g. Neon Cloud Postgres)
-- Redis instance (e.g. Upstash Redis)
+- **Node.js**: v18.0.0 or higher
+- **npm**: v9.0.0 or higher
+- **PostgreSQL**: Neon Serverless or local instance
+- **Redis**: Upstash Redis or local instance
 
-### 1. Repository Setup
+### 1. Clone & Install
 ```bash
 git clone https://github.com/MVPAlok/Recover_AI.git
 cd Recover_AI
 npm install
 ```
 
-### 2. Environment Configuration
+### 2. Configure Environment Variables
 Create `.env` in the root directory:
 ```bash
 cp .env.example .env
 ```
-Ensure the following variables are configured:
+Ensure required environment variables are set:
 ```ini
-# PostgreSQL (Neon Cloud)
+# PostgreSQL Connection (Neon Cloud)
 DATABASE_URL="postgresql://neondb_owner:<password>@<host>/neondb?sslmode=require"
 
 # Upstash Redis
@@ -181,44 +283,57 @@ RAZORPAY_WEBHOOK_SECRET="..."
 
 ### 3. Database Migration & Synthetic Seeding
 ```bash
-# Apply schema migrations
+# Generate Prisma Client
+npm run prisma:generate
+
+# Deploy Schema Migrations
 npx prisma migrate dev --name init --schema=database/prisma/schema.prisma
 
-# Seed 1,000 synthetic transactions (deterministic seed 42)
+# Seed 1,000 Deterministic Synthetic Transactions
 npm run db:seed
 ```
 
-### 4. Running the Development Workspace
-Start frontend (port 3000) and backend (port 5000) concurrently:
+### 4. Start Development Workspace
 ```bash
 npm run dev
 ```
+- **Frontend Dashboard**: `http://localhost:3000`
+- **Express API Server**: `http://localhost:5000`
 
 ---
 
-## 🧪 Testing & Verification Suite
+## 🧪 Automated Testing & Verification
 
 RecoverAI includes a complete 58-test multi-phase automated test suite:
 
 ```bash
-# Run all phase unit tests (58/58 tests)
+# Run all multi-phase unit tests (58/58 passing)
 npm run test:all
 
-# Run individual subsystems
-npm run test:detection        # Detection & probability scoring tests (8/8)
-npm run test:diagnosis        # Diagnosis Agent & prompt injection defense tests (10/10)
-npm run test:decision         # Recovery Decision Engine policy tests (12/12)
+# Run individual subsystem test suites
+npm run test:detection        # Recovery probability scoring tests (8/8)
+npm run test:diagnosis        # Diagnosis Agent & prompt injection tests (10/10)
+npm run test:decision         # Policy Engine safety override tests (12/12)
 npm run test:executor         # Recovery Executor & outcome tests (10/10)
-npm run test:webhooks         # Razorpay Webhook validation & idempotency tests (6/6)
+npm run test:webhooks         # Razorpay HMAC Webhook tests (6/6)
 npm run test:dashboard        # Merchant Dashboard backend tests (7/7)
 npm run test:queue            # BullMQ & Redis queue tests (3/3)
-npm run test:system           # Real-Time System Health & Observability tests (7/7)
+npm run test:system           # Real-Time System Health telemetry tests (7/7)
 
-# Master Production Failure Simulation
+# Run Master Production Failure Simulation
 npm run simulation:failure    # E2E 7-scenario master production failure simulation (100% pass)
 ```
 
 ---
 
-## 🛡️ License
-Distributed under the MIT License.
+## 🛡️ Security & Sandbox Invariants
+
+1. **Strict Test Mode Guardrail**: RecoverAI is engineered with hardcoded safety checks that reject non-test Razorpay credentials (`rzp_test_` prefix required). Real money transactions are strictly isolated.
+2. **Timing-Safe HMAC Verification**: All Razorpay webhooks require raw-body HMAC SHA-256 signature verification evaluated using `crypto.timingSafeEqual`.
+3. **Zero Secret Leakage**: Database URLs, API keys, and webhook secrets are sanitized and stripped from all client responses and health endpoints.
+4. **Idempotency & Concurrency Locks**: Recovery attempts enforce unique constraints (`@@unique([transactionId, attemptNumber])`) and unique webhook event deduplication (`x-razorpay-event-id`).
+
+---
+
+## 📜 License
+Distributed under the MIT License. See `LICENSE` for more information.

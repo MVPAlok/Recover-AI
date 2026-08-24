@@ -103,6 +103,19 @@ export async function fetchMerchants(): Promise<Merchant[]> {
   return request<Merchant[]>('/api/dashboard/merchants');
 }
 
+export async function createMerchantWorkspace(data: {
+  name: string;
+  email: string;
+  currency?: string;
+}): Promise<Merchant> {
+  const merchant = await request<Merchant>('/api/dashboard/merchants', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  setActiveMerchantId(merchant.id);
+  return merchant;
+}
+
 export async function fetchOverview(): Promise<DashboardOverviewMetrics> {
   return request<DashboardOverviewMetrics>('/api/dashboard/overview');
 }

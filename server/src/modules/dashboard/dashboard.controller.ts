@@ -29,6 +29,21 @@ export class DashboardController {
   };
 
   /**
+   * POST /api/dashboard/merchants
+   */
+  createMerchant = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { name, email, currency } = req.body;
+      const merchant = await this.service.createMerchant({ name, email, currency });
+      res.status(201).json({ success: true, data: merchant });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(`[DashboardController] Error in createMerchant: ${message}`);
+      res.status(500).json({ success: false, error: { code: 'MERCHANT_CREATE_ERROR', message } });
+    }
+  };
+
+  /**
    * GET /api/dashboard/overview
    */
   getOverview = async (req: Request, res: Response): Promise<void> => {

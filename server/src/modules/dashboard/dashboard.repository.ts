@@ -19,13 +19,173 @@ export class DashboardRepository {
   }
 
   /**
-   * Retrieves default primary merchant or looks up by ID.
+   * Retrieves default primary merchant or looks up by ID with safe fallback.
    */
   async getMerchant(merchantId?: string) {
     if (merchantId) {
-      return this.db.merchant.findUnique({ where: { id: merchantId } });
+      const found = await this.db.merchant.findUnique({ where: { id: merchantId } });
+      if (found) return found;
     }
     return this.db.merchant.findFirst({ orderBy: { createdAt: 'asc' } });
+  }
+
+  /**
+   * Creates a new merchant workspace and auto-seeds initial sandbox transactions.
+   */
+  async createMerchantWithSeedData(data: { name: string; email: string; currency?: string }) {
+    const rawEmail = data.email.trim().toLowerCase();
+    // Check if email exists; if so, append random suffix for uniqueness in sandbox
+    const existing = await this.db.merchant.findUnique({ where: { email: rawEmail } });
+    const uniqueEmail = existing
+      ? `${rawEmail.split('@')[0]}_${Math.floor(Math.random() * 10000)}@${rawEmail.split('@')[1] || 'example.test'}`
+      : rawEmail;
+
+    const merchant = await this.db.merchant.create({
+      data: {
+        name: data.name.trim() || 'Custom Merchant Sandbox',
+        email: uniqueEmail,
+        role: 'OWNER',
+      },
+    });
+
+    const now = new Date();
+    const currency = data.currency || 'INR';
+
+    // Seed 1 default customer
+    const customer = await this.db.customer.create({
+      data: {
+        merchantId: merchant.id,
+        email: `customer_${Math.floor(Math.random() * 1000)}@example.test`,
+        name: 'Demo Customer',
+        phone: '+919876543210',
+      },
+    });
+
+    // 1. Seed Recovered Transaction
+    const tx1 = await this.db.transaction.create({
+      data: {
+        merchantId: merchant.id,
+        customerId: customer.id,
+        amount: 2499,
+        currency,
+        status: TransactionStatus.SUCCESS,
+        recoveryStatus: TransactionRecoveryStatus.RECOVERED,
+        failureCode: 'GATEWAY_TIMEOUT',
+        failureReason: 'Temporary bank server timeout',
+        createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+      },
+    });
+
+    const aiDec1 = await this.db.aIDecision.create({
+      data: {
+        merchantId: merchant.id,
+        transactionId: tx1.id,
+        stage: 'POLICY',
+        agentType: AIAgentType.RECOVERY_POLICY,
+        decision: RecoveryDecision.RETRY,
+        confidence: 0.94,
+        reasoning: 'Transient gateway timeout with 94% recovery likelihood. RETRY recommended.',
+        failureCategory: 'TEMPORARY_INFRASTRUCTURE',
+        rootCause: 'TEMPORARY_GATEWAY_FAILURE',
+        riskLevel: 'LOW',
+        modelName: 'gemini-3.5-flash-lite',
+      },
+    });
+
+    const attempt1 = await this.db.recoveryAttempt.create({
+      data: {
+        merchantId: merchant.id,
+        transactionId: tx1.id,
+        attemptNumber: 1,
+        status: RecoveryStatus.SUCCESS,
+        action: RecoveryDecision.RETRY,
+        amountRecovered: 2499,
+        razorpayOrderId: `order_sandbox_${Math.floor(Math.random() * 100000)}`,
+        razorpayPaymentId: `pay_sandbox_${Math.floor(Math.random() * 100000)}`,
+        executedAt: new Date(now.getTime() - 90 * 60 * 1000),
+      },
+    });
+
+    await this.db.payment.create({
+      data: {
+        merchantId: merchant.id,
+        transactionId: tx1.id,
+        recoveryAttemptId: attempt1.id,
+        amount: 2499,
+        currency,
+        status: PaymentStatus.CAPTURED,
+        capturedAmount: 2499,
+        verified: true,
+        reconciled: true,
+        razorpayOrderId: attempt1.razorpayOrderId,
+        razorpayPaymentId: attempt1.razorpayPaymentId,
+        settledAt: new Date(now.getTime() - 85 * 60 * 1000),
+      },
+    });
+
+    // 2. Seed In-Progress Reminder Opportunity
+    const tx2 = await this.db.transaction.create({
+      data: {
+        merchantId: merchant.id,
+        customerId: customer.id,
+        amount: 4850,
+        currency,
+        status: TransactionStatus.FAILED,
+        recoveryStatus: TransactionRecoveryStatus.IN_PROGRESS,
+        failureCode: 'AUTHENTICATION_FAILURE',
+        failureReason: 'Customer abandoned OTP 3DS challenge',
+        createdAt: new Date(now.getTime() - 45 * 60 * 1000),
+      },
+    });
+
+    await this.db.aIDecision.create({
+      data: {
+        merchantId: merchant.id,
+        transactionId: tx2.id,
+        stage: 'POLICY',
+        agentType: AIAgentType.RECOVERY_POLICY,
+        decision: RecoveryDecision.REMIND,
+        confidence: 0.82,
+        reasoning: 'Customer abandoned 3DS OTP verification. Dispatched payment link reminder.',
+        failureCategory: 'CUSTOMER_AUTHENTICATION',
+        rootCause: 'CUSTOMER_AUTH_FAILED',
+        riskLevel: 'LOW',
+        modelName: 'gemini-3.5-flash-lite',
+      },
+    });
+
+    // 3. Seed Stopped Fraud/Expired Card Transaction
+    const tx3 = await this.db.transaction.create({
+      data: {
+        merchantId: merchant.id,
+        customerId: customer.id,
+        amount: 12000,
+        currency,
+        status: TransactionStatus.FAILED,
+        recoveryStatus: TransactionRecoveryStatus.CANCELLED,
+        failureCode: 'EXPIRED_CARD',
+        failureReason: 'Payment card has expired',
+        createdAt: new Date(now.getTime() - 30 * 60 * 1000),
+      },
+    });
+
+    await this.db.aIDecision.create({
+      data: {
+        merchantId: merchant.id,
+        transactionId: tx3.id,
+        stage: 'POLICY',
+        agentType: AIAgentType.RECOVERY_POLICY,
+        decision: RecoveryDecision.STOP,
+        confidence: 0.99,
+        reasoning: 'Hard card expiration. Retries stopped by Authoritative Policy Guardrail.',
+        failureCategory: 'INSTRUMENT_EXPIRATION',
+        rootCause: 'CARD_EXPIRED',
+        riskLevel: 'HIGH',
+        modelName: 'gemini-3.5-flash-lite',
+      },
+    });
+
+    return merchant;
   }
 
   /**
@@ -40,7 +200,7 @@ export class DashboardRepository {
         role: true,
         createdAt: true,
       },
-      orderBy: { name: 'asc' },
+      orderBy: { createdAt: 'desc' },
     });
   }
 

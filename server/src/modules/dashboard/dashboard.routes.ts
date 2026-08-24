@@ -6,6 +6,7 @@ const controller = new DashboardController();
 
 // Dashboard overview & opportunities
 router.get('/merchants', controller.getMerchants);
+router.post('/merchants', controller.createMerchant);
 router.get('/overview', controller.getOverview);
 router.get('/recovery-opportunities', controller.getRecoveryOpportunities);
 

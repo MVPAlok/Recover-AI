@@ -40,6 +40,13 @@ export class DashboardService {
   }
 
   /**
+   * Creates a new merchant workspace with auto-seeded transactions.
+   */
+  async createMerchant(data: { name: string; email: string; currency?: string }) {
+    return this.repo.createMerchantWithSeedData(data);
+  }
+
+  /**
    * Calculates overall dashboard overview metrics.
    * Documented formula: Recovery Rate = (Recovered Revenue / Revenue At Risk) * 100
    */

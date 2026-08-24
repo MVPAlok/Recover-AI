@@ -15,6 +15,7 @@ import {
   setActiveMerchantId,
   getOnboardingProfile,
   setOnboardingProfile,
+  createMerchantWorkspace,
 } from '../../services/api';
 
 export const OnboardingPage: React.FC = () => {
@@ -82,15 +83,28 @@ export const OnboardingPage: React.FC = () => {
     }, 1800);
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     // Persist final selections
     setOnboardingProfile({
       ...profile,
       gatewayKey: keyId,
       policyProfile,
     });
-    setActiveMerchantId('merchant_test_001');
-    navigate('/dashboard');
+
+    try {
+      const merchant = await createMerchantWorkspace({
+        name: profile.businessName,
+        email: profile.email,
+        currency: profile.currency,
+      });
+      if (merchant?.id) {
+        setActiveMerchantId(merchant.id);
+      }
+    } catch (err) {
+      console.warn('Sandbox merchant registration warning:', err);
+    } finally {
+      navigate('/dashboard');
+    }
   };
 
   return (

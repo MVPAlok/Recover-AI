@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Zap, ArrowRight, ShieldCheck, CheckCircle2, Store, Mail, DollarSign } from 'lucide-react';
-import { setActiveMerchantId, setOnboardingProfile } from '../../services/api';
+import { setActiveMerchantId, setOnboardingProfile, createMerchantWorkspace } from '../../services/api';
 
 export const SignupPage: React.FC = () => {
   const [businessName, setBusinessName] = useState('');
@@ -10,23 +10,35 @@ export const SignupPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Save customized profile into onboarding session state
+    const bName = businessName.trim() || 'My Merchant Store';
+    const bEmail = email.trim() || 'merchant@example.com';
+
     setOnboardingProfile({
-      businessName: businessName.trim() || 'My Merchant Store',
-      email: email.trim() || 'merchant@example.com',
+      businessName: bName,
+      email: bEmail,
       currency: currency || 'INR',
     });
 
-    // Seed default active merchant context for seamless dashboard transition
-    setActiveMerchantId('merchant_test_001');
-
-    setTimeout(() => {
+    try {
+      // Actually register the merchant in PostgreSQL
+      const created = await createMerchantWorkspace({
+        name: bName,
+        email: bEmail,
+        currency: currency || 'INR',
+      });
+      if (created?.id) {
+        setActiveMerchantId(created.id);
+      }
+    } catch (err) {
+      console.warn('Sandbox merchant pre-creation warning, proceeding to onboarding wizard:', err);
+    } finally {
+      setIsSubmitting(false);
       navigate('/onboarding');
-    }, 400);
+    }
   };
 
   return (

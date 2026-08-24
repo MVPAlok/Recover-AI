@@ -415,10 +415,10 @@ export class DashboardRepository {
   }
 
   /**
-   * Retrieves single transaction by ID with full lifecycle context.
+   * Retrieves single transaction by ID with full lifecycle context under strict tenant boundary.
    */
   async getTransactionDetail(merchantId: string | undefined, id: string) {
-    let transaction = await this.db.transaction.findFirst({
+    const transaction = await this.db.transaction.findFirst({
       where: merchantId ? { id, merchantId } : { id },
       include: {
         customer: true,
@@ -438,39 +438,26 @@ export class DashboardRepository {
       },
     });
 
-    // If not found with merchant filter, lookup globally by ID so links & direct routing resolve seamlessly
-    if (!transaction && merchantId) {
-      transaction = await this.db.transaction.findUnique({
-        where: { id },
-        include: {
-          customer: true,
-          merchant: true,
-          payments: {
-            orderBy: { createdAt: 'desc' },
-          },
-          aiDecisions: {
-            orderBy: { createdAt: 'asc' },
-          },
-          recoveryAttempts: {
-            orderBy: { attemptNumber: 'asc' },
-          },
-          auditLogs: {
-            orderBy: { createdAt: 'asc' },
-          },
-        },
-      });
-    }
-
     if (!transaction) return null;
 
-    // Customer historical stats
+    // Customer historical stats scoped strictly to the same merchant
     const [customerTotal, customerSuccess, customerFailed] = await Promise.all([
-      this.db.transaction.count({ where: { customerId: transaction.customerId } }),
       this.db.transaction.count({
-        where: { customerId: transaction.customerId, status: TransactionStatus.SUCCESS },
+        where: { customerId: transaction.customerId, merchantId: transaction.merchantId },
       }),
       this.db.transaction.count({
-        where: { customerId: transaction.customerId, status: TransactionStatus.FAILED },
+        where: {
+          customerId: transaction.customerId,
+          merchantId: transaction.merchantId,
+          status: TransactionStatus.SUCCESS,
+        },
+      }),
+      this.db.transaction.count({
+        where: {
+          customerId: transaction.customerId,
+          merchantId: transaction.merchantId,
+          status: TransactionStatus.FAILED,
+        },
       }),
     ]);
 
@@ -531,10 +518,10 @@ export class DashboardRepository {
   }
 
   /**
-   * Retrieves single recovery attempt by ID.
+   * Retrieves single recovery attempt by ID under strict tenant boundary.
    */
   async getRecoveryById(merchantId: string | undefined, id: string) {
-    let recovery = await this.db.recoveryAttempt.findFirst({
+    return this.db.recoveryAttempt.findFirst({
       where: merchantId ? { id, merchantId } : { id },
       include: {
         transaction: {
@@ -546,23 +533,6 @@ export class DashboardRepository {
         },
       },
     });
-
-    if (!recovery && merchantId) {
-      recovery = await this.db.recoveryAttempt.findUnique({
-        where: { id },
-        include: {
-          transaction: {
-            include: { customer: true },
-          },
-          aiDecision: true,
-          auditLogs: {
-            orderBy: { createdAt: 'asc' },
-          },
-        },
-      });
-    }
-
-    return recovery;
   }
 
   /**

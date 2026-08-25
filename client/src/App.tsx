@@ -21,9 +21,11 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
+        {/* Standalone Cinematic Landing Page - no shared layout */}
+        <Route path="/" element={<LandingPage />} />
+
+        {/* Other Public Routes */}
         <Route element={<PublicLayout />}>
-          <Route path="/" element={<LandingPage />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/how-it-works" element={<HowItWorksPage />} />
           <Route path="/security" element={<SecurityPage />} />

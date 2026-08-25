@@ -1,966 +1,667 @@
-import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import {
-  ArrowRight,
-  ShieldCheck,
-  Cpu,
-  Layers,
-  CheckCircle2,
-  RotateCcw,
-  Ban,
-  Server,
-  Lock,
-  Sparkles,
-  BarChart3,
-  Search,
-  FileCheck,
-  ShoppingBag,
-  CreditCard,
-  Building,
-} from 'lucide-react';
-import { getActiveMerchantId } from '../../services/api';
+import React, { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
-interface LifecycleScenario {
-  id: string;
-  name: string;
-  amount: string;
-  failureCode: string;
-  detectionScore: string;
-  diagnosis: string;
-  recommendedAction: 'RETRY' | 'WAIT' | 'REMIND' | 'STOP';
-  executionDetail: string;
-  webhookEvent: string;
-  recoveredAmount: string;
-  status: 'RECOVERED' | 'CANCELLED';
-}
-
-const LIFECYCLE_SCENARIOS: LifecycleScenario[] = [
-  {
-    id: 'txn_sim_01',
-    name: 'Temporary Gateway Timeout (Bank Spike)',
-    amount: '₹2,499',
-    failureCode: 'GATEWAY_TIMEOUT',
-    detectionScore: '92% Recovery Likelihood',
-    diagnosis: 'Temporary infrastructure timeout on issuing bank rail.',
-    recommendedAction: 'RETRY',
-    executionDetail: 'Razorpay Test Mode Order created via BullMQ Queue',
-    webhookEvent: 'payment.captured (Amount: ₹2,499, Signature Verified)',
-    recoveredAmount: '₹2,499',
-    status: 'RECOVERED',
-  },
-  {
-    id: 'txn_sim_02',
-    name: '3D-Secure Authentication Drop-off',
-    amount: '₹4,850',
-    failureCode: 'AUTHENTICATION_FAILURE',
-    detectionScore: '78% Recovery Likelihood',
-    diagnosis: 'Customer abandoned OTP 3DS verification step.',
-    recommendedAction: 'REMIND',
-    executionDetail: 'Dispatched direct Razorpay Test Mode Payment Link to customer',
-    webhookEvent: 'payment.captured (Amount: ₹4,850 via Payment Link)',
-    recoveredAmount: '₹4,850',
-    status: 'RECOVERED',
-  },
-  {
-    id: 'txn_sim_03',
-    name: 'Expired Payment Card (Hard Decline)',
-    amount: '₹12,000',
-    failureCode: 'EXPIRED_CARD',
-    detectionScore: '4% Recovery Likelihood',
-    diagnosis: 'Permanent card expiration. Automated retries will fail.',
-    recommendedAction: 'STOP',
-    executionDetail: 'Recovery permanently halted by Authoritative Policy Guardrail',
-    webhookEvent: 'No webhook triggered (Halted for loss prevention)',
-    recoveredAmount: '₹0',
-    status: 'CANCELLED',
-  },
-];
-
+// Pure 1:1 HTML→JSX conversion — same classes, same CSS, same scroll engine.
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const isAuthenticated = Boolean(getActiveMerchantId());
-  const [selectedScenarioIndex, setSelectedScenarioIndex] = useState(0);
+  const tickingRef = useRef(false);
 
-  const currentScenario = LIFECYCLE_SCENARIOS[selectedScenarioIndex];
+  useEffect(() => {
+    const root = document.documentElement;
+    const numChapters = 9;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
 
-  const handleStart = () => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    } else {
-      navigate('/signup');
+    const stages = [
+      { start: 0.0, end: 0.12 },
+      { start: 0.12, end: 0.22 },
+      { start: 0.22, end: 0.35 },
+      { start: 0.35, end: 0.48 },
+      { start: 0.48, end: 0.62 },
+      { start: 0.62, end: 0.75 },
+      { start: 0.75, end: 0.85 },
+      { start: 0.85, end: 0.95 },
+      { start: 0.95, end: 1.0 },
+    ];
+
+    // Initialise CSS variables
+    root.style.setProperty("--scroll-progress", "0");
+    root.style.setProperty("--chap-0-opacity", "1");
+    for (let i = 1; i < numChapters; i++)
+      root.style.setProperty(`--chap-${i}-opacity`, "0");
+    root.style.setProperty("--hero-scale", "1");
+    root.style.setProperty("--hero-blur", "0px");
+
+    function updateScroll() {
+      const scrollY = window.scrollY;
+      const maxScroll = document.body.scrollHeight - window.innerHeight;
+      const progress = Math.max(0, Math.min(1, scrollY / maxScroll));
+
+      root.style.setProperty("--scroll-progress", String(progress));
+      let activeChapter = 0;
+
+      for (let i = 0; i < numChapters; i++) {
+        const stage = stages[i];
+        let opacity = 0;
+
+        if (progress >= stage.start && progress <= stage.end) {
+          const width = stage.end - stage.start;
+          const localP = (progress - stage.start) / width;
+          if (localP < 0.2) opacity = localP / 0.2;
+          else if (localP > 0.8) opacity = (1 - localP) / 0.2;
+          else opacity = 1;
+          if (opacity > 0.5) activeChapter = i;
+        }
+
+        if (
+          i === numChapters - 1 &&
+          progress >= stages[numChapters - 1].start
+        ) {
+          const localP =
+            (progress - stage.start) / (stage.end - stage.start);
+          opacity = Math.min(1, localP / 0.2);
+          activeChapter = i;
+        }
+
+        root.style.setProperty(
+          `--chap-${i}-opacity`,
+          Math.max(0, opacity).toFixed(3)
+        );
+      }
+
+      if (!prefersReducedMotion) {
+        root.style.setProperty(
+          "--hero-scale",
+          (1 + progress * 0.05).toFixed(3)
+        );
+        root.style.setProperty(
+          "--hero-blur",
+          `${(Math.sin(progress * Math.PI) * 5).toFixed(1)}px`
+        );
+      }
+
+      document.querySelectorAll(".chapter-dot").forEach((dot, index) => {
+        if (index === activeChapter) dot.classList.add("active");
+        else dot.classList.remove("active");
+      });
+
+      const navbar = document.getElementById("navbar");
+      if (navbar) {
+        if (scrollY > 50) {
+          navbar.style.backgroundColor = "rgba(7,11,23,0.9)";
+          navbar.style.backdropFilter = "blur(12px)";
+          navbar.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+        } else {
+          navbar.style.backgroundColor = "transparent";
+          navbar.style.backdropFilter = "none";
+          navbar.style.borderBottom = "none";
+        }
+      }
+
+      tickingRef.current = false;
     }
-  };
+
+    const onScroll = () => {
+      if (!tickingRef.current) {
+        window.requestAnimationFrame(updateScroll);
+        tickingRef.current = true;
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    updateScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <div className="space-y-24 sm:space-y-32 pb-24 overflow-hidden">
-      {/* ========================================================================= */}
-      {/* 1. HERO SECTION */}
-      {/* ========================================================================= */}
-      <section className="relative pt-12 sm:pt-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        {/* Ambient background glow */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-emerald-600/15 via-indigo-600/15 to-cyan-600/10 blur-3xl pointer-events-none rounded-full" />
+    <>
+      {/* ── Scoped styles — exact copy of the original HTML <style> block ─── */}
+      <style>{`
+        body { background-color: #070B17; color: #dee1f9; }
 
-        <div className="text-center space-y-6 max-w-4xl mx-auto relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-xs text-slate-300 shadow-sm backdrop-blur-md">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-medium text-emerald-400">Autonomous Revenue Recovery</span>
-            <span className="text-slate-600">•</span>
-            <span className="text-slate-400">Razorpay Test Mode Sandbox</span>
-          </div>
+        .cinematic-stage { height: 1600vh; position: relative; }
 
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1]">
-            Recover revenue from{' '}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400">
-              failed payments.
-            </span>
-          </h1>
+        .viewport-pinned {
+          position: sticky; top: 0; height: 100vh; width: 100%;
+          overflow: hidden; display: flex; align-items: center; justify-content: center;
+        }
 
-          <p className="text-base sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
-            RecoverAI detects failed payment events, understands why they failed using AI diagnostics, chooses the safest recovery strategy, and verifies the revenue through cryptographic payment evidence.
-          </p>
+        .bg-grid-pattern {
+          background-image:
+            linear-gradient(to right, rgba(91,91,247,0.05) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(91,91,247,0.05) 1px, transparent 1px);
+          background-size: 40px 40px;
+        }
 
-          {/* Hero CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
-            <button
-              onClick={handleStart}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all shadow-lg shadow-emerald-900/40 flex items-center justify-center gap-2 active:scale-95"
-            >
-              Get Started with RecoverAI
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <a
-              href="#how-it-works"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-800 font-semibold text-sm transition-all flex items-center justify-center gap-2"
-            >
-              See How It Works
-            </a>
-          </div>
+        .ambient-glow {
+          position: absolute; width: 800px; height: 800px;
+          background: radial-gradient(circle, rgba(91,91,247,0.15) 0%, transparent 60%);
+          border-radius: 50%; pointer-events: none; z-index: -1;
+          transform: translate(-50%, -50%);
+        }
 
-          <div className="pt-4 flex items-center justify-center gap-6 text-xs text-slate-500 font-mono">
-            <span>TRUSTED RECOVERY</span>
-            <span>•</span>
-            <span>VERIFIED PAYMENT LEDGER</span>
-            <span>•</span>
-            <span>ZERO GUESSWORK</span>
-          </div>
+        .chapter-layer {
+          position: absolute; inset: 0; display: flex;
+          align-items: center; justify-content: center;
+          opacity: 0; transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+          pointer-events: none; will-change: opacity, transform;
+        }
+
+        #layer-0 { opacity: var(--chap-0-opacity); transform: scale(calc(1 + (1 - var(--chap-0-opacity)) * 0.05)); }
+        #layer-1 { opacity: var(--chap-1-opacity); transform: translateY(calc((1 - var(--chap-1-opacity)) * 20px)); }
+        #layer-2 { opacity: var(--chap-2-opacity); transform: scale(calc(0.95 + var(--chap-2-opacity) * 0.05)); }
+        #layer-3 { opacity: var(--chap-3-opacity); }
+        #layer-4 { opacity: var(--chap-4-opacity); }
+        #layer-5 { opacity: var(--chap-5-opacity); transform: translateY(calc((1 - var(--chap-5-opacity)) * 20px)); }
+        #layer-6 { opacity: var(--chap-6-opacity); transform: scale(calc(0.9 + var(--chap-6-opacity) * 0.1)); }
+        #layer-7 { opacity: var(--chap-7-opacity); transform: translateY(calc((1 - var(--chap-7-opacity)) * 20px)); }
+        #layer-8 { opacity: var(--chap-8-opacity); transform: scale(calc(0.9 + var(--chap-8-opacity) * 0.1)); pointer-events: auto; }
+
+        .hero-bg-container {
+          transform: scale(var(--hero-scale)); filter: blur(var(--hero-blur));
+          transition: transform 0.1s linear, filter 0.1s linear;
+          will-change: transform, filter;
+        }
+
+        .chapter-indicator {
+          position: fixed; left: 24px; top: 50%; transform: translateY(-50%);
+          z-index: 100; display: flex; flex-direction: column; gap: 24px;
+        }
+
+        .chapter-dot {
+          width: 4px; height: 4px; background: rgba(255,255,255,0.2);
+          border-radius: 50%; transition: all 0.3s ease; position: relative;
+        }
+        .chapter-dot.active {
+          background: #c1c1ff; box-shadow: 0 0 10px #c1c1ff;
+          height: 24px; border-radius: 4px;
+        }
+        .chapter-dot.active::after {
+          content: attr(data-label); position: absolute; left: 16px; top: 50%;
+          transform: translateY(-50%); font-family: 'JetBrains Mono', monospace;
+          font-size: 10px; color: #c1c1ff; white-space: nowrap; letter-spacing: 0.1em;
+        }
+
+        .material-symbols-outlined {
+          font-family: 'Material Symbols Outlined'; font-weight: normal;
+          font-style: normal; font-size: 24px; line-height: 1;
+          letter-spacing: normal; text-transform: none; display: inline-block;
+          white-space: nowrap; word-wrap: normal; direction: ltr;
+          font-feature-settings: 'liga'; -webkit-font-smoothing: antialiased;
+        }
+
+        @keyframes spin-slow { to { transform: rotate(360deg); } }
+        .animate-spin-slow { animation: spin-slow 3s linear infinite; }
+
+        @media (prefers-reduced-motion: reduce) {
+          .chapter-layer, .hero-bg-container {
+            transition: opacity 0.3s ease;
+            transform: none !important;
+            filter: none !important;
+          }
+        }
+      `}</style>
+
+      {/* TopNavBar */}
+      <nav
+        id="navbar"
+        className="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-desktop h-24 bg-transparent"
+        style={{ transition: "background-color 0.3s, backdrop-filter 0.3s, border-bottom 0.3s" }}
+      >
+        <div className="font-headline-md text-[24px] font-bold text-on-surface tracking-tight">
+          RecoverAI
         </div>
-
-        {/* Hero Illustrative Pipeline Ribbon */}
-        <div className="mt-14 p-1 rounded-2xl bg-gradient-to-b from-slate-800 to-slate-900/60 border border-slate-800 shadow-2xl">
-          <div className="bg-slate-950/90 rounded-xl p-4 sm:p-6">
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
-              <div className="p-3 rounded-lg bg-rose-500/5 border border-rose-500/20 text-rose-300">
-                <div className="text-[10px] font-mono uppercase text-rose-400">1. Failed Payment</div>
-                <div className="text-xs font-semibold mt-1">₹2,499 Declined</div>
-              </div>
-              <div className="p-3 rounded-lg bg-indigo-500/5 border border-indigo-500/20 text-indigo-300">
-                <div className="text-[10px] font-mono uppercase text-indigo-400">2. AI Diagnosis</div>
-                <div className="text-xs font-semibold mt-1">Bank Timeout (92%)</div>
-              </div>
-              <div className="p-3 rounded-lg bg-cyan-500/5 border border-cyan-500/20 text-cyan-300">
-                <div className="text-[10px] font-mono uppercase text-cyan-400">3. Policy Action</div>
-                <div className="text-xs font-semibold mt-1">Smart RETRY (0-5m)</div>
-              </div>
-              <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20 text-amber-300">
-                <div className="text-[10px] font-mono uppercase text-amber-400">4. Payment Dispatch</div>
-                <div className="text-xs font-semibold mt-1">Razorpay Test Order</div>
-              </div>
-              <div className="col-span-2 sm:col-span-1 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
-                <div className="text-[10px] font-mono uppercase text-emerald-400">5. Verified Ledger</div>
-                <div className="text-xs font-semibold mt-1">₹2,499 Recovered</div>
-              </div>
-            </div>
-            <div className="text-[11px] text-center text-slate-500 mt-3 font-mono">
-              Illustrative pipeline flow — Revenue recognized strictly upon HMAC SHA-256 webhook capture
-            </div>
-          </div>
+        <div className="flex items-center space-x-6">
+          <button className="hidden md:block font-label-mono text-label-mono text-on-surface-variant hover:text-white transition-colors">
+            Sign In
+          </button>
+          <button
+            onClick={() => navigate("/login")}
+            className="bg-primary/10 text-primary border border-primary/30 font-label-mono text-[11px] px-6 py-2.5 rounded hover:bg-primary hover:text-surface-dim transition-all flex items-center gap-2 uppercase tracking-widest pointer-events-auto"
+          >
+            Enter Sandbox
+          </button>
         </div>
-      </section>
+      </nav>
 
-      {/* ========================================================================= */}
-      {/* 2. VALUE PROPOSITION PILLARS */}
-      {/* ========================================================================= */}
-      <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
-              <Search className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-white">DETECT</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Identify failed payment transactions automatically from your payment gateway stream and score recovery likelihood.
-            </p>
+      <main className="relative z-10 cinematic-stage">
+        <div className="viewport-pinned">
+
+          {/* Background Plate */}
+          <div className="absolute inset-0 z-0 hero-bg-container origin-center w-full h-full">
+            <img
+              alt="Atmospheric workspace"
+              className="w-full h-full object-cover mix-blend-screen opacity-90"
+              src="https://lh3.googleusercontent.com/aida/AEtjO1Wa-2ZofRJCQPIVGcHpHw4ZHHntvfuttqhzW5ZBu0BvdWjj-AyeXngBWIkCLS0eUnx5qh16EkaahxeH7-mRour6g6HGUqz0S0P8BWmg9QrbXyjtGXN9R9_hlJ0wKykkW9SLWSSnNtnSOLyjb0ceymZTRCWNXLK_j05EvyFDYkBTR5bgpcwvGWGA8fviGCZPMjBewholRlQ5YxF0eh5tmZxHDlTNhrT4VlRXnZxtJNQg7kUyvUfgRb62Xg"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#070B17]/90 via-[#070B17]/60 to-[#070B17]/95 mix-blend-multiply" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(7,11,23,0.9)_100%)]" />
+            <div className="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none" />
           </div>
 
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
-              <Cpu className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-white">DIAGNOSE</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Understand failure causes using Google Gemini AI diagnostics paired with transparent deterministic fallback logic.
-            </p>
+          {/* Chapter Indicator */}
+          <div className="chapter-indicator hidden xl:flex">
+            <div className="chapter-dot active" data-label="00/HERO" id="nav-dot-0" />
+            <div className="chapter-dot" data-label="01/FAILURE" id="nav-dot-1" />
+            <div className="chapter-dot" data-label="02/DIAGNOSIS" id="nav-dot-2" />
+            <div className="chapter-dot" data-label="03/DECISION" id="nav-dot-3" />
+            <div className="chapter-dot" data-label="04/EXECUTION" id="nav-dot-4" />
+            <div className="chapter-dot" data-label="05/VERIFICATION" id="nav-dot-5" />
+            <div className="chapter-dot" data-label="06/RECOVERY" id="nav-dot-6" />
+            <div className="chapter-dot" data-label="07/ARCHITECTURE" id="nav-dot-7" />
+            <div className="chapter-dot" data-label="08/SANDBOX" id="nav-dot-8" />
           </div>
 
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
-              <Layers className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-white">RECOVER</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Enforce authoritative recovery policy actions: <span className="text-white font-mono text-[11px]">RETRY</span>, <span className="text-white font-mono text-[11px]">REMIND</span>, <span className="text-white font-mono text-[11px]">WAIT</span>, <span className="text-white font-mono text-[11px]">ESCALATE</span>, or <span className="text-white font-mono text-[11px]">STOP</span>.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-emerald-500/30 bg-emerald-950/10 hover:border-emerald-500/50 transition-all space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-emerald-300">VERIFY</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Count revenue as recovered <span className="font-semibold text-emerald-400">only after verified payment evidence</span>. Execution is not recovery.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 3. PROBLEM & OPPORTUNITY SECTION */}
-      {/* ========================================================================= */}
-      <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="p-8 sm:p-12 rounded-3xl bg-slate-900/40 border border-slate-800 space-y-8">
-          <div className="max-w-3xl space-y-3">
-            <div className="text-xs font-mono text-cyan-400 uppercase tracking-wider font-semibold">
-              The Payment Drop-off Problem
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Failed payments are lost revenue — until you recover them.
-            </h2>
-            <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
-              Customers fail to complete checkouts due to temporary bank server congestion, UPI outages, authentication drop-offs, and network hiccups. Most merchants only see a generic &ldquo;Payment Failed&rdquo; code while the customer vanishes.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-            {/* Traditional failure */}
-            <div className="p-6 rounded-2xl bg-slate-950 border border-rose-900/40 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-rose-400 font-semibold uppercase">Traditional Handling</span>
-                <span className="px-2 py-0.5 rounded text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                  Customer Lost
-                </span>
-              </div>
-              <div className="space-y-2 text-xs text-slate-400 font-mono">
-                <div className="flex items-center gap-2 text-rose-300 font-semibold">
-                  <Ban className="w-4 h-4 text-rose-400 shrink-0" />
-                  PAYMENT FAILED (Raw Bank Code)
-                </div>
-                <div className="pl-6 text-slate-500">↓ Merchant logs error</div>
-                <div className="pl-6 text-slate-500">↓ Blind retry triggered (Fails again)</div>
-                <div className="pl-6 text-slate-500">↓ Generic email sent 24h later</div>
-                <div className="pl-6 text-rose-400 font-semibold">✕ Customer Churned & Cart Abandoned</div>
-              </div>
-            </div>
-
-            {/* RecoverAI Handling */}
-            <div className="p-6 rounded-2xl bg-slate-950 border border-emerald-900/40 space-y-4 shadow-lg shadow-emerald-950/20">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-emerald-400 font-semibold uppercase">RecoverAI Handling</span>
-                <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Revenue Reconciled
-                </span>
-              </div>
-              <div className="space-y-2 text-xs text-slate-300 font-mono">
-                <div className="flex items-center gap-2 text-emerald-400 font-semibold">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  PAYMENT FAILED (Real-Time Ingestion)
-                </div>
-                <div className="pl-6 text-slate-400">↓ AI Diagnoses failure root cause & likelihood</div>
-                <div className="pl-6 text-slate-400">↓ Policy enforces context-aware action (RETRY / WAIT / REMIND)</div>
-                <div className="pl-6 text-slate-400">↓ Execution via BullMQ & Razorpay Test Mode</div>
-                <div className="pl-6 text-emerald-400 font-semibold">✓ Cryptographic Webhook Reconciles Exact Amount</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 4. HOW RECOVERAI WORKS (6-STEP VISUAL WORKFLOW) */}
-      {/* ========================================================================= */}
-      <section id="how-it-works" className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-12">
-        <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <div className="text-xs font-mono text-emerald-400 uppercase tracking-wider font-semibold">
-            6-Stage Recovery Engine
-          </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            How RecoverAI turns failed payments into recovered revenue
-          </h2>
-          <p className="text-sm sm:text-base text-slate-400">
-            A controlled, explainable pipeline combining multi-agent AI diagnostics with hard deterministic safety guardrails.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-cyan-400 font-semibold">STEP 01</span>
-              <span className="text-xs text-slate-500 font-mono">INGESTION</span>
-            </div>
-            <h3 className="text-base font-bold text-white">DETECT</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              RecoverAI listens for failed transaction events from your payment gateway stream, extracting failure codes and customer history.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-cyan-400 font-semibold">STEP 02</span>
-              <span className="text-xs text-slate-500 font-mono">SCORING</span>
-            </div>
-            <h3 className="text-base font-bold text-white">SCORE</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              The detection model calculates recovery probability (0–100%) and business priority based on customer lifetime value and payment signals.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-indigo-400 font-semibold">STEP 03</span>
-              <span className="text-xs text-slate-500 font-mono">AI DIAGNOSTICS</span>
-            </div>
-            <h3 className="text-base font-bold text-white">DIAGNOSE</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Google Gemini interprets raw error metadata into categorized root causes, backed by instant deterministic fallback if AI is offline.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-amber-400 font-semibold">STEP 04</span>
-              <span className="text-xs text-slate-500 font-mono">POLICY ENGINE</span>
-            </div>
-            <h3 className="text-base font-bold text-white">DECIDE</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Deterministic safety rules select the optimal action: <span className="font-mono text-white text-[11px]">RETRY</span>, <span className="font-mono text-white text-[11px]">REMIND</span>, <span className="font-mono text-white text-[11px]">WAIT</span>, <span className="font-mono text-white text-[11px]">ESCALATE</span>, or <span className="font-mono text-white text-[11px]">STOP</span>.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-indigo-400 font-semibold">STEP 05</span>
-              <span className="text-xs text-slate-500 font-mono">BACKGROUND QUEUE</span>
-            </div>
-            <h3 className="text-base font-bold text-white">EXECUTE</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              The worker queue (BullMQ + Redis) dispatches the recovery action to the Razorpay Test Mode gateway with strict attempt idempotency.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-emerald-500/30 bg-emerald-950/10 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-emerald-400 font-semibold">STEP 06</span>
-              <span className="text-xs text-emerald-400/80 font-mono">SETTLEMENT</span>
-            </div>
-            <h3 className="text-base font-bold text-emerald-300">VERIFY</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              An HMAC SHA-256 verified webhook confirms payment capture and reconciles the PostgreSQL evidence ledger.
-            </p>
-          </div>
-        </div>
-
-        {/* Strong Architectural Callout */}
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/40 border border-slate-800 text-center space-y-2">
-          <div className="text-xs font-mono text-emerald-400 uppercase tracking-widest font-semibold">
-            Core Financial Invariant
-          </div>
-          <div className="text-lg sm:text-xl font-bold text-white">
-            &ldquo;Execution is not recovery. Verified payment evidence is recovery.&rdquo;
-          </div>
-          <p className="text-xs text-slate-400 max-w-2xl mx-auto">
-            RecoverAI will never report revenue as recovered until a cryptographically verified webhook confirms the exact paise amount in the payment ledger.
-          </p>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 5. INTERACTIVE RECOVERY LIFECYCLE SIMULATOR */}
-      {/* ========================================================================= */}
-      <section id="lifecycle-demo" className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-2">
-            <div className="text-xs font-mono text-cyan-400 uppercase tracking-wider font-semibold">
-              Interactive Demonstration
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Explore the Decision & Recovery Lifecycle
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400">
-              Select a sample failure scenario to see how RecoverAI scores, diagnoses, decides, and reconciles.
-            </p>
-          </div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-900 border border-slate-800 text-slate-400 text-xs font-mono">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            Illustrative demo data
-          </div>
-        </div>
-
-        {/* Scenario Selector Pills */}
-        <div className="flex flex-wrap gap-2">
-          {LIFECYCLE_SCENARIOS.map((sc, idx) => (
-            <button
-              key={sc.id}
-              onClick={() => setSelectedScenarioIndex(idx)}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
-                selectedScenarioIndex === idx
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-900/30'
-                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
-              }`}
-            >
-              <span>{sc.name}</span>
-              <span className="font-mono text-[11px] opacity-80">{sc.amount}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Interactive Scenario Card */}
-        <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 sm:p-8 space-y-8 shadow-xl">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Stage 1 & 2: Ingestion & Scoring */}
-            <div className="space-y-4 p-5 rounded-xl bg-slate-950/80 border border-slate-800">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-rose-400 uppercase">1. Failed Event</span>
-                <span className="text-slate-500">{currentScenario.id}</span>
-              </div>
-              <div>
-                <div className="text-xl font-bold text-white">{currentScenario.amount}</div>
-                <div className="text-xs font-mono text-rose-300 mt-0.5">{currentScenario.failureCode}</div>
-              </div>
-              <div className="pt-3 border-t border-slate-800/80 space-y-1">
-                <div className="text-[11px] font-mono text-cyan-400">DETECTION ENGINE</div>
-                <div className="text-xs text-slate-300 font-semibold">{currentScenario.detectionScore}</div>
-              </div>
-            </div>
-
-            {/* Stage 3 & 4: Diagnosis & Policy */}
-            <div className="space-y-4 p-5 rounded-xl bg-slate-950/80 border border-slate-800">
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-indigo-400 uppercase">2. AI Diagnosis</span>
-                <span className="text-slate-500">Gemini Flash</span>
-              </div>
-              <div>
-                <div className="text-xs text-slate-300 leading-relaxed font-medium">
-                  {currentScenario.diagnosis}
-                </div>
-              </div>
-              <div className="pt-3 border-t border-slate-800/80 space-y-1">
-                <div className="text-[11px] font-mono text-amber-400">AUTHORITATIVE POLICY</div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-bold font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                  {currentScenario.recommendedAction}
-                </div>
-              </div>
-            </div>
-
-            {/* Stage 5 & 6: Execution & Settlement */}
-            <div className={`space-y-4 p-5 rounded-xl border ${
-              currentScenario.status === 'RECOVERED'
-                ? 'bg-emerald-950/10 border-emerald-500/30'
-                : 'bg-rose-950/10 border-rose-500/30'
-            }`}>
-              <div className="flex items-center justify-between text-xs font-mono">
-                <span className={currentScenario.status === 'RECOVERED' ? 'text-emerald-400 uppercase' : 'text-rose-400 uppercase'}>
-                  3. Execution & Ledger
-                </span>
-                <span className="text-slate-500">Razorpay Test</span>
-              </div>
-              <div className="text-xs text-slate-300 leading-relaxed">
-                {currentScenario.executionDetail}
-              </div>
-              <div className="pt-3 border-t border-slate-800/80 space-y-1">
-                <div className="text-[11px] font-mono text-slate-400">WEBHOOK RECONCILIATION</div>
-                <div className="text-xs font-mono text-slate-300 break-all">{currentScenario.webhookEvent}</div>
-                <div className="pt-2 flex items-center justify-between">
-                  <span className="text-xs text-slate-400 font-mono">Verified Recovered:</span>
-                  <span className={`text-base font-bold font-mono ${
-                    currentScenario.status === 'RECOVERED' ? 'text-emerald-400' : 'text-slate-400'
-                  }`}>
-                    {currentScenario.recoveredAmount}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 6. ARCHITECTURAL DIFFERENTIATION (COMPARISON TABLE) */}
-      {/* ========================================================================= */}
-      <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-        <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <div className="text-xs font-mono text-cyan-400 uppercase tracking-wider font-semibold">
-            Architectural Differentiation
-          </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Why RecoverAI is not a simple retry script
-          </h2>
-          <p className="text-sm sm:text-base text-slate-400">
-            Compare traditional payment retry plugins with RecoverAI&rsquo;s autonomous multi-agent architecture.
-          </p>
-        </div>
-
-        <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900/60 shadow-xl">
-          <table className="w-full text-left text-xs border-collapse min-w-[640px]">
-            <thead>
-              <tr className="border-b border-slate-800 bg-slate-950/80">
-                <th className="py-4 px-6 font-semibold text-slate-400 uppercase tracking-wider w-1/3">
-                  Capability / Invariant
-                </th>
-                <th className="py-4 px-6 font-semibold text-rose-400 uppercase tracking-wider w-1/3">
-                  Traditional Dunning / Retries
-                </th>
-                <th className="py-4 px-6 font-semibold text-emerald-400 uppercase tracking-wider w-1/3">
-                  RecoverAI Autonomous Engine
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              <tr className="hover:bg-slate-800/30 transition-colors">
-                <td className="py-4 px-6 font-medium text-white">Recovery Strategy</td>
-                <td className="py-4 px-6 text-slate-400">Static timed intervals (Day 1, 3, 7)</td>
-                <td className="py-4 px-6 text-emerald-300 font-medium">Dynamic, root-cause-aware policy (RETRY, WAIT, REMIND, STOP)</td>
-              </tr>
-              <tr className="hover:bg-slate-800/30 transition-colors">
-                <td className="py-4 px-6 font-medium text-white">Failure Diagnostics</td>
-                <td className="py-4 px-6 text-slate-400">Generic raw bank strings</td>
-                <td className="py-4 px-6 text-emerald-300 font-medium">Google Gemini LLM Root-Cause Analysis with structured JSON schemas</td>
-              </tr>
-              <tr className="hover:bg-slate-800/30 transition-colors">
-                <td className="py-4 px-6 font-medium text-white">Hallucination Guardrails</td>
-                <td className="py-4 px-6 text-slate-400">N/A (Rigid cron scripts)</td>
-                <td className="py-4 px-6 text-emerald-300 font-medium">Authoritative Deterministic Safety Engine overrides AI when unsafe</td>
-              </tr>
-              <tr className="hover:bg-slate-800/30 transition-colors">
-                <td className="py-4 px-6 font-medium text-white">Financial Source of Truth</td>
-                <td className="py-4 px-6 text-slate-400">Prematurely marks success on attempt trigger</td>
-                <td className="py-4 px-6 text-emerald-300 font-medium">Cryptographic PostgreSQL Payment Ledger backed by webhook verification</td>
-              </tr>
-              <tr className="hover:bg-slate-800/30 transition-colors">
-                <td className="py-4 px-6 font-medium text-white">Background Execution</td>
-                <td className="py-4 px-6 text-slate-400">Synchronous API calls or basic crons</td>
-                <td className="py-4 px-6 text-emerald-300 font-medium">Upstash Redis + BullMQ Queue with retry backoff & concurrency locks</td>
-              </tr>
-              <tr className="hover:bg-slate-800/30 transition-colors">
-                <td className="py-4 px-6 font-medium text-white">Full Observability</td>
-                <td className="py-4 px-6 text-slate-400">Unstructured server logs</td>
-                <td className="py-4 px-6 text-emerald-300 font-medium">Live System Health telemetry (Database, Redis, AI latency, Webhook error rate)</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 7. AI DIAGNOSIS & RESILIENCE SECTION */}
-      {/* ========================================================================= */}
-      <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="p-8 sm:p-12 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-mono">
-                <Cpu className="w-3.5 h-3.5" />
-                INTELLIGENT DIAGNOSTIC LAYER
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                AI that explains the failure before deciding what to do.
+          {/* 00 / HERO */}
+          <div className="chapter-layer" id="layer-0">
+            <div className="max-w-container-max mx-auto text-center px-4 relative">
+              <div className="ambient-glow top-1/2 left-1/2" />
+              <h1 className="font-display-hero-mobile md:text-display-hero text-on-surface max-w-5xl mx-auto mb-8 tracking-tighter drop-shadow-2xl">
+                Revenue doesn&apos;t disappear.
+              </h1>
+              <h2 className="font-headline-md text-primary-fixed-dim/90 max-w-3xl mx-auto font-normal">
+                It slips through the cracks of legacy infrastructure. We isolate, diagnose, and recover failed transactions with cinematic precision.
               </h2>
-              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                RecoverAI uses Google Gemini to translate cryptic payment decline codes and metadata into standardized categories:
-              </p>
-              <ul className="space-y-2 text-xs text-slate-300 font-mono">
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                  TEMPORARY_INFRASTRUCTURE (Gateway Timeout, Bank rail lag)
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-                  CUSTOMER_AUTHENTICATION (3DS OTP drop, Verification error)
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-                  INSTRUMENT_EXPIRATION & FINANCIAL_HARD (Expired card, repeated decline)
-                </li>
-              </ul>
-              <div className="p-4 rounded-xl bg-slate-950 border border-indigo-500/20 text-xs text-slate-400">
-                <span className="font-semibold text-indigo-300">Transparent Fallback Guarantee:</span> If the LLM provider experiences latency or outage, RecoverAI automatically switches to deterministic diagnostic rules with zero pipeline downtime.
+            </div>
+          </div>
+
+          {/* 01 / FAILURE */}
+          <div className="chapter-layer" id="layer-1">
+            <div className="relative w-full max-w-5xl mx-auto px-8 grid md:grid-cols-2 gap-16 items-center">
+              <div>
+                <h3 className="font-headline-lg text-on-surface mb-6 text-[48px] leading-tight">
+                  The problem isn&apos;t one failed payment.
+                </h3>
+                <div className="font-label-mono text-primary text-[10px] tracking-widest border border-primary/30 bg-primary/10 px-3 py-1.5 rounded mb-8 inline-block backdrop-blur-sm">
+                  DEMO / SYNTHETIC DATA
+                </div>
+                <div className="grid grid-cols-2 gap-8 font-label-mono text-sm">
+                  <div>
+                    <div className="text-on-surface-variant/70 mb-1">VALUE AT RISK</div>
+                    <div className="text-on-surface text-xl font-bold">&#8377;7.51 Cr</div>
+                  </div>
+                  <div>
+                    <div className="text-on-surface-variant/70 mb-1">FAILED TXNS</div>
+                    <div className="text-on-surface text-xl font-bold">2,491</div>
+                  </div>
+                  <div>
+                    <div className="text-on-surface-variant/70 mb-1">POTENTIALLY RECOVERABLE</div>
+                    <div className="text-primary text-xl font-bold">18.4%</div>
+                  </div>
+                  <div>
+                    <div className="text-on-surface-variant/70 mb-1">RECOVERY OPPORTUNITY</div>
+                    <div className="text-primary text-xl font-bold">&#8377;1.38 Cr</div>
+                  </div>
+                </div>
+              </div>
+              <div className="relative">
+                <div className="bg-surface-container-high/90 backdrop-blur-md border border-error/30 p-8 rounded-lg w-full max-w-sm ml-auto shadow-[0_0_50px_rgba(255,180,171,0.1)]">
+                  <div className="flex items-center justify-between gap-2 mb-4 border-b border-error/20 pb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-error animate-pulse" />
+                      <div className="font-label-mono text-error text-[12px] font-bold tracking-wider">FAILED_TXN</div>
+                    </div>
+                    <div className="font-label-mono text-[10px] text-on-surface-variant/70">txn_000102</div>
+                  </div>
+                  <div className="font-display-hero-mobile text-on-surface mb-4">&#8377;18,000</div>
+                  <div className="font-label-mono text-sm text-error bg-error/10 px-3 py-2 rounded inline-block border border-error/20">
+                    Failure: GATEWAY_TIMEOUT
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
 
-            {/* Illustrative AI Output Card */}
-            <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-4 font-mono text-xs">
-              <div className="flex items-center justify-between text-slate-500 border-b border-slate-800 pb-3">
-                <span>GEMINI_DIAGNOSTIC_SCHEMA</span>
-                <span className="text-emerald-400 font-semibold">VALIDATED</span>
+          {/* 02 / DIAGNOSIS */}
+          <div className="chapter-layer" id="layer-2">
+            <div className="max-w-4xl mx-auto px-8 w-full">
+              <span className="font-label-mono text-primary text-[10px] tracking-widest border border-primary/30 bg-primary/10 px-3 py-1.5 rounded mb-8 inline-block backdrop-blur-sm">
+                02 / DIAGNOSIS
+              </span>
+              <div className="bg-surface-container-high/80 backdrop-blur-xl border border-primary/20 rounded-2xl p-8 overflow-hidden shadow-2xl relative">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10" />
+                <div className="flex justify-between items-center mb-8 pb-4 border-b border-primary/10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 bg-primary rounded-sm animate-pulse" />
+                    <div className="font-label-mono text-on-surface text-sm tracking-wider">ANALYZING: txn_000102</div>
+                  </div>
+                  <span className="material-symbols-outlined text-primary/70 animate-spin-slow">radar</span>
+                </div>
+                <div className="space-y-4 font-label-mono text-sm mb-8">
+                  <div className="flex justify-between items-center p-3 rounded bg-surface/50 border border-white/5">
+                    <span className="text-on-surface-variant/70">LATENCY_DELTA</span>
+                    <span className="text-error bg-error/10 px-2 py-1 rounded border border-error/20">+412ms</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded bg-surface/50 border border-white/5">
+                    <span className="text-on-surface-variant/70">GATEWAY</span>
+                    <span className="text-on-surface">Razorpay (Test)</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded bg-surface/50 border border-white/5">
+                    <span className="text-on-surface-variant/70">HISTORY</span>
+                    <span className="text-on-surface">99.9% SUCCESS RATE</span>
+                  </div>
+                </div>
+                <div className="border-t border-primary/20 pt-6">
+                  <div className="font-label-mono text-primary mb-4 text-xs tracking-widest">DIAGNOSTIC RESULT</div>
+                  <div className="flex flex-col md:flex-row gap-4 justify-between">
+                    <div className="bg-primary/5 border border-primary/20 p-4 rounded flex-1">
+                      <div className="text-on-surface-variant/70 text-[10px] mb-1">Diagnosis</div>
+                      <div className="text-primary font-bold">TEMPORARY_GATEWAY_FAILURE</div>
+                    </div>
+                    <div className="flex gap-4 flex-1">
+                      <div className="bg-primary/5 border border-primary/20 p-4 rounded flex-1">
+                        <div className="text-on-surface-variant/70 text-[10px] mb-1">Recovery probability</div>
+                        <div className="text-on-surface font-bold">92%</div>
+                      </div>
+                      <div className="bg-primary/5 border border-primary/20 p-4 rounded flex-1">
+                        <div className="text-on-surface-variant/70 text-[10px] mb-1">Model confidence</div>
+                        <div className="text-on-surface font-bold">95%</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-1.5 text-slate-300">
-                <div><span className="text-slate-500">&quot;failureCategory&quot;:</span> <span className="text-cyan-300">&quot;TEMPORARY_INFRASTRUCTURE&quot;</span>,</div>
-                <div><span className="text-slate-500">&quot;diagnosisCode&quot;:</span> <span className="text-cyan-300">&quot;TEMPORARY_GATEWAY_FAILURE&quot;</span>,</div>
-                <div><span className="text-slate-500">&quot;confidence&quot;:</span> <span className="text-emerald-400">0.94</span>,</div>
-                <div><span className="text-slate-500">&quot;isLikelyTemporary&quot;:</span> <span className="text-indigo-400">true</span>,</div>
-                <div><span className="text-slate-500">&quot;recommendedNextStep&quot;:</span> <span className="text-amber-300">&quot;EVALUATE_RETRY&quot;</span>,</div>
-                <div><span className="text-slate-500">&quot;reasoning&quot;:</span> <span className="text-slate-400">&quot;Transient HTTP 504 gateway timeout on acquiring network. Issuing bank rails remain operational.&quot;</span></div>
+            </div>
+          </div>
+
+          {/* 03 / DECISION */}
+          <div className="chapter-layer" id="layer-3">
+            <div className="max-w-5xl mx-auto px-8 w-full text-center">
+              <span className="font-label-mono text-primary text-[10px] tracking-widest border border-primary/30 bg-primary/10 px-3 py-1.5 rounded mb-8 inline-block backdrop-blur-sm">
+                03 / DECISION ENGINE
+              </span>
+              <h2 className="font-headline-lg text-[56px] text-on-surface mb-12">Intelligent Routing</h2>
+              <div className="grid md:grid-cols-3 gap-8 items-center">
+                <div className="text-left font-label-mono text-xs space-y-4">
+                  <div className="p-3 border border-white/10 rounded bg-surface-container/50">
+                    <span className="text-on-surface-variant/70 block mb-1">Gateway Load</span>
+                    <span className="text-secondary">NORMAL</span>
+                  </div>
+                  <div className="p-3 border border-white/10 rounded bg-surface-container/50">
+                    <span className="text-on-surface-variant/70 block mb-1">User History</span>
+                    <span className="text-on-surface">CLEAN</span>
+                  </div>
+                  <div className="p-3 border border-white/10 rounded bg-surface-container/50">
+                    <span className="text-on-surface-variant/70 block mb-1">Risk Score</span>
+                    <span className="text-secondary">LOW</span>
+                  </div>
+                </div>
+                <div className="relative w-64 h-64 mx-auto flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border border-primary/30 border-dashed animate-[spin_10s_linear_infinite]" />
+                  <div className="absolute inset-4 rounded-full border border-primary/10 animate-[spin_15s_linear_infinite_reverse]" />
+                  <div className="font-headline-lg text-primary drop-shadow-[0_0_30px_rgba(91,91,247,0.6)] tracking-tighter text-[48px] flex flex-col items-center">
+                    <span>RETRY</span>
+                    <span className="text-xs font-label-mono text-primary/70 tracking-widest mt-2 uppercase">Action Selected</span>
+                  </div>
+                </div>
+                <div className="text-right font-label-mono text-xs space-y-4">
+                  <div className="p-4 border border-primary/30 rounded bg-primary/5">
+                    <span className="text-primary/70 block mb-1">Confidence</span>
+                    <span className="text-primary font-bold text-lg">95%</span>
+                  </div>
+                  <div className="p-4 border border-primary/30 rounded bg-primary/5">
+                    <span className="text-primary/70 block mb-1">Recovery Probability</span>
+                    <span className="text-primary font-bold text-lg">92%</span>
+                  </div>
+                  <div className="p-2 border border-white/5 rounded bg-surface/50 opacity-50">
+                    <span className="text-on-surface-variant/70 block mb-1">Target</span>
+                    <span className="text-on-surface">txn_000102</span>
+                  </div>
+                </div>
               </div>
-              <div className="text-[10px] text-slate-500 pt-2 border-t border-slate-800 text-right">
-                Illustrative JSON schema output
+            </div>
+          </div>
+
+          {/* 04 / EXECUTION */}
+          <div className="chapter-layer" id="layer-4">
+            <div
+              className="w-full h-full absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(91,91,247,0.05)_0%,transparent_70%)] pointer-events-auto"
+              id="threejs-container"
+            />
+            <div className="absolute top-32 left-0 w-full text-center z-10 pointer-events-none">
+              <span className="font-label-mono text-primary text-[10px] tracking-widest border border-primary/30 bg-surface-container-high/80 backdrop-blur-md px-3 py-1.5 rounded inline-block shadow-lg mb-6">
+                04 / EXECUTION PIPELINE
+              </span>
+              <div className="max-w-md mx-auto bg-surface-container-high/90 backdrop-blur-xl border border-primary/30 p-6 rounded-lg font-label-mono text-sm text-left shadow-2xl">
+                <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+                  <span className="text-on-surface font-bold">Attempt #1</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    <span className="text-primary text-xs">EXECUTING</span>
+                  </div>
+                </div>
+                <div className="space-y-3 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-on-surface-variant/70">Target</span>
+                    <span className="text-on-surface">txn_000102</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-on-surface-variant/70">Strategy</span>
+                    <span className="text-primary font-bold">RETRY</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-on-surface-variant/70">Gateway</span>
+                    <span className="text-on-surface">Razorpay TEST MODE</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* ========================================================================= */}
-      {/* 8. FINANCIAL TRUST & PAYMENT EVIDENCE LEDGER */}
-      {/* ========================================================================= */}
-      <section id="evidence-ledger" className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-        <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <div className="text-xs font-mono text-emerald-400 uppercase tracking-wider font-semibold">
-            Zero False-Positive Invariant
-          </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Recovered revenue is backed by payment evidence
-          </h2>
-          <p className="text-sm sm:text-base text-slate-400">
-            RecoverAI does not recognize revenue simply because a retry was sent or an order was placed.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <div className="text-2xl font-bold font-mono text-rose-400">Recovery Attempt</div>
-            <p className="text-xs text-slate-400">
-              An action dispatched to Razorpay (e.g. Test Order Created or Link Generated). Status remains <span className="text-amber-400 font-mono">Pending</span>.
-            </p>
-            <div className="text-xs font-mono text-slate-500">₹0 Counted</div>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="text-2xl font-bold font-mono text-cyan-400">Cryptographic Webhook</div>
-              <p className="text-xs text-slate-400">
-                Razorpay emits <span className="text-white font-mono">payment.captured</span> signed with HMAC SHA-256 secret.
-              </p>
-            </div>
-            <div className="text-xs font-mono text-slate-500">Signature Verified</div>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-emerald-950/20 border border-emerald-500/40 space-y-3 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="text-2xl font-bold font-mono text-emerald-400">Payment Evidence Ledger</div>
-              <p className="text-xs text-slate-300">
-                Amount reconciled in PostgreSQL <span className="text-white font-mono">Payment</span> table where <span className="text-emerald-400 font-mono">verified = true</span>.
-              </p>
-            </div>
-            <div className="text-xs font-mono text-emerald-400 font-bold">100% Verified Recovered</div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 9. SECURITY & ARCHITECTURAL GUARDRAILS */}
-      {/* ========================================================================= */}
-      <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-        <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <div className="text-xs font-mono text-cyan-400 uppercase tracking-wider font-semibold">
-            Security & Compliance Architecture
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Engineered for institutional security & multi-tenant isolation
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-400">
-            Factual architecture safeguards protecting your payment data and credentials.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
-              <Lock className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-bold text-white">Multi-Tenant RBAC</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Granular isolation between merchants with role-based memberships (OWNER, ADMIN, ANALYST, SUPPORT, VIEWER).
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-bold text-white">Timing-Safe HMAC Verification</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Raw-body webhook evaluation using constant-time comparison (<span className="font-mono text-[11px]">crypto.timingSafeEqual</span>).
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
-              <Layers className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-bold text-white">Attempt Idempotency</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Database unique constraints (<span className="font-mono text-[11px]">@@unique([transactionId, attemptNumber])</span>) prevent duplicate charges.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
-              <FileCheck className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-bold text-white">Immutable Audit Trails</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Non-cascading audit logging recording actor, IP, timestamp, reasoning, and correlation IDs across the lifecycle.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2.5">
-            <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center">
-              <Ban className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-bold text-white">Strict Test Mode Guardrail</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Hardcoded key verification requiring <span className="font-mono text-[11px]">rzp_test_</span> prefix. Zero exposure of production keys.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
-              <Server className="w-4 h-4" />
-            </div>
-            <h4 className="text-sm font-bold text-white">Zero Secret Leakage</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Database URLs, Redis connection strings, and Gemini API keys are completely stripped and sanitized from client responses.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 10. SYSTEM HEALTH / RELIABILITY PREVIEW */}
-      {/* ========================================================================= */}
-      <section id="system-health" className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6">
-        <div className="p-8 rounded-3xl bg-slate-900/40 border border-slate-800 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="text-xs font-mono text-emerald-400 uppercase font-semibold">
-                Operational Telemetry
+          {/* 05 / VERIFICATION */}
+          <div className="chapter-layer" id="layer-5">
+            <div className="w-full max-w-3xl mx-auto px-8">
+              <div className="text-center mb-12">
+                <span className="font-label-mono text-secondary text-[10px] tracking-widest border border-secondary/30 bg-secondary/10 px-3 py-1.5 rounded mb-6 inline-block">
+                  05 / VERIFICATION
+                </span>
+                <h3 className="font-headline-md text-on-surface text-[32px]">Execution success &#8800; payment recovered</h3>
+                <p className="font-label-mono text-on-surface-variant mt-4 text-sm">Recovery claims need evidence.</p>
               </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-white">
-                Continuous Infrastructure Health Monitoring
-              </h3>
-              <p className="text-xs text-slate-400">
-                RecoverAI monitors all recovery infrastructure components in real time.
-              </p>
-            </div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              SYSTEM OPERATIONAL
-            </div>
-          </div>
-
-          {/* Illustrative Telemetry Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs font-mono">
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-              <div className="text-slate-400">PostgreSQL</div>
-              <div className="text-emerald-400 font-bold flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                Healthy
+              <div className="bg-surface-container-highest/60 border border-white/10 rounded-xl p-8 backdrop-blur-md font-label-mono">
+                <div className="space-y-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center shrink-0 border border-secondary/30 mt-1">
+                      <span className="material-symbols-outlined text-secondary text-sm">verified</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-on-surface font-bold mb-1">VERIFIED WEBHOOK</div>
+                      <div className="text-secondary text-xs">&#10003; Signature verified</div>
+                    </div>
+                    <div className="text-right text-xs text-on-surface-variant/70">razorpay.payment.captured</div>
+                  </div>
+                  <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center shrink-0 border border-secondary/30 mt-1">
+                      <span className="material-symbols-outlined text-secondary text-sm">fact_check</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-on-surface font-bold mb-3">PAYMENT EVIDENCE</div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="flex justify-between bg-surface/50 p-2 rounded">
+                          <span className="text-on-surface-variant/70">Transaction</span>
+                          <span className="text-secondary">MATCHED</span>
+                        </div>
+                        <div className="flex justify-between bg-surface/50 p-2 rounded">
+                          <span className="text-on-surface-variant/70">Amount (&#8377;18,000)</span>
+                          <span className="text-secondary">MATCHED</span>
+                        </div>
+                        <div className="flex justify-between bg-surface/50 p-2 rounded">
+                          <span className="text-on-surface-variant/70">Status</span>
+                          <span className="text-secondary">CAPTURED</span>
+                        </div>
+                        <div className="flex justify-between bg-surface/50 p-2 rounded">
+                          <span className="text-on-surface-variant/70">Correlation ID</span>
+                          <span className="text-secondary">MATCHED</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                  <div className="flex items-center justify-between bg-secondary/5 border border-secondary/20 p-4 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <span className="material-symbols-outlined text-secondary">sync_alt</span>
+                      <span className="text-on-surface font-bold">RECONCILIATION</span>
+                    </div>
+                    <span className="text-secondary font-bold tracking-widest text-sm bg-secondary/10 px-3 py-1 rounded">SYNCED</span>
+                  </div>
+                </div>
               </div>
-              <div className="text-[10px] text-slate-500">~110ms</div>
             </div>
+          </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-              <div className="text-slate-400">Upstash Redis</div>
-              <div className="text-emerald-400 font-bold flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                Healthy
+          {/* 06 / RECOVERY */}
+          <div className="chapter-layer" id="layer-6">
+            <div className="text-center relative">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-secondary/20 rounded-full blur-[100px] -z-10" />
+              <span className="font-label-mono text-secondary text-[10px] tracking-widest border border-secondary/30 bg-secondary/10 px-3 py-1.5 rounded mb-8 inline-block">
+                06 / RESOLUTION
+              </span>
+              <h2 className="font-display-hero text-[100px] md:text-[140px] text-secondary mb-2 leading-none tracking-tighter drop-shadow-[0_0_80px_rgba(53,211,154,0.4)]">
+                RECOVERED
+              </h2>
+              <div className="font-display-hero-mobile text-on-surface mb-8">&#8377;18,000</div>
+              <div className="flex flex-col md:flex-row gap-4 justify-center items-center mb-12 font-label-mono text-xs">
+                <div className="flex items-center gap-2 bg-surface-container/50 border border-white/10 px-4 py-2 rounded">
+                  <span className="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+                  <span>PAYMENT VERIFIED</span>
+                </div>
+                <div className="flex items-center gap-2 bg-surface-container/50 border border-white/10 px-4 py-2 rounded">
+                  <span className="material-symbols-outlined text-secondary text-[16px]">account_balance_wallet</span>
+                  <span>LEDGER RECONCILED</span>
+                </div>
+                <div className="flex items-center gap-2 bg-surface-container/50 border border-white/10 px-4 py-2 rounded">
+                  <span className="text-on-surface-variant/70">ID:</span>
+                  <span className="text-on-surface">txn_000102</span>
+                </div>
               </div>
-              <div className="text-[10px] text-slate-500">~290ms</div>
             </div>
+          </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-              <div className="text-slate-400">Google Gemini</div>
-              <div className="text-emerald-400 font-bold flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                Healthy
+          {/* 07 / ARCHITECTURE */}
+          <div className="chapter-layer" id="layer-7">
+            <div className="max-w-6xl mx-auto px-8 w-full">
+              <div className="text-center mb-16">
+                <span className="font-label-mono text-primary text-[10px] tracking-widest border border-primary/30 bg-primary/10 px-3 py-1.5 rounded mb-6 inline-block">
+                  07 / ARCHITECTURE
+                </span>
+                <h3 className="font-headline-md text-on-surface text-[32px]">An autonomous recovery system has to stay healthy.</h3>
+                <p className="font-label-mono text-on-surface-variant mt-4 text-sm">Built for financial systems.</p>
               </div>
-              <div className="text-[10px] text-slate-500">0.0% Fallback</div>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-              <div className="text-slate-400">Razorpay</div>
-              <div className="text-amber-400 font-bold flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                TEST MODE
+              <div className="grid md:grid-cols-2 gap-12">
+                <div className="bg-surface-container-highest/40 border border-white/10 rounded-xl p-6 backdrop-blur-md">
+                  <h4 className="font-label-mono text-sm text-primary mb-6 border-b border-white/10 pb-2">SYSTEM TELEMETRY</h4>
+                  <div className="space-y-4 font-label-mono text-xs">
+                    <div className="flex justify-between items-center bg-surface/50 p-3 rounded border border-white/5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-secondary" />
+                        <span className="text-on-surface">PostgreSQL (Primary)</span>
+                      </div>
+                      <span className="text-secondary">99.99% Uptime</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-surface/50 p-3 rounded border border-white/5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-secondary" />
+                        <span className="text-on-surface">Redis Cache</span>
+                      </div>
+                      <span className="text-secondary">0.4ms latency</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-surface/50 p-3 rounded border border-white/5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-secondary" />
+                        <span className="text-on-surface">Webhook Workers</span>
+                      </div>
+                      <span className="text-on-surface-variant/70">48 instances</span>
+                    </div>
+                    <div className="mt-6 pt-4 border-t border-white/10">
+                      <div className="text-[10px] text-on-surface-variant/70 mb-3">Recovery intelligence shouldn&apos;t depend on one model.</div>
+                      <div className="relative overflow-hidden rounded border border-primary/20 bg-primary/5 p-3">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-on-surface font-bold">Gemini 1.5 Pro</span>
+                          <span className="text-error text-[10px] bg-error/10 px-2 py-0.5 rounded border border-error/20">DEGRADED</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-primary">Fallback Engine</span>
+                          <span className="text-secondary text-[10px] bg-secondary/10 px-2 py-0.5 rounded border border-secondary/20">ACTIVE (70% conf)</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-surface-container-highest/40 border border-white/10 rounded-xl p-6 backdrop-blur-md">
+                  <h4 className="font-label-mono text-sm text-primary mb-6 border-b border-white/10 pb-2">FINANCIAL INTEGRITY</h4>
+                  <div className="space-y-6">
+                    <div className="flex gap-4">
+                      <span className="material-symbols-outlined text-primary/70 text-2xl shrink-0">shield</span>
+                      <div>
+                        <div className="font-label-mono text-sm text-on-surface font-bold mb-1">Tenant Isolation</div>
+                        <div className="font-body-md text-sm text-on-surface-variant/70">Strict logical separation of data across all operational boundaries.</div>
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="material-symbols-outlined text-primary/70 text-2xl shrink-0">repeat</span>
+                      <div>
+                        <div className="font-label-mono text-sm text-on-surface font-bold mb-1">Idempotent Execution</div>
+                        <div className="font-body-md text-sm text-on-surface-variant/70">Guaranteed exactly-once processing for all recovery attempts.</div>
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <span className="material-symbols-outlined text-primary/70 text-2xl shrink-0">history</span>
+                      <div>
+                        <div className="font-label-mono text-sm text-on-surface font-bold mb-1">Cryptographic Audit Trail</div>
+                        <div className="font-body-md text-sm text-on-surface-variant/70">Immutable log of every diagnostic decision and execution attempt.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="text-[10px] text-slate-500">Sandbox Validated</div>
             </div>
+          </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-              <div className="text-slate-400">Webhook Worker</div>
-              <div className="text-emerald-400 font-bold flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                Healthy
+          {/* 08 / SANDBOX */}
+          <div className="chapter-layer" id="layer-8">
+            <div className="text-center max-w-4xl mx-auto px-8">
+              <span className="font-label-mono text-primary text-[10px] tracking-widest border border-primary/30 bg-primary/10 px-3 py-1.5 rounded mb-8 inline-block">
+                08 / RECOVERY CENTER
+              </span>
+              <h2 className="font-headline-lg text-[48px] text-on-surface mb-8">Stop writing off recoverable revenue.</h2>
+              <div className="bg-surface-container-highest/80 border border-white/10 rounded-xl p-8 mb-12 backdrop-blur-xl shadow-2xl relative overflow-hidden text-left">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10" />
+                <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                  <div className="font-label-mono text-sm text-on-surface">Overview</div>
+                  <div className="font-label-mono text-xs text-on-surface-variant/70">Last 30 Days</div>
+                </div>
+                <div className="grid grid-cols-3 gap-6 font-label-mono mb-8">
+                  <div>
+                    <div className="text-[10px] text-on-surface-variant/70 mb-2">Recovery Opportunity</div>
+                    <div className="text-xl text-on-surface font-bold">&#8377;1.38 Cr</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-on-surface-variant/70 mb-2">Recovered Revenue</div>
+                    <div className="text-xl text-secondary font-bold">&#8377;28.4 L</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-on-surface-variant/70 mb-2">Recovery Rate</div>
+                    <div className="text-xl text-primary font-bold">20.5%</div>
+                  </div>
+                </div>
+                <div className="text-center pt-6 border-t border-white/10">
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="bg-primary hover:bg-primary-fixed hover:text-surface-dim text-surface-dim font-label-mono text-sm tracking-widest px-12 py-4 rounded transition-all shadow-[0_0_40px_rgba(193,193,255,0.4)] hover:scale-105 transform pointer-events-auto w-full md:w-auto"
+                  >
+                    ENTER DEMO SANDBOX
+                  </button>
+                </div>
               </div>
-              <div className="text-[10px] text-slate-500">0.0% Errors</div>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-              <div className="text-slate-400">Recovery Worker</div>
-              <div className="text-emerald-400 font-bold flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                Healthy
-              </div>
-              <div className="text-[10px] text-slate-500">Concurrency: 5</div>
             </div>
           </div>
-          <div className="text-[11px] text-right text-slate-500 font-mono">
-            Conceptual telemetry overview • Production metrics available in authenticated Merchant Settings
-          </div>
+
         </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 11. DASHBOARD PREVIEW & WORKFLOW PANELS */}
-      {/* ========================================================================= */}
-      <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-        <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <div className="text-xs font-mono text-cyan-400 uppercase tracking-wider font-semibold">
-            Merchant Workspace
-          </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            What you get inside the RecoverAI dashboard
-          </h2>
-          <p className="text-sm sm:text-base text-slate-400">
-            A purpose-built operations command center giving your finance and support teams full control.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <div className="flex items-center gap-2 text-indigo-400">
-              <BarChart3 className="w-5 h-5" />
-              <h3 className="text-base font-bold text-white">Recovery Overview</h3>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Track revenue at risk, total verified recovered revenue, and dynamic recovery rate across your merchant account.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <div className="flex items-center gap-2 text-cyan-400">
-              <RotateCcw className="w-5 h-5" />
-              <h3 className="text-base font-bold text-white">Recovery Center</h3>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Live status tracking for dispatched attempts, real-time webhook confirmation, and a dedicated &ldquo;Needs Attention&rdquo; queue.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <div className="flex items-center gap-2 text-emerald-400">
-              <Search className="w-5 h-5" />
-              <h3 className="text-base font-bold text-white">Transaction Explorer</h3>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Inspect full AI reasoning factors, root causes, policy overrides, and cryptographic payment ledger receipts.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 12. INDUSTRY USE CASES */}
-      {/* ========================================================================= */}
-      <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-        <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <div className="text-xs font-mono text-emerald-400 uppercase tracking-wider font-semibold">
-            Industry Applications
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Built for modern digital commerce & subscriptions
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <ShoppingBag className="w-6 h-6 text-cyan-400" />
-            <h4 className="text-sm font-bold text-white">E-Commerce</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Recover checkout payment failures before shoppers abandon their cart.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <CreditCard className="w-6 h-6 text-indigo-400" />
-            <h4 className="text-sm font-bold text-white">Subscriptions & SaaS</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Recover recurring billing failures and eliminate passive subscriber churn.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <Building className="w-6 h-6 text-emerald-400" />
-            <h4 className="text-sm font-bold text-white">Digital Services</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Prevent immediate service disruption by engaging automatic wait and retry windows.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <Layers className="w-6 h-6 text-amber-400" />
-            <h4 className="text-sm font-bold text-white">Marketplaces</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Monitor and reconcile payment recoveries across multiple merchant accounts with tenant isolation.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* 13. FINAL HIGH-IMPACT CTA */}
-      {/* ========================================================================= */}
-      <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div className="p-8 sm:p-14 rounded-3xl bg-gradient-to-tr from-indigo-950/60 via-slate-900 to-emerald-950/40 border border-slate-800 text-center space-y-6 relative overflow-hidden shadow-2xl">
-          <div className="space-y-3 max-w-2xl mx-auto">
-            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-              Stop treating failed payments as the end of the transaction.
-            </h2>
-            <p className="text-sm sm:text-base text-slate-300">
-              Turn recoverable payment failures into verified revenue with AI diagnostics and cryptographic reconciliation.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <button
-              onClick={handleStart}
-              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-900/40 flex items-center justify-center gap-2 active:scale-95"
-            >
-              Get Started with RecoverAI
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <NavLink
-              to="/how-it-works"
-              className="w-full sm:w-auto px-6 py-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-semibold text-sm transition-all"
-            >
-              Explore 6-Stage Engine
-            </NavLink>
-          </div>
-
-          <div className="text-[11px] text-slate-400 font-mono pt-2">
-            Currently running in Razorpay Test Mode Sandbox • Strict multi-tenant isolation
-          </div>
-        </div>
-      </section>
-    </div>
+      </main>
+    </>
   );
 };
+
+export default LandingPage;

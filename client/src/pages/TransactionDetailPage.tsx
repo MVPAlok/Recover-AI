@@ -3,16 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   RotateCw,
-  Play,
   Brain,
   AlertCircle,
   CheckCircle2,
-  FileText,
-  User,
-  Sparkles,
-  Cpu,
-  Layers,
-  ShieldCheck,
   CreditCard,
 } from 'lucide-react';
 import {
@@ -22,7 +15,11 @@ import {
   triggerDiagnosis,
 } from '../services/api';
 import { TransactionDetail } from '../types';
-import { StatusBadge } from '../components/ui/StatusBadge';
+import { SectionTag } from '../components/system/SectionTag';
+import { SystemPanel } from '../components/system/SystemPanel';
+import { DataRow } from '../components/system/DataRow';
+import { StatusIndicator } from '../components/system/StatusIndicator';
+import { ActionButton } from '../components/system/ActionButton';
 import { Timeline } from '../components/ui/Timeline';
 import { Skeleton } from '../components/ui/Skeleton';
 import { ErrorBanner } from '../components/ui/ErrorBanner';
@@ -75,12 +72,12 @@ export const TransactionDetailPage: React.FC = () => {
       if (res?.status === 'SUCCESS') {
         setExecutionMessage({
           type: 'success',
-          text: `Recovery action executed successfully: ${res.action} -> ${res.status} (${res.outcomeCode || 'ORDER_CREATED'})`,
+          text: `Recovery action executed: ${res.action} -> ${res.status} (${res.outcomeCode || 'ORDER_CREATED'})`,
         });
       } else {
         setExecutionMessage({
           type: 'error',
-          text: `Recovery execution ${res?.status || 'halted'}: ${res?.message || res?.outcomeCode || 'Action blocked by safety policy'}`,
+          text: `Recovery execution ${res?.status || 'halted'}: ${res?.message || res?.outcomeCode || 'Halted by policy guardrail'}`,
         });
       }
       await loadDetail();
@@ -101,7 +98,7 @@ export const TransactionDetailPage: React.FC = () => {
       await triggerDecision(effectiveId, true);
       setExecutionMessage({
         type: 'success',
-        text: 'Google Gemini AI diagnosis & recovery policy re-evaluated in real time!',
+        text: 'Google Gemini AI diagnosis & policy rules re-evaluated in real time!',
       });
       await loadDetail();
     } catch (err: unknown) {
@@ -117,8 +114,8 @@ export const TransactionDetailPage: React.FC = () => {
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Skeleton className="h-64 lg:col-span-2 rounded-xl" />
-          <Skeleton className="h-64 rounded-xl" />
+          <Skeleton className="h-64 lg:col-span-2 rounded-2xl" />
+          <Skeleton className="h-64 rounded-2xl" />
         </div>
       </div>
     );
@@ -126,10 +123,10 @@ export const TransactionDetailPage: React.FC = () => {
 
   if (error || !transaction) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 font-mono">
         <button
           onClick={() => navigate('/transactions')}
-          className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+          className="flex items-center gap-2 text-xs text-on-surface-variant hover:text-white"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Transactions
@@ -140,376 +137,262 @@ export const TransactionDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Top Breadcrumb & Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/transactions')}
-            className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-bold text-white tracking-tight">
-                Transaction Lifecycle
-              </h1>
-              <StatusBadge type="transaction" value={transaction.status} />
-              {transaction.paymentStatus && (
-                <StatusBadge type="payment" value={transaction.paymentStatus} />
-              )}
-              {transaction.recoveryStatus && (
-                <StatusBadge type="recoveryState" value={transaction.recoveryStatus} />
-              )}
-            </div>
-            <span className="text-xs font-mono text-slate-400">ID: {transaction.id}</span>
+    <div className="space-y-8 pb-12 font-mono">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/transactions')}
+              className="p-1.5 rounded bg-surface/50 hover:bg-surface/80 border border-white/10 text-on-surface-variant hover:text-white"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <SectionTag label="02 / DIAGNOSIS & RECOVERY" />
+            <StatusIndicator
+              status={transaction.status === 'SUCCESS' ? 'OPERATIONAL' : 'FAILED'}
+              label={transaction.status}
+            />
           </div>
+          <h1 className="text-xl sm:text-3xl font-bold font-geist text-on-surface tracking-tight">
+            TRANSACTION: {transaction.id}
+          </h1>
+          <p className="text-xs text-on-surface-variant/80 max-w-xl">
+            Cryptographic ledger state, AI root-cause decomposition, and recovery attempt history.
+          </p>
         </div>
 
-        {/* Recovery Action Buttons */}
+        {/* Action Buttons */}
         {transaction.status === 'FAILED' && (
           <div className="flex items-center gap-3">
             <button
               disabled={reEvaluating || executing}
               onClick={handleReevaluate}
-              className="flex items-center gap-2 px-3 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-600 disabled:opacity-50 disabled:pointer-events-none transition-all"
+              className="flex items-center gap-2 px-3 py-2 text-xs rounded bg-surface/50 hover:bg-surface/80 text-on-surface-variant hover:text-white border border-white/10 transition-all disabled:opacity-50"
             >
-              <RotateCw className={`w-3.5 h-3.5 text-indigo-400 ${reEvaluating ? 'animate-spin' : ''}`} />
-              {reEvaluating ? 'Analyzing...' : 'Re-Evaluate AI Policy'}
+              <RotateCw className={`w-3.5 h-3.5 ${reEvaluating ? 'animate-spin' : ''}`} />
+              <span>{reEvaluating ? 'Analyzing...' : 'Re-Evaluate AI'}</span>
             </button>
 
-            <button
+            <ActionButton
               disabled={executing || transaction.retryCount >= 3}
               onClick={handleExecuteRecovery}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:pointer-events-none text-white shadow-lg shadow-emerald-600/20 transition-all"
             >
-              {executing ? (
-                <>
-                  <RotateCw className="w-4 h-4 animate-spin" />
-                  Executing...
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4 fill-white" />
-                  Execute Recovery Action
-                </>
-              )}
-            </button>
+              {executing ? 'EXECUTING...' : 'DISPATCH RECOVERY'}
+            </ActionButton>
           </div>
         )}
       </div>
 
+      {/* Execution Feedback Message */}
       {executionMessage && (
         <div
-          className={`p-4 rounded-xl text-xs font-medium border flex items-center gap-2 ${
+          className={`p-3.5 rounded border text-xs flex items-center gap-3 ${
             executionMessage.type === 'success'
-              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
-              : 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+              ? 'bg-secondary/10 border-secondary/30 text-secondary'
+              : 'bg-error/10 border-error/30 text-error'
           }`}
         >
           {executionMessage.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
           ) : (
-            <AlertCircle className="w-4 h-4 text-rose-400" />
+            <AlertCircle className="w-4 h-4 shrink-0" />
           )}
-          {executionMessage.text}
+          <span>{executionMessage.text}</span>
         </div>
       )}
 
-      {/* Main 2-Column Grid */}
+      {/* 2-Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Visual Lifecycle Timeline (Span 2) */}
+        {/* Left Column: Lifecycle Timeline & Evidence Ledger (Span 2) */}
         <div className="lg:col-span-2 space-y-6">
           {/* Card: Lifecycle Timeline */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
+          <SystemPanel borderVariant="subtle" className="p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
               <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Autonomous Recovery Lifecycle
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  End-to-end trace from initial gateway failure to cryptographic payment reconciliation.
+                <span className="text-xs font-bold text-primary uppercase tracking-wider block">
+                  AUTONOMOUS RECOVERY LIFECYCLE
+                </span>
+                <p className="text-[11px] text-on-surface-variant/70 mt-0.5">
+                  Chronological trace from gateway failure to payment reconciliation.
                 </p>
               </div>
-              <span className="text-[11px] font-semibold px-2.5 py-1 rounded bg-slate-800 text-slate-300">
-                {(transaction.recoveryAttempts || []).length} Execution Attempts
+              <span className="text-[10px] text-on-surface-variant/70 px-2 py-0.5 rounded bg-surface/50 border border-white/5">
+                {(transaction.recoveryAttempts || []).length} Attempts
               </span>
             </div>
 
             <Timeline transaction={transaction} />
-          </div>
+          </SystemPanel>
 
-          {/* Card: Traceability & Correlation Chain */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-indigo-400" />
-              Traceability & Correlation Chain
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
-              <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800">
-                <span className="text-slate-500 block text-[10px] uppercase font-sans font-semibold">Transaction ID</span>
-                <span className="text-slate-200">{transaction.id}</span>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800">
-                <span className="text-slate-500 block text-[10px] uppercase font-sans font-semibold">Customer ID</span>
-                <span className="text-slate-200">{transaction.customerId}</span>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800">
-                <span className="text-slate-500 block text-[10px] uppercase font-sans font-semibold">Razorpay Order ID</span>
-                <span className="text-slate-200">{transaction.razorpayOrderId || 'None (Pre-Order)'}</span>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800">
-                <span className="text-slate-500 block text-[10px] uppercase font-sans font-semibold">Razorpay Payment ID</span>
-                <span className="text-slate-200">{transaction.razorpayPaymentId || 'None (Pending)'}</span>
-              </div>
+          {/* Card: Correlation Chain */}
+          <SystemPanel borderVariant="subtle" className="p-6 space-y-3">
+            <span className="text-xs font-bold text-primary uppercase tracking-wider block border-b border-white/10 pb-2">
+              TRACEABILITY & CORRELATION CHAIN
+            </span>
+            <div className="space-y-1.5">
+              <DataRow label="TRANSACTION ID" value={transaction.id} />
+              <DataRow label="CUSTOMER ID" value={transaction.customerId} />
+              <DataRow label="RAZORPAY ORDER ID" value={transaction.razorpayOrderId || 'None (Pre-Order)'} />
+              <DataRow label="RAZORPAY PAYMENT ID" value={transaction.razorpayPaymentId || 'None (Pending)'} />
             </div>
-          </div>
+          </SystemPanel>
 
-          {/* Card: Payment & Settlement Evidence Ledger (Authoritative Source of Financial Truth) */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-emerald-400" />
-                Payment & Settlement Evidence Ledger
-              </h3>
-              <span className="text-[11px] font-semibold px-2.5 py-1 rounded bg-emerald-950/70 border border-emerald-800/60 text-emerald-400 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                Evidence-Based Source of Truth
+          {/* Card: Payment Evidence Ledger */}
+          <SystemPanel borderVariant="subtle" className="p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <span className="text-xs font-bold text-secondary uppercase tracking-wider flex items-center gap-2">
+                <CreditCard className="w-4 h-4" />
+                PAYMENT & SETTLEMENT EVIDENCE LEDGER
               </span>
+              <StatusIndicator status="VERIFIED" label="CRYPTOGRAPHIC PROOF" />
             </div>
 
             {(!transaction.payments || transaction.payments.length === 0) ? (
-              <div className="p-4 rounded-lg bg-slate-950/60 border border-slate-800/80 text-xs text-slate-400">
+              <div className="p-3.5 rounded bg-surface/40 border border-white/5 text-xs text-on-surface-variant/70">
                 No external payment attempts recorded in ledger yet. Revenue recognition awaits verified gateway capture.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {transaction.payments.map((p) => (
                   <div
                     key={p.id}
-                    className="p-3.5 rounded-lg bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                    className="p-3 rounded bg-surface/50 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-white text-sm">{formatINR(p.amount)}</span>
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            p.status === 'CAPTURED'
-                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/80'
-                              : p.status === 'PENDING' || p.status === 'CREATED'
-                              ? 'bg-cyan-950 text-cyan-300 border border-cyan-800/80'
-                              : 'bg-rose-950 text-rose-300 border border-rose-800/80'
-                          }`}
-                        >
-                          {p.status}
-                        </span>
+                        <StatusIndicator
+                          status={p.status === 'CAPTURED' ? 'VERIFIED' : 'PENDING'}
+                          label={p.status}
+                        />
                         {p.reconciled && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-950 text-indigo-300 border border-indigo-800/60">
-                            Reconciled ✓
+                          <span className="text-secondary text-[10px] bg-secondary/10 px-1.5 py-0.5 rounded border border-secondary/20 font-bold">
+                            RECONCILED ✓
                           </span>
                         )}
                       </div>
-                      <div className="text-slate-400 text-[11px] font-mono">
-                        Order: <span className="text-slate-300">{p.razorpayOrderId || 'N/A'}</span> | Payment: <span className="text-slate-300">{p.razorpayPaymentId || 'Pending'}</span>
+                      <div className="text-on-surface-variant/60 text-[11px]">
+                        Order: {p.razorpayOrderId || 'N/A'} | Payment: {p.razorpayPaymentId || 'Pending'}
                       </div>
                     </div>
-                    <div className="text-right sm:text-right shrink-0 text-[11px] text-slate-500">
-                      <div>Captured: <span className="text-emerald-400 font-semibold">{formatINR(p.capturedAmount ?? 0)}</span></div>
+                    <div className="text-right text-[11px] text-on-surface-variant/60">
+                      <div>Captured: <strong className="text-secondary">{formatINR(p.capturedAmount ?? 0)}</strong></div>
                       <div>{new Date(p.createdAt).toLocaleTimeString()}</div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Card: Audit Trail Logs */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-indigo-400" />
-              Immutable Audit Trail
-            </h3>
-
-            {(!transaction.auditLogs || transaction.auditLogs.length === 0) ? (
-              <p className="text-xs text-slate-500">No audit events recorded for this transaction yet.</p>
-            ) : (
-              <div className="space-y-3 font-mono text-xs">
-                {(transaction.auditLogs || []).map((log) => (
-                  <div key={log.id} className="p-3 rounded-lg bg-slate-950/70 border border-slate-800/80 flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-slate-200 font-semibold">{log.action}</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
-                        Actor: <span className="text-indigo-300">{log.actor || 'SYSTEM'}</span> | Entity: {log.entityType}
-                      </div>
-                    </div>
-                    <span className="text-[11px] text-slate-500 shrink-0">
-                      {new Date(log.createdAt).toLocaleTimeString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          </SystemPanel>
         </div>
 
-        {/* Right Column: AI Explainability & Customer Details */}
+        {/* Right Column: AI Diagnosis, Policy & Customer */}
         <div className="space-y-6">
           {/* Card: Financial Summary */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Transaction Amount</span>
-            <div className="text-3xl font-extrabold text-white">{formatINR(transaction.amount)}</div>
-
-            <div className="pt-3 border-t border-slate-800/80 space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Payment Status:</span>
-                <StatusBadge type="payment" value={transaction.paymentStatus || 'FAILED'} />
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Recovery Status:</span>
-                <StatusBadge type="recoveryState" value={transaction.recoveryStatus || 'NOT_STARTED'} />
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Payment Method:</span>
-                <span className="font-semibold text-slate-200">{transaction.paymentMethod || 'Card / UPI'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Retry Counter:</span>
-                <span className="font-semibold text-slate-200">{transaction.retryCount} of 3 max</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Created:</span>
-                <span className="text-slate-300">{new Date(transaction.createdAt).toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card: AI Explainability Engine */}
-          <div className="bg-gradient-to-b from-indigo-950/30 via-slate-900 to-slate-900 border border-indigo-500/20 rounded-xl p-5 space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Brain className="w-5 h-5 text-indigo-400" />
-                <h3 className="text-sm font-bold text-white">AI Diagnostic Engine</h3>
-              </div>
-              <Sparkles className="w-4 h-4 text-indigo-400 animate-pulse" />
+          <SystemPanel borderVariant="primary" className="p-6 space-y-4">
+            <span className="text-[10px] text-on-surface-variant/70 uppercase font-bold tracking-wider block">
+              TRANSACTION AMOUNT
+            </span>
+            <div className="text-3xl font-bold font-geist text-on-surface">
+              {formatINR(transaction.amount)}
             </div>
 
-            {/* AI Model Transparency Badge */}
-            <div className="p-3 rounded-lg bg-slate-950/90 border border-slate-800 flex items-center justify-between">
+            <div className="pt-3 border-t border-white/10 space-y-2 text-xs">
+              <DataRow
+                label="Payment Status"
+                value={transaction.paymentStatus || 'FAILED'}
+                badge={<StatusIndicator status={transaction.paymentStatus === 'CAPTURED' ? 'VERIFIED' : 'FAILED'} />}
+              />
+              <DataRow
+                label="Recovery State"
+                value={transaction.recoveryStatus || 'NOT_STARTED'}
+                badge={<StatusIndicator status={transaction.recoveryStatus === 'RECOVERED' ? 'RECOVERED' : 'WARNING'} />}
+              />
+              <DataRow label="Payment Method" value={transaction.paymentMethod || 'UPI / NetBanking'} />
+              <DataRow label="Retry Counter" value={`${transaction.retryCount} of 3 max`} />
+              <DataRow label="Created" value={new Date(transaction.createdAt).toLocaleTimeString()} />
+            </div>
+          </SystemPanel>
+
+          {/* Card: AI Diagnostic Engine (Mirroring Chapter 02 & 03) */}
+          <SystemPanel borderVariant="primary" className="p-6 space-y-4">
+            <div className="flex justify-between items-center border-b border-white/10 pb-2">
               <div className="flex items-center gap-2">
-                <Cpu className="w-4 h-4 text-indigo-400" />
-                <div>
-                  <span className="text-[11px] font-bold text-white block">
-                    {transaction.diagnosis?.isFallback ? 'Deterministic Fallback Engine' : 'Google Gemini AI'}
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    Model: {transaction.diagnosis?.modelName || 'gemini-3.5-flash-lite'}
-                  </span>
+                <Brain className="w-4 h-4 text-primary" />
+                <span className="text-xs font-bold text-primary uppercase">AI DIAGNOSTIC ENGINE</span>
+              </div>
+              <StatusIndicator status="OPERATIONAL" label="ACTIVE" />
+            </div>
+
+            {/* AI Model details */}
+            <div className="p-3 rounded bg-surface/50 border border-white/5 flex justify-between items-center text-xs">
+              <div>
+                <div className="font-bold text-white text-xs">
+                  {transaction.diagnosis?.isFallback ? 'Deterministic Fallback' : 'Google Gemini LLM'}
+                </div>
+                <div className="text-[10px] text-on-surface-variant/60">
+                  {transaction.diagnosis?.modelName || 'gemini-3.5-flash-lite'}
                 </div>
               </div>
               {transaction.diagnosis?.latencyMs && (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                <span className="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
                   {transaction.diagnosis.latencyMs}ms
                 </span>
               )}
             </div>
 
-            {/* Probability & Confidence Score */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Recovery Likelihood</span>
-                <span className="text-xl font-bold text-emerald-400">
-                  {transaction.detection?.recoveryProbability || 50}%
-                </span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">
-                  {transaction.detection?.riskLevel || 'MEDIUM'} Risk
+            {/* Probability and Confidence */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-3 rounded bg-surface/50 border border-white/5">
+                <span className="text-[9px] uppercase text-on-surface-variant/70 block">Recovery Probability</span>
+                <span className="text-xl font-bold text-secondary font-geist mt-1 block">
+                  {transaction.detection?.recoveryProbability || 75}%
                 </span>
               </div>
-
-              <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Model Confidence</span>
-                <span className="text-xl font-bold text-indigo-400">
-                  {transaction.detection?.confidenceScore || 85}%
+              <div className="p-3 rounded bg-surface/50 border border-white/5">
+                <span className="text-[9px] uppercase text-on-surface-variant/70 block">Model Confidence</span>
+                <span className="text-xl font-bold text-primary font-geist mt-1 block">
+                  {transaction.detection?.confidenceScore || 92}%
                 </span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">High Certainty</span>
               </div>
             </div>
 
             {/* Approved Policy */}
-            <div>
-              <span className="text-[11px] uppercase font-bold text-slate-400 block mb-1.5">Approved Policy Decision</span>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-slate-950/80 border border-slate-800">
-                <span className="font-semibold text-white text-xs">Action:</span>
-                {transaction.decision?.decision ? (
-                  <StatusBadge type="decision" value={transaction.decision.decision} />
-                ) : (
-                  <span className="text-slate-400 text-xs font-semibold">RETRY</span>
-                )}
+            <div className="space-y-1">
+              <span className="text-[9px] uppercase text-on-surface-variant/70 block">APPROVED POLICY DECISION</span>
+              <div className="p-2.5 rounded bg-surface/50 border border-white/5 flex justify-between items-center text-xs">
+                <span className="font-bold text-white">Action:</span>
+                <span className="text-primary font-bold bg-primary/10 border border-primary/20 px-2 py-0.5 rounded text-[10px]">
+                  {transaction.decision?.decision || 'RETRY'}
+                </span>
               </div>
             </div>
 
-            {/* Positive Factors */}
-            <div>
-              <span className="text-[11px] uppercase font-bold text-emerald-400 block mb-1.5">Positive Signals</span>
-              <div className="space-y-1.5">
-                {(transaction.detection?.positiveFactors || ['Strong historical payment rate', 'Temporary network failure code']).map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs text-slate-300">
-                    <span className="text-emerald-400 font-bold">✓</span>
-                    <span>{f}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Risk Factors */}
-            <div>
-              <span className="text-[11px] uppercase font-bold text-rose-400 block mb-1.5">Risk Factors</span>
-              <div className="space-y-1.5">
-                {(transaction.detection?.riskFactors || ['Recent payment decline']).map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs text-slate-400">
-                    <span className="text-rose-400 font-bold">×</span>
-                    <span>{f}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* AI Reasoning Text */}
+            {/* AI Reasoning */}
             {transaction.decision?.reasoning && (
-              <div className="bg-slate-950/90 rounded-lg p-3 border border-slate-800/80 text-xs text-slate-300 leading-relaxed">
-                <span className="font-bold text-indigo-300 block mb-1">Reasoning Synthesis:</span>
+              <div className="p-3 rounded bg-surface/30 border border-white/5 text-[11px] text-on-surface-variant/80 leading-relaxed">
+                <strong className="text-primary block mb-1">Reasoning Synthesis:</strong>
                 {transaction.decision.reasoning}
               </div>
             )}
-          </div>
+          </SystemPanel>
 
-          {/* Card: Customer Historical Context */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <User className="w-4 h-4 text-indigo-400" />
-              Customer Profile
-            </h3>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Name:</span>
-                <span className="font-semibold text-slate-200">{transaction.customer?.name || 'Customer'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Email:</span>
-                <span className="font-semibold text-slate-200">{transaction.customer?.email || 'N/A'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Success Rate:</span>
-                <span className="font-semibold text-emerald-400">
-                  {transaction.customer?.successRate !== undefined ? transaction.customer.successRate.toFixed(1) : '100'}%
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Total Transactions:</span>
-                <span className="font-semibold text-slate-200">{transaction.customer?.totalTransactions ?? 0}</span>
-              </div>
+          {/* Card: Customer Profile */}
+          <SystemPanel borderVariant="subtle" className="p-6 space-y-3">
+            <span className="text-xs font-bold text-primary uppercase tracking-wider block border-b border-white/10 pb-2">
+              CUSTOMER PROFILE
+            </span>
+            <div className="space-y-1.5 text-xs">
+              <DataRow label="Name" value={transaction.customer?.name || 'Customer'} />
+              <DataRow label="Email" value={transaction.customer?.email || 'N/A'} />
+              <DataRow
+                label="Historical Success"
+                value={`${transaction.customer?.successRate !== undefined ? transaction.customer.successRate.toFixed(1) : '100'}%`}
+              />
+              <DataRow label="Total Transactions" value={transaction.customer?.totalTransactions ?? 1} />
             </div>
-          </div>
+          </SystemPanel>
         </div>
       </div>
     </div>

@@ -1,105 +1,103 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import {
-  ShieldCheck,
-  Lock,
-  FileCheck,
-  Layers,
-  Ban,
-  Key,
-  ArrowRight,
-} from 'lucide-react';
+import { SectionTag } from '../../components/system/SectionTag';
+import { SystemPanel } from '../../components/system/SystemPanel';
+import { StatusIndicator } from '../../components/system/StatusIndicator';
+import { ActionButton } from '../../components/system/ActionButton';
 
 export const SecurityPage: React.FC = () => {
+  const pillars = [
+    {
+      num: '01 / ISOLATION',
+      title: 'Multi-Tenant RBAC Isolation',
+      desc: 'Granular access control enforcing merchant tenant boundaries with User and MerchantMembership relationships. Role tiers include OWNER, ADMIN, ANALYST, SUPPORT, and VIEWER.',
+      status: 'VERIFIED',
+      badge: 'RBAC ENFORCED',
+    },
+    {
+      num: '02 / INTEGRITY',
+      title: 'Timing-Safe HMAC SHA-256',
+      desc: 'All Razorpay webhooks require raw-body HMAC SHA-256 signature verification evaluated using crypto.timingSafeEqual to defeat side-channel timing attacks.',
+      status: 'VERIFIED',
+      badge: 'TIMING-SAFE',
+    },
+    {
+      num: '03 / IDEMPOTENCY',
+      title: 'Attempt Idempotency Locks',
+      desc: 'Database uniqueness constraints (@@unique([transactionId, attemptNumber])) and webhook event deduplication (x-razorpay-event-id) prevent duplicate charges and race conditions.',
+      status: 'VERIFIED',
+      badge: 'IDEMPOTENT',
+    },
+    {
+      num: '04 / AUDITABILITY',
+      title: 'Immutable Audit Logging',
+      desc: 'Every recovery decision, AI reasoning factor, and execution action is committed with correlation IDs, timestamps, actor metadata, and IP address logging.',
+      status: 'VERIFIED',
+      badge: 'IMMUTABLE',
+    },
+    {
+      num: '05 / GUARDRAILS',
+      title: 'Strict Test Mode Guardrails',
+      desc: 'The platform strictly enforces Razorpay Test Mode keys (rzp_test_). Security filters reject live production keys to ensure zero financial exposure during testing.',
+      status: 'VERIFIED',
+      badge: 'FAIL CLOSED',
+    },
+    {
+      num: '06 / ZERO LEAKAGE',
+      title: 'Zero Secret Exposure',
+      desc: 'Database connection strings, Redis auth tokens, and Gemini API keys reside exclusively in backend environment variables and are completely stripped from client REST responses.',
+      status: 'VERIFIED',
+      badge: 'SERVER-ONLY SECRETS',
+    },
+  ];
+
   return (
-    <div className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16">
+    <div className="py-16 sm:py-24 px-4 sm:px-8 max-w-7xl mx-auto space-y-16 font-mono">
       {/* Header */}
-      <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="font-mono text-emerald-400">SECURITY & GOVERNANCE</span>
-        </div>
-        <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-          Financial data protection & zero-trust architecture
+      <div className="text-center space-y-3 max-w-3xl mx-auto">
+        <SectionTag label="SECURITY & GOVERNANCE" />
+        <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight leading-tight">
+          FINANCIAL DATA PROTECTION & ZERO-TRUST ARCHITECTURE
         </h1>
-        <p className="text-sm sm:text-base text-slate-400">
-          Factual architectural safeguards engineered to protect merchant transaction integrity, prevent duplicate billing, and ensure cryptographic financial reconciliation.
+        <p className="text-xs sm:text-sm text-on-surface-variant/80 leading-relaxed">
+          Architectural safeguards engineered to protect transaction integrity, prevent duplicate billing, and ensure cryptographic reconciliation.
         </p>
       </div>
 
       {/* Security Pillars Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div className="p-7 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
-            <Lock className="w-5 h-5" />
-          </div>
-          <h3 className="text-base font-bold text-white">Multi-Tenant RBAC Isolation</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Granular access control enforcing merchant boundaries with <span className="font-mono text-slate-300">User</span> and <span className="font-mono text-slate-300">MerchantMembership</span> relationships. Roles include <span className="font-mono text-white text-[11px]">OWNER</span>, <span className="font-mono text-white text-[11px]">ADMIN</span>, <span className="font-mono text-white text-[11px]">ANALYST</span>, <span className="font-mono text-white text-[11px]">SUPPORT</span>, and <span className="font-mono text-white text-[11px]">VIEWER</span>.
-          </p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {pillars.map((pillar) => (
+          <SystemPanel key={pillar.num} borderVariant="subtle" className="p-6 sm:p-7 space-y-4">
+            <div className="flex justify-between items-center text-[10px]">
+              <span className="text-primary font-bold">{pillar.num}</span>
+              <StatusIndicator status={pillar.status} label={pillar.badge} />
+            </div>
 
-        <div className="p-7 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <h3 className="text-base font-bold text-white">Timing-Safe HMAC SHA-256</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            All Razorpay webhooks require raw-body HMAC SHA-256 signature verification evaluated using <span className="font-mono text-slate-300">crypto.timingSafeEqual</span> to defeat side-channel timing attacks.
-          </p>
-        </div>
+            <h3 className="text-base sm:text-lg font-bold font-geist text-on-surface">
+              {pillar.title}
+            </h3>
 
-        <div className="p-7 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
-            <Layers className="w-5 h-5" />
-          </div>
-          <h3 className="text-base font-bold text-white">Attempt Idempotency Locks</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Database constraints (<span className="font-mono text-slate-300">@@unique([transactionId, attemptNumber])</span>) and webhook event deduplication (<span className="font-mono text-slate-300">x-razorpay-event-id</span>) prevent double-charging or race conditions.
-          </p>
-        </div>
-
-        <div className="p-7 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
-            <FileCheck className="w-5 h-5" />
-          </div>
-          <h3 className="text-base font-bold text-white">Immutable Audit Logging</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Every recovery decision, AI reasoning factor, and execution event is committed with correlation IDs, timestamps, actor metadata, IP address, and non-cascading persistence.
-          </p>
-        </div>
-
-        <div className="p-7 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center">
-            <Ban className="w-5 h-5" />
-          </div>
-          <h3 className="text-base font-bold text-white">Strict Test Mode Guardrails</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            The platform strictly enforces Razorpay Test Mode keys (<span className="font-mono text-slate-300">rzp_test_</span>). Hardcoded security filters reject live credentials to ensure zero live customer risk during sandbox testing.
-          </p>
-        </div>
-
-        <div className="p-7 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
-            <Key className="w-5 h-5" />
-          </div>
-          <h3 className="text-base font-bold text-white">Zero Client Secret Leakage</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Database connection strings, Redis auth tokens, and Gemini API keys reside exclusively in backend environment variables and are completely stripped from all client REST payloads.
-          </p>
-        </div>
+            <p className="text-xs text-on-surface-variant/70 leading-relaxed">
+              {pillar.desc}
+            </p>
+          </SystemPanel>
+        ))}
       </div>
 
-      <div className="p-8 rounded-2xl bg-slate-900/40 border border-slate-800 text-center space-y-4">
-        <h3 className="text-lg font-bold text-white">Ready to test the recovery engine?</h3>
-        <NavLink
-          to="/signup"
-          className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all shadow-md shadow-emerald-900/30"
-        >
-          Create Sandbox Account
-          <ArrowRight className="w-4 h-4" />
+      {/* Sandbox CTA */}
+      <SystemPanel borderVariant="primary" className="p-8 sm:p-10 text-center space-y-4">
+        <h3 className="text-xl sm:text-2xl font-bold font-geist text-white">
+          Ready to evaluate the autonomous recovery engine?
+        </h3>
+        <p className="text-xs text-on-surface-variant/80 max-w-md mx-auto">
+          Initialize a merchant sandbox in 60 seconds with synthetic failed transactions.
+        </p>
+        <NavLink to="/signup" className="inline-block pt-2">
+          <ActionButton>
+            INITIALIZE SANDBOX ENVIRONMENT &rarr;
+          </ActionButton>
         </NavLink>
-      </div>
+      </SystemPanel>
     </div>
   );
 };

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, ChevronLeft, ChevronRight, AlertTriangle, RotateCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import { fetchRecoveries } from '../services/api';
 import { RecoverySummary } from '../types';
-import { StatusBadge } from '../components/ui/StatusBadge';
-import { formatINR } from '../components/ui/MetricCard';
+import { SectionTag } from '../components/system/SectionTag';
+import { SystemPanel } from '../components/system/SystemPanel';
+import { StatusIndicator } from '../components/system/StatusIndicator';
 import { TableSkeleton } from '../components/ui/Skeleton';
 import { ErrorBanner } from '../components/ui/ErrorBanner';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -74,51 +75,58 @@ export const RecoveriesPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Recovery Center</h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Real-time tracking of recovery attempts dispatched to Razorpay Test Mode and simulation providers.
+    <div className="space-y-6 pb-12 font-mono">
+      {/* Header: 03 / EXECUTION PIPELINE */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <SectionTag label="03 / EXECUTION PIPELINE" />
+            <StatusIndicator status="OPERATIONAL" label="DISPATCH WORKERS READY" />
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-bold font-geist text-on-surface tracking-tight">
+            RECOVERY CENTER
+          </h1>
+          <p className="text-xs text-on-surface-variant/80 max-w-2xl leading-relaxed">
+            Real-time execution log of autonomous recovery attempts dispatched to Razorpay Test Mode and SMS/email channels.
           </p>
         </div>
+
         <div className="flex items-center gap-3">
           <button
             onClick={toggleNeedsAttention}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+            className={`flex items-center gap-2 px-3 py-2 rounded text-xs transition-all ${
               needsAttention
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                ? 'border border-tertiary/50 bg-tertiary/10 text-tertiary font-bold shadow-[0_0_10px_rgba(249,188,69,0.2)]'
+                : 'border border-white/10 bg-surface/50 text-on-surface-variant hover:text-white'
             }`}
           >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            Needs Attention (Stuck &gt;30m)
+            <span>●</span>
+            Needs Attention (&gt;30m)
           </button>
-          <div className="text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg shrink-0">
-            Showing <span className="text-white">{recoveries.length}</span> of <span className="text-white">{total}</span> total
+          <div className="text-xs text-on-surface-variant/70 bg-surface/50 border border-white/10 px-3 py-2 rounded">
+            TOTAL: <span className="text-white font-bold">{total}</span>
           </div>
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-xl p-3">
-        {/* Status Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto text-xs">
+      {/* Filter Tabs System Panel */}
+      <SystemPanel borderVariant="subtle" className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
+        {/* Status Filter Buttons */}
+        <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
           {[
-            { label: 'All Statuses', val: '' },
-            { label: 'Executed', val: 'SUCCESS' },
-            { label: 'Pending / In Progress', val: 'PENDING' },
-            { label: 'Failed', val: 'FAILED' },
-            { label: 'Cancelled', val: 'CANCELLED' },
+            { label: 'ALL', val: '' },
+            { label: 'EXECUTED', val: 'SUCCESS' },
+            { label: 'PENDING', val: 'PENDING' },
+            { label: 'FAILED', val: 'FAILED' },
+            { label: 'CANCELLED', val: 'CANCELLED' },
           ].map((tab) => (
             <button
               key={tab.val}
               onClick={() => handleFilterChange('status', tab.val)}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-colors shrink-0 ${
+              className={`px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all ${
                 status === tab.val
-                  ? 'bg-indigo-600 text-white font-semibold'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-primary/20 text-primary border border-primary/40'
+                  : 'text-on-surface-variant/70 hover:text-white hover:bg-surface/50 border border-transparent'
               }`}
             >
               {tab.label}
@@ -131,28 +139,28 @@ export const RecoveriesPage: React.FC = () => {
           <select
             value={actionType}
             onChange={(e) => handleFilterChange('actionType', e.target.value)}
-            aria-label="Filter by Policy Action Type"
-            className="bg-slate-950 border border-slate-800 text-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500"
+            aria-label="Filter by Policy Action"
+            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs"
           >
-            <option value="">All Action Types</option>
-            <option value="RETRY">RETRY</option>
-            <option value="REMIND">REMIND</option>
-            <option value="ESCALATE">ESCALATE</option>
-            <option value="WAIT">WAIT</option>
-            <option value="STOP">STOP</option>
+            <option value="" className="bg-[#070B17] text-white">All Action Types</option>
+            <option value="RETRY" className="bg-[#070B17] text-white">RETRY</option>
+            <option value="REMIND" className="bg-[#070B17] text-white">REMIND</option>
+            <option value="ESCALATE" className="bg-[#070B17] text-white">ESCALATE</option>
+            <option value="WAIT" className="bg-[#070B17] text-white">WAIT</option>
+            <option value="STOP" className="bg-[#070B17] text-white">STOP</option>
           </select>
 
           {(status || actionType || search || needsAttention) && (
             <button
               onClick={() => setSearchParams(new URLSearchParams())}
-              className="flex items-center gap-1 text-xs text-rose-400 hover:text-rose-300 ml-2"
+              className="flex items-center gap-1 text-xs text-error hover:underline ml-2"
             >
               <RotateCcw className="w-3 h-3" />
               Reset
             </button>
           )}
         </div>
-      </div>
+      </SystemPanel>
 
       {/* Main Table */}
       {loading ? (
@@ -161,63 +169,72 @@ export const RecoveriesPage: React.FC = () => {
         <ErrorBanner message={error} onRetry={loadRecoveries} />
       ) : recoveries.length === 0 ? (
         <EmptyState
-          title="No Recovery Records Found"
-          description="No recovery executions match the active filter criteria."
+          title="No Recovery Attempts Found"
+          description="Adjust your active filters or execute a recovery action from the Transaction Explorer."
         />
       ) : (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-surface-container-high/80 border border-white/10 rounded-xl overflow-hidden backdrop-blur-md shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-semibold uppercase tracking-wider text-[10px]">
+              <thead className="bg-surface/80 text-on-surface-variant/70 border-b border-white/10 text-[10px] uppercase font-bold tracking-wider">
                 <tr>
-                  <th className="py-3.5 px-4">Attempt ID</th>
-                  <th className="py-3.5 px-4">Tx ID / Customer</th>
-                  <th className="py-3.5 px-4">Policy Action</th>
-                  <th className="py-3.5 px-4">Execution Status</th>
-                  <th className="py-3.5 px-4">Verified Recovered</th>
-                  <th className="py-3.5 px-4">Executed At</th>
-                  <th className="py-3.5 px-4 text-right">Inspect</th>
+                  <th className="py-3.5 px-4">ATTEMPT ID</th>
+                  <th className="py-3.5 px-4">TX ID & CUSTOMER</th>
+                  <th className="py-3.5 px-4">ACTION DISPATCHED</th>
+                  <th className="py-3.5 px-4">EXECUTION STATUS</th>
+                  <th className="py-3.5 px-4">OUTCOME</th>
+                  <th className="py-3.5 px-4">TIMESTAMP</th>
+                  <th className="py-3.5 px-4 text-right">ACTION</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 text-slate-300">
+              <tbody className="divide-y divide-white/5 text-on-surface-variant">
                 {recoveries.map((rec) => (
                   <tr
                     key={rec.id}
                     onClick={() => navigate(`/transactions/${rec.transactionId}`)}
-                    className="hover:bg-slate-800/40 cursor-pointer transition-colors"
+                    className="hover:bg-surface/50 cursor-pointer transition-colors group"
                   >
-                    <td className="py-3 px-4 font-mono font-medium text-slate-200">
-                      {rec.id.slice(0, 12)}...
+                    <td className="py-3.5 px-4 font-bold text-white group-hover:text-primary">
+                      {rec.id}
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="font-mono text-indigo-300">{rec.transactionId}</div>
-                      <div className="text-[11px] text-slate-400">{rec.customerName}</div>
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-white">{rec.transactionId}</div>
+                      <div className="text-[10px] text-on-surface-variant/60">
+                        {rec.customerName || 'Customer'}
+                      </div>
                     </td>
-                    <td className="py-3 px-4">
-                      <StatusBadge type="decision" value={rec.actionType} />
+                    <td className="py-3.5 px-4">
+                      <span className="text-primary font-bold text-[10px] bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
+                        {rec.actionType}
+                      </span>
                     </td>
-                    <td className="py-3 px-4">
-                      <StatusBadge type="execution" value={rec.status} />
+                    <td className="py-3.5 px-4">
+                      <StatusIndicator
+                        status={
+                          rec.status === 'SUCCESS'
+                            ? 'OPERATIONAL'
+                            : rec.status === 'PENDING'
+                            ? 'EXECUTING'
+                            : 'FAILED'
+                        }
+                        label={rec.status}
+                      />
                     </td>
-                    <td className="py-3 px-4 font-bold text-white">
-                      {rec.amountRecovered > 0 ? (
-                        <span className="text-emerald-400">{formatINR(rec.amountRecovered)}</span>
-                      ) : (
-                        <span className="text-slate-500">₹0 (Pending Webhook)</span>
-                      )}
+                    <td className="py-3.5 px-4 text-[11px]">
+                      {rec.reason || '—'}
                     </td>
-                    <td className="py-3 px-4 text-slate-400">
-                      {rec.executedAt ? new Date(rec.executedAt).toLocaleString() : 'Pending'}
+                    <td className="py-3.5 px-4 text-[10px] text-on-surface-variant/60">
+                      {new Date(rec.createdAt).toLocaleTimeString()}
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3.5 px-4 text-right">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/transactions/${rec.transactionId}`);
                         }}
-                        className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                        className="text-[10px] text-primary hover:text-white border border-primary/30 hover:bg-primary hover:text-surface-dim px-2.5 py-1 rounded transition-all font-bold"
                       >
-                        <ArrowRight className="w-4 h-4" />
+                        INSPECT &rarr;
                       </button>
                     </td>
                   </tr>
@@ -226,24 +243,23 @@ export const RecoveriesPage: React.FC = () => {
             </table>
           </div>
 
-          {/* Pagination Controls */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-800 text-xs text-slate-400 bg-slate-950/40">
+          {/* Pagination */}
+          <div className="flex items-center justify-between px-4 py-3 border-t border-white/10 text-xs text-on-surface-variant/70 bg-surface/40">
             <div>
-              Page <span className="font-semibold text-white">{page}</span> of{' '}
-              <span className="font-semibold text-white">{totalPages}</span>
+              PAGE <span className="font-bold text-white">{page}</span> OF <span className="font-bold text-white">{totalPages}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 disabled={page <= 1}
                 onClick={() => handleFilterChange('page', (page - 1).toString())}
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 transition-colors"
+                className="p-1.5 rounded bg-surface/50 hover:bg-surface/80 disabled:opacity-30 text-white border border-white/10 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 disabled={page >= totalPages}
                 onClick={() => handleFilterChange('page', (page + 1).toString())}
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 transition-colors"
+                className="p-1.5 rounded bg-surface/50 hover:bg-surface/80 disabled:opacity-30 text-white border border-white/10 transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

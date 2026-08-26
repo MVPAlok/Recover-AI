@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Zap, ArrowRight, ShieldCheck, CheckCircle2, Store, Mail, DollarSign } from 'lucide-react';
 import { setActiveMerchantId, setOnboardingProfile, createMerchantWorkspace } from '../../services/api';
+import { SectionTag } from '../../components/system/SectionTag';
+import { SystemPanel } from '../../components/system/SystemPanel';
+import { ActionButton } from '../../components/system/ActionButton';
+import { StatusIndicator } from '../../components/system/StatusIndicator';
 
 export const SignupPage: React.FC = () => {
   const [businessName, setBusinessName] = useState('');
@@ -14,8 +17,8 @@ export const SignupPage: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const bName = businessName.trim() || 'My Merchant Store';
-    const bEmail = email.trim() || 'merchant@example.com';
+    const bName = businessName.trim() || 'Apex Retail India';
+    const bEmail = email.trim() || 'finance@apexretail.in';
 
     setOnboardingProfile({
       businessName: bName,
@@ -24,7 +27,6 @@ export const SignupPage: React.FC = () => {
     });
 
     try {
-      // Actually register the merchant in PostgreSQL
       const created = await createMerchantWorkspace({
         name: bName,
         email: bEmail,
@@ -42,100 +44,96 @@ export const SignupPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md p-8 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-6 shadow-2xl backdrop-blur-xl">
+    <div className="min-h-[85vh] flex flex-col justify-center items-center px-4 py-12 relative">
+      <div className="w-full max-w-xl space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-indigo-600 flex items-center justify-center text-white mx-auto shadow-md shadow-emerald-500/20">
-            <Zap className="w-5 h-5 fill-white" />
-          </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Create Merchant Sandbox</h2>
-          <p className="text-xs text-slate-400">
-            Configure your revenue recovery workspace & gateway connection in 60 seconds.
+          <SectionTag label="01 / INITIALIZATION" />
+          <h1 className="text-2xl sm:text-4xl font-bold font-geist text-on-surface tracking-tight mt-2">
+            CREATE RECOVERY ENVIRONMENT
+          </h1>
+          <p className="text-xs sm:text-sm font-mono text-on-surface-variant max-w-md mx-auto leading-relaxed">
+            Configure your isolated merchant infrastructure and autonomous recovery rules.
           </p>
         </div>
 
-        <form onSubmit={handleSignup} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-300">
-              <span className="flex items-center gap-1.5">
-                <Store className="w-3.5 h-3.5 text-indigo-400" />
-                Business / Store Name
-              </span>
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Apex Retail India"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-emerald-500 transition-colors"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-300">
-              <span className="flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5 text-cyan-400" />
-                Finance & Operations Email
-              </span>
-            </label>
-            <input
-              type="email"
-              required
-              placeholder="finance@yourcompany.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-emerald-500 transition-colors"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-300">
-              <span className="flex items-center gap-1.5">
-                <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
-                Settlement Currency
-              </span>
-            </label>
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-emerald-500 font-mono transition-colors"
-            >
-              <option value="INR">INR (₹ Indian Rupee)</option>
-              <option value="USD">USD ($ US Dollar)</option>
-            </select>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1 text-[11px] text-slate-400">
-            <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Test Mode Sandbox Included
+        {/* Configuration System Panel */}
+        <SystemPanel borderVariant="primary" className="p-6 sm:p-8 space-y-6">
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-1 font-mono">
+              <label className="block text-[10px] sm:text-[11px] text-on-surface-variant/70 uppercase tracking-wider">
+                BUSINESS / STORE NAME
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Apex Retail India"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                className="w-full px-3 py-2.5 rounded bg-surface/50 border border-white/10 text-on-surface text-xs font-mono placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary transition-colors"
+              />
             </div>
-            <div>Free sandbox environment with 1,000 synthetic transactions for testing.</div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all shadow-md shadow-emerald-900/30 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
-          >
-            {isSubmitting ? 'Configuring Sandbox...' : 'Continue to Gateway Setup'}
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </form>
+            <div className="space-y-1 font-mono">
+              <label className="block text-[10px] sm:text-[11px] text-on-surface-variant/70 uppercase tracking-wider">
+                FINANCE & OPERATIONS EMAIL
+              </label>
+              <input
+                type="email"
+                required
+                placeholder="finance@yourcompany.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2.5 rounded bg-surface/50 border border-white/10 text-on-surface text-xs font-mono placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary transition-colors"
+              />
+            </div>
 
-        <div className="pt-4 border-t border-slate-800/80 text-center space-y-2">
-          <p className="text-xs text-slate-400">
-            Already have a merchant workspace?{' '}
-            <NavLink to="/login" className="text-emerald-400 hover:underline font-semibold">
-              Sign In
-            </NavLink>
-          </p>
-          <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500 font-mono">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            Deterministic AI Fallback Guardrails
+            <div className="space-y-1 font-mono">
+              <label className="block text-[10px] sm:text-[11px] text-on-surface-variant/70 uppercase tracking-wider">
+                SETTLEMENT CURRENCY
+              </label>
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="w-full px-3 py-2.5 rounded bg-surface/50 border border-white/10 text-on-surface text-xs font-mono focus:outline-none focus:border-primary transition-colors"
+              >
+                <option value="INR" className="bg-surface-container-lowest text-white">INR — Indian Rupee (₹)</option>
+                <option value="USD" className="bg-surface-container-lowest text-white">USD — US Dollar ($)</option>
+              </select>
+            </div>
+
+            {/* Sandbox Environment notice */}
+            <div className="p-3 rounded bg-surface/30 border border-white/5 space-y-1 text-xs font-mono">
+              <div className="flex justify-between items-center text-[10px] uppercase font-bold text-on-surface">
+                <span>SANDBOX ENVIRONMENT</span>
+                <StatusIndicator status="OPERATIONAL" label="SYNTHETIC READY" />
+              </div>
+              <p className="text-[11px] text-on-surface-variant/70 leading-relaxed">
+                Synthetic transactions enabled. No production funds are touched during evaluation.
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <ActionButton
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full justify-center"
+              >
+                {isSubmitting ? 'INITIALIZING ENVIRONMENT...' : 'INITIALIZE RECOVERY ENVIRONMENT'}
+              </ActionButton>
+            </div>
+          </form>
+
+          {/* Panel Footer */}
+          <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px] font-mono">
+            <div className="text-on-surface-variant/70">
+              Existing environment?{' '}
+              <NavLink to="/login" className="text-primary hover:underline font-bold">
+                SIGN IN &rarr;
+              </NavLink>
+            </div>
+            <StatusIndicator status="VERIFIED" label="TENANT ISOLATED" />
           </div>
-        </div>
+        </SystemPanel>
       </div>
     </div>
   );

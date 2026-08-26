@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import {
-  BarChart3,
-  TrendingUp,
-  PieChart,
-  ShieldCheck,
-  Activity,
-} from 'lucide-react';
 import { fetchAnalytics } from '../services/api';
 import { AnalyticsData } from '../types';
-import { MetricCard, formatINR } from '../components/ui/MetricCard';
+import { SectionTag } from '../components/system/SectionTag';
+import { SystemPanel } from '../components/system/SystemPanel';
+import { StatusIndicator } from '../components/system/StatusIndicator';
 import { CardSkeleton } from '../components/ui/Skeleton';
 import { ErrorBanner } from '../components/ui/ErrorBanner';
+import { formatINR } from '../components/ui/MetricCard';
 
 export const AnalyticsPage: React.FC = () => {
   const [data, setData] = useState<AnalyticsData | null>(null);
@@ -54,104 +50,136 @@ export const AnalyticsPage: React.FC = () => {
   const { overview, failures, decisions } = data;
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Recovery Analytics & Intelligence</h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-          Real-time failure categorization, AI decision efficacy, and recovered revenue breakdown.
-        </p>
+    <div className="space-y-8 pb-12 font-mono">
+      {/* Header: 04 / INTELLIGENCE */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <SectionTag label="04 / INTELLIGENCE" />
+            <StatusIndicator status="OPERATIONAL" label="STATISTICAL PIPELINE LIVE" />
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-bold font-geist text-on-surface tracking-tight">
+            RECOVERY ANALYTICS
+          </h1>
+          <p className="text-xs text-on-surface-variant/80 max-w-2xl leading-relaxed">
+            Quantitative analysis of payment failure codes, AI policy distribution, and verified recovery efficiency.
+          </p>
+        </div>
+
+        <div className="text-xs text-on-surface-variant/70 bg-surface/50 border border-white/10 px-3 py-2 rounded">
+          SCOPE: <span className="text-white font-bold">ALL HISTORICAL SESSIONS</span>
+        </div>
       </div>
 
-      {/* Top Performance Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <MetricCard
-          title="Overall Recovery Rate"
-          value={`${overview.overallRecoveryRate}%`}
-          subtitle="Revenue Saved / Revenue at Risk"
-          icon={TrendingUp}
-          badge={{ text: 'Real Data', variant: 'emerald' }}
-        />
-        <MetricCard
-          title="Total Recovered"
-          value={formatINR(overview.totalRecoveredRevenue)}
-          subtitle={`From ${overview.successfulRecoveriesCount} successful attempts`}
-          icon={ShieldCheck}
-          badge={{ text: 'PostgreSQL Sum', variant: 'indigo' }}
-        />
-        <MetricCard
-          title="Avg Transaction Value"
-          value={formatINR(overview.averageTransactionValue)}
-          subtitle="Across all failed payments"
-          icon={BarChart3}
-        />
-      </div>
-
-      {/* 2-Column Analytics Distribution Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Failure Breakdown */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Failure Cause Distribution</h3>
-              <p className="text-xs text-slate-400">Breakdown of gateway decline codes</p>
+      {/* Top Telemetry Summary Panel */}
+      <SystemPanel borderVariant="primary" className="p-6 sm:p-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="space-y-1">
+            <span className="text-[10px] sm:text-xs text-on-surface-variant/70 uppercase">OVERALL RECOVERY RATE</span>
+            <div className="text-2xl sm:text-3xl font-bold font-geist text-primary">
+              {overview.overallRecoveryRate}%
             </div>
-            <Activity className="w-4 h-4 text-indigo-400" />
+            <div className="text-[10px] text-secondary">
+              Revenue Saved / Revenue at Risk
+            </div>
           </div>
 
-          <div className="space-y-3 pt-2">
+          <div className="space-y-1">
+            <span className="text-[10px] sm:text-xs text-on-surface-variant/70 uppercase">TOTAL VERIFIED RECOVERY</span>
+            <div className="text-2xl sm:text-3xl font-bold font-geist text-secondary">
+              {formatINR(overview.totalRecoveredRevenue)}
+            </div>
+            <div className="text-[10px] text-on-surface-variant/70">
+              {overview.successfulRecoveriesCount} successful attempts reconciled
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-[10px] sm:text-xs text-on-surface-variant/70 uppercase">AVG TRANSACTION VALUE</span>
+            <div className="text-2xl sm:text-3xl font-bold font-geist text-white">
+              {formatINR(overview.averageTransactionValue)}
+            </div>
+            <div className="text-[10px] text-on-surface-variant/70">
+              Across all ingested payment failures
+            </div>
+          </div>
+        </div>
+      </SystemPanel>
+
+      {/* 2-Column Structured Visualization Panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Failure Cause Breakdown */}
+        <SystemPanel borderVariant="subtle" className="p-6 space-y-4">
+          <div className="flex justify-between items-center border-b border-white/10 pb-3">
+            <div>
+              <span className="text-xs font-bold text-primary uppercase tracking-wider block">
+                FAILURE CAUSE DECOMPOSITION
+              </span>
+              <p className="text-[11px] text-on-surface-variant/70 mt-0.5">
+                Frequency and financial volume by gateway decline reason
+              </p>
+            </div>
+            <span className="text-[10px] text-on-surface-variant/60">
+              {failures.length} Categories
+            </span>
+          </div>
+
+          <div className="space-y-3.5 pt-1">
             {failures.map((item) => (
-              <div key={item.failureCode} className="space-y-1">
-                <div className="flex justify-between text-xs font-semibold">
-                  <span className="text-slate-300 font-mono">{item.failureCode}</span>
-                  <span className="text-slate-400">
-                    {item.count} orders ({item.percentage.toFixed(1)}%) • {formatINR(item.amount)}
+              <div key={item.failureCode} className="space-y-1 text-xs">
+                <div className="flex justify-between font-semibold">
+                  <span className="text-white text-[11px]">{item.failureCode}</span>
+                  <span className="text-on-surface-variant/70 text-[10px]">
+                    {item.count} orders ({item.percentage.toFixed(1)}%) • <strong className="text-secondary">{formatINR(item.amount)}</strong>
                   </span>
                 </div>
-                {/* Visual Progress Bar */}
-                <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden">
+                <div className="w-full h-1.5 rounded-full bg-surface/50 overflow-hidden border border-white/5">
                   <div
-                    className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                    className="h-full bg-primary rounded-full transition-all"
                     style={{ width: `${Math.max(4, item.percentage)}%` }}
                   />
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </SystemPanel>
 
         {/* AI Decision Policy Distribution */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between">
+        <SystemPanel borderVariant="subtle" className="p-6 space-y-4">
+          <div className="flex justify-between items-center border-b border-white/10 pb-3">
             <div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">AI Policy Distribution</h3>
-              <p className="text-xs text-slate-400">Approved recovery actions determined by Phase 5</p>
+              <span className="text-xs font-bold text-primary uppercase tracking-wider block">
+                AI POLICY DISTRIBUTION
+              </span>
+              <p className="text-[11px] text-on-surface-variant/70 mt-0.5">
+                Actions determined by deterministic safety policies
+              </p>
             </div>
-            <PieChart className="w-4 h-4 text-emerald-400" />
+            <StatusIndicator status="OPERATIONAL" label="DECISION ENGINE" />
           </div>
 
-          <div className="space-y-3 pt-2">
+          <div className="space-y-3.5 pt-1">
             {decisions.map((item) => {
-              const colors: Record<string, string> = {
-                RETRY: 'bg-emerald-500',
-                REMIND: 'bg-indigo-500',
-                ESCALATE: 'bg-purple-500',
-                WAIT: 'bg-amber-500',
-                STOP: 'bg-slate-600',
-              };
+              const color =
+                item.decision === 'RETRY'
+                  ? 'bg-secondary'
+                  : item.decision === 'REMIND'
+                  ? 'bg-primary'
+                  : item.decision === 'WAIT'
+                  ? 'bg-tertiary'
+                  : 'bg-error';
 
               return (
-                <div key={item.decision} className="space-y-1">
-                  <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-slate-200 font-bold">{item.decision}</span>
-                    <span className="text-slate-400">
+                <div key={item.decision} className="space-y-1 text-xs">
+                  <div className="flex justify-between font-semibold">
+                    <span className="text-white font-bold text-[11px]">{item.decision}</span>
+                    <span className="text-on-surface-variant/70 text-[10px]">
                       {item.count} decisions ({item.percentage.toFixed(1)}%)
                     </span>
                   </div>
-                  {/* Visual Progress Bar */}
-                  <div className="w-full h-2 rounded-full bg-slate-950 overflow-hidden">
+                  <div className="w-full h-1.5 rounded-full bg-surface/50 overflow-hidden border border-white/5">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${colors[item.decision] || 'bg-indigo-500'}`}
+                      className={`h-full ${color} rounded-full transition-all`}
                       style={{ width: `${Math.max(4, item.percentage)}%` }}
                     />
                   </div>
@@ -159,7 +187,7 @@ export const AnalyticsPage: React.FC = () => {
               );
             })}
           </div>
-        </div>
+        </SystemPanel>
       </div>
     </div>
   );

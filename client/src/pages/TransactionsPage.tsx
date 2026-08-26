@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  ArrowRight,
-  RotateCcw,
-  AlertTriangle,
-} from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import { fetchTransactions } from '../services/api';
 import { TransactionSummary } from '../types';
-import { StatusBadge } from '../components/ui/StatusBadge';
+import { SectionTag } from '../components/system/SectionTag';
+import { SystemPanel } from '../components/system/SystemPanel';
+import { StatusIndicator } from '../components/system/StatusIndicator';
 import { formatINR } from '../components/ui/MetricCard';
 import { TableSkeleton } from '../components/ui/Skeleton';
 import { ErrorBanner } from '../components/ui/ErrorBanner';
@@ -107,126 +102,126 @@ export const TransactionsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            Transaction Explorer
+    <div className="space-y-6 pb-12 font-mono">
+      {/* Header: 02 / TRANSACTION LEDGER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <SectionTag label="02 / TRANSACTION LEDGER" />
+            <StatusIndicator status="OPERATIONAL" label="INGESTION STREAM ACTIVE" />
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-bold font-geist text-on-surface tracking-tight">
+            TRANSACTION EXPLORER
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Search and inspect all customer payment transactions, failure causes, and recovery states.
+          <p className="text-xs text-on-surface-variant/80 max-w-2xl leading-relaxed">
+            Search and inspect payment failures, AI root-cause decisions, and cryptographic recovery outcomes.
           </p>
         </div>
+
         <div className="flex items-center gap-3">
           <button
             onClick={toggleNeedsAttention}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+            className={`flex items-center gap-2 px-3 py-2 rounded text-xs transition-all ${
               needsAttention
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                ? 'border border-tertiary/50 bg-tertiary/10 text-tertiary font-bold shadow-[0_0_10px_rgba(249,188,69,0.2)]'
+                : 'border border-white/10 bg-surface/50 text-on-surface-variant hover:text-white'
             }`}
           >
-            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>●</span>
             Needs Attention
           </button>
-          <div className="text-xs font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg shrink-0">
-            Showing <span className="text-white">{transactions.length}</span> of <span className="text-white">{total}</span> total
+          <div className="text-xs text-on-surface-variant/70 bg-surface/50 border border-white/10 px-3 py-2 rounded">
+            TOTAL: <span className="text-white font-bold">{total}</span>
           </div>
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+      {/* Filter System Panel */}
+      <SystemPanel borderVariant="subtle" className="p-4 sm:p-5 space-y-3">
         <form onSubmit={handleSearchSubmit} className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-on-surface-variant/40 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search by Transaction ID, Customer Name, Email, or Failure Code..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full bg-surface/50 border border-white/10 rounded pl-9 pr-3 py-2 text-xs text-white placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary"
             />
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg transition-colors"
+            className="px-4 py-2 bg-primary/10 text-primary border border-primary/30 hover:bg-primary hover:text-surface-dim font-bold text-xs uppercase tracking-wider rounded transition-all"
           >
             Search
           </button>
         </form>
 
-        <div className="flex flex-wrap items-center gap-2.5 pt-1 text-xs">
-          {/* Status Filter */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
           <select
             value={status}
             onChange={(e) => handleFilterChange('status', e.target.value)}
-            aria-label="Filter by Transaction Status"
-            className="bg-slate-950 border border-slate-800 text-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500"
+            aria-label="Filter by Status"
+            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs"
           >
-            <option value="">All Statuses</option>
-            <option value="FAILED">Failed Only</option>
-            <option value="SUCCESS">Success Only</option>
+            <option value="" className="bg-[#070B17] text-white">All Statuses</option>
+            <option value="FAILED" className="bg-[#070B17] text-white">Failed Only</option>
+            <option value="SUCCESS" className="bg-[#070B17] text-white">Success Only</option>
           </select>
 
-          {/* Payment Status Filter */}
           <select
             value={paymentStatus}
             onChange={(e) => handleFilterChange('paymentStatus', e.target.value)}
-            aria-label="Filter by Payment Status"
-            className="bg-slate-950 border border-slate-800 text-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500"
+            aria-label="Filter by Payment State"
+            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs"
           >
-            <option value="">All Payment States</option>
-            <option value="CAPTURED">Captured</option>
-            <option value="AUTHORIZED">Authorized</option>
-            <option value="UNPAID">Unpaid</option>
-            <option value="FAILED">Failed</option>
+            <option value="" className="bg-[#070B17] text-white">All Payment States</option>
+            <option value="CAPTURED" className="bg-[#070B17] text-white">Captured</option>
+            <option value="AUTHORIZED" className="bg-[#070B17] text-white">Authorized</option>
+            <option value="UNPAID" className="bg-[#070B17] text-white">Unpaid</option>
+            <option value="FAILED" className="bg-[#070B17] text-white">Failed</option>
           </select>
 
-          {/* Recovery Status Filter */}
           <select
             value={recoveryStatus}
             onChange={(e) => handleFilterChange('recoveryStatus', e.target.value)}
-            aria-label="Filter by Recovery Status"
-            className="bg-slate-950 border border-slate-800 text-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500"
+            aria-label="Filter by Recovery State"
+            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs"
           >
-            <option value="">All Recovery States</option>
-            <option value="RECOVERED">Recovered</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="REQUIRES_REVIEW">Requires Review</option>
-            <option value="NOT_STARTED">Not Started</option>
+            <option value="" className="bg-[#070B17] text-white">All Recovery States</option>
+            <option value="RECOVERED" className="bg-[#070B17] text-white">Recovered</option>
+            <option value="IN_PROGRESS" className="bg-[#070B17] text-white">In Progress</option>
+            <option value="REQUIRES_REVIEW" className="bg-[#070B17] text-white">Requires Review</option>
+            <option value="NOT_STARTED" className="bg-[#070B17] text-white">Not Started</option>
           </select>
 
-          {/* Decision Filter */}
           <select
             value={decision}
             onChange={(e) => handleFilterChange('decision', e.target.value)}
-            aria-label="Filter by AI Policy Decision"
-            className="bg-slate-950 border border-slate-800 text-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500"
+            aria-label="Filter by AI Policy"
+            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs"
           >
-            <option value="">All AI Decisions</option>
-            <option value="RETRY">RETRY</option>
-            <option value="REMIND">REMIND</option>
-            <option value="ESCALATE">ESCALATE</option>
-            <option value="WAIT">WAIT</option>
-            <option value="STOP">STOP</option>
+            <option value="" className="bg-[#070B17] text-white">All AI Decisions</option>
+            <option value="RETRY" className="bg-[#070B17] text-white">RETRY</option>
+            <option value="REMIND" className="bg-[#070B17] text-white">REMIND</option>
+            <option value="ESCALATE" className="bg-[#070B17] text-white">ESCALATE</option>
+            <option value="WAIT" className="bg-[#070B17] text-white">WAIT</option>
+            <option value="STOP" className="bg-[#070B17] text-white">STOP</option>
           </select>
 
-          {/* Reset Filters */}
           {(status || paymentStatus || recoveryStatus || decision || risk || search || needsAttention) && (
             <button
               onClick={handleResetFilters}
-              className="flex items-center gap-1 text-xs text-rose-400 hover:text-rose-300 ml-auto transition-colors"
+              className="flex items-center gap-1 text-xs text-error hover:underline ml-auto"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-3 h-3" />
               Reset Filters
             </button>
           )}
         </div>
-      </div>
+      </SystemPanel>
 
-      {/* Main Table */}
+      {/* Main Technical Ledger Table */}
       {loading ? (
         <TableSkeleton rows={8} cols={7} />
       ) : error ? (
@@ -237,69 +232,84 @@ export const TransactionsPage: React.FC = () => {
           description="Try broadening your search query or reset the active filter settings."
         />
       ) : (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-surface-container-high/80 border border-white/10 rounded-xl overflow-hidden backdrop-blur-md shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-semibold uppercase tracking-wider text-[10px]">
+              <thead className="bg-surface/80 text-on-surface-variant/70 border-b border-white/10 text-[10px] uppercase font-bold tracking-wider">
                 <tr>
-                  <th className="py-3.5 px-4">Tx ID</th>
-                  <th className="py-3.5 px-4">Customer</th>
-                  <th className="py-3.5 px-4">Amount</th>
-                  <th className="py-3.5 px-4">Status / Payment</th>
-                  <th className="py-3.5 px-4">Recovery State</th>
-                  <th className="py-3.5 px-4">Failure Code</th>
-                  <th className="py-3.5 px-4">AI Decision</th>
-                  <th className="py-3.5 px-4 text-right">Action</th>
+                  <th className="py-3.5 px-4">TX ID</th>
+                  <th className="py-3.5 px-4">CUSTOMER</th>
+                  <th className="py-3.5 px-4">AMOUNT</th>
+                  <th className="py-3.5 px-4">STATUS / PAYMENT</th>
+                  <th className="py-3.5 px-4">RECOVERY STATE</th>
+                  <th className="py-3.5 px-4">FAILURE CODE</th>
+                  <th className="py-3.5 px-4">AI DECISION</th>
+                  <th className="py-3.5 px-4 text-right">ACTION</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 text-slate-300">
+              <tbody className="divide-y divide-white/5 text-on-surface-variant">
                 {transactions.map((tx) => (
                   <tr
                     key={tx.id}
                     onClick={() => navigate(`/transactions/${tx.id}`)}
-                    className="hover:bg-slate-800/40 cursor-pointer transition-colors"
+                    className="hover:bg-surface/50 cursor-pointer transition-colors group"
                   >
-                    <td className="py-3 px-4 font-mono font-medium text-slate-200">
+                    <td className="py-3.5 px-4 font-bold text-white group-hover:text-primary">
                       {tx.id}
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="font-semibold text-white">{tx.customerName}</div>
-                      <div className="text-[11px] text-slate-400">{tx.customerEmail}</div>
+                    <td className="py-3.5 px-4">
+                      <div className="text-white font-semibold">{tx.customerName}</div>
+                      <div className="text-[10px] text-on-surface-variant/60">{tx.customerEmail}</div>
                     </td>
-                    <td className="py-3 px-4 font-bold text-white">
+                    <td className="py-3.5 px-4 font-bold text-white">
                       {formatINR(tx.amount)}
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <StatusBadge type="transaction" value={tx.status} />
-                        {tx.paymentStatus && <StatusBadge type="payment" value={tx.paymentStatus} />}
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-1.5">
+                        <StatusIndicator
+                          status={tx.status === 'SUCCESS' ? 'OPERATIONAL' : 'FAILED'}
+                          label={tx.status}
+                        />
+                        {tx.paymentStatus && (
+                          <span className="text-[10px] text-on-surface-variant/60">
+                            ({tx.paymentStatus})
+                          </span>
+                        )}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
-                      <StatusBadge
-                        type="recoveryState"
-                        value={tx.recoveryStatus || (tx.status === 'SUCCESS' ? 'RECOVERED' : 'NOT_STARTED')}
+                    <td className="py-3.5 px-4">
+                      <StatusIndicator
+                        status={
+                          tx.recoveryStatus === 'RECOVERED' || tx.status === 'SUCCESS'
+                            ? 'RECOVERED'
+                            : tx.recoveryStatus === 'IN_PROGRESS'
+                            ? 'EXECUTING'
+                            : 'WARNING'
+                        }
+                        label={tx.recoveryStatus || (tx.status === 'SUCCESS' ? 'RECOVERED' : 'NOT STARTED')}
                       />
                     </td>
-                    <td className="py-3 px-4 font-mono text-[11px] text-slate-400">
+                    <td className="py-3.5 px-4 text-[11px]">
                       {tx.failureCode || '—'}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4">
                       {tx.decision ? (
-                        <StatusBadge type="decision" value={tx.decision} />
+                        <span className="text-primary font-bold text-[10px] bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
+                          {tx.decision}
+                        </span>
                       ) : (
-                        <span className="text-slate-500">—</span>
+                        <span className="text-on-surface-variant/40">—</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3.5 px-4 text-right">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/transactions/${tx.id}`);
                         }}
-                        className="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                        className="text-[10px] text-primary hover:text-white border border-primary/30 hover:bg-primary hover:text-surface-dim px-2.5 py-1 rounded transition-all font-bold"
                       >
-                        <ArrowRight className="w-4 h-4" />
+                        INSPECT &rarr;
                       </button>
                     </td>
                   </tr>
@@ -309,23 +319,22 @@ export const TransactionsPage: React.FC = () => {
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-800 text-xs text-slate-400 bg-slate-950/40">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-white/10 text-xs text-on-surface-variant/70 bg-surface/40">
             <div>
-              Page <span className="font-semibold text-white">{page}</span> of{' '}
-              <span className="font-semibold text-white">{totalPages}</span>
+              PAGE <span className="font-bold text-white">{page}</span> OF <span className="font-bold text-white">{totalPages}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 disabled={page <= 1}
                 onClick={() => handleFilterChange('page', (page - 1).toString())}
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 transition-colors"
+                className="p-1.5 rounded bg-surface/50 hover:bg-surface/80 disabled:opacity-30 text-white border border-white/10 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 disabled={page >= totalPages}
                 onClick={() => handleFilterChange('page', (page + 1).toString())}
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:pointer-events-none text-slate-200 transition-colors"
+                className="p-1.5 rounded bg-surface/50 hover:bg-surface/80 disabled:opacity-30 text-white border border-white/10 transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

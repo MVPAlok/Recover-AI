@@ -1,140 +1,95 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import {
-  Zap,
-  ArrowRight,
-  ShieldCheck,
-  Cpu,
-  Layers,
-  Activity,
-  RotateCcw,
-  Search,
-} from 'lucide-react';
+import { SectionTag } from '../../components/system/SectionTag';
+import { SystemPanel } from '../../components/system/SystemPanel';
+import { StatusIndicator } from '../../components/system/StatusIndicator';
+import { ActionButton } from '../../components/system/ActionButton';
 
 export const FeaturesPage: React.FC = () => {
+  const capabilities = [
+    {
+      chapter: '01 / DETECTION',
+      title: 'Detection & Scoring Engine',
+      desc: 'Continuously ingests failed transaction streams, assesses merchant risk, and computes recovery probabilities (0–100%) by correlating customer historical success with failure codes.',
+      status: 'OPERATIONAL',
+      statusLabel: '0-100% PROBABILITY',
+    },
+    {
+      chapter: '02 / DIAGNOSIS',
+      title: 'Google Gemini AI Diagnostics',
+      desc: 'Translates cryptic gateway error payloads into standardized failure classifications with structured JSON outputs, key signals, and deterministic fallback guarantees.',
+      status: 'OPERATIONAL',
+      statusLabel: 'GEMINI 3.5 FLASH',
+    },
+    {
+      chapter: '03 / DECISION',
+      title: 'Authoritative Decision Engine',
+      desc: 'Deterministic hard safety rules enforce contextual actions (RETRY, WAIT, REMIND, STOP). Prevents AI hallucinations and enforces strict retry caps.',
+      status: 'OPERATIONAL',
+      statusLabel: 'HARD SAFETY RULES',
+    },
+    {
+      chapter: '04 / EXECUTION',
+      title: 'BullMQ & Redis Workers',
+      desc: 'Scalable asynchronous execution backed by Upstash Redis, supporting concurrency locks, exponential backoff, and strict idempotency.',
+      status: 'OPERATIONAL',
+      statusLabel: 'BULLMQ QUEUES',
+    },
+    {
+      chapter: '05 / VERIFICATION',
+      title: 'Payment Evidence Ledger',
+      desc: 'Financial reconciliation ensuring revenue is recognized if and only if Razorpay emits a verified payment.captured HMAC SHA-256 webhook.',
+      status: 'VERIFIED',
+      statusLabel: 'HMAC SHA-256',
+    },
+    {
+      chapter: '06 / TELEMETRY',
+      title: 'System Telemetry & Observability',
+      desc: 'Real-time multi-service telemetry calculating query latencies, queue depths, AI fallback rates, and webhook health without hardcoded values.',
+      status: 'OPERATIONAL',
+      statusLabel: 'LIVE TELEMETRY',
+    },
+  ];
+
   return (
-    <div className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-16">
+    <div className="py-16 sm:py-24 px-4 sm:px-8 max-w-7xl mx-auto space-y-16 font-mono">
       {/* Header */}
-      <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300">
-          <Zap className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="font-mono text-emerald-400">PRODUCT CAPABILITIES</span>
-        </div>
-        <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
-          Engineered for autonomous, verified revenue recovery
+      <div className="text-center space-y-3 max-w-3xl mx-auto">
+        <SectionTag label="CORE CAPABILITIES" />
+        <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight leading-tight">
+          ENGINEERED FOR AUTONOMOUS REVENUE RECOVERY
         </h1>
-        <p className="text-sm sm:text-base text-slate-400">
-          RecoverAI integrates detection, LLM-based root-cause diagnosis, deterministic safety policy, background workers, and cryptographic reconciliation into a unified platform.
+        <p className="text-xs sm:text-sm text-on-surface-variant/80 leading-relaxed">
+          Integrated detection, LLM-based root-cause diagnosis, deterministic safety policies, asynchronous workers, and cryptographic payment reconciliation.
         </p>
       </div>
 
-      {/* Feature Grids */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {/* Capability 1 */}
-        <div className="p-7 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4">
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
-            <Search className="w-5 h-5" />
-          </div>
-          <h3 className="text-lg font-bold text-white">Detection & Scoring Engine</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Continuously ingests failed transaction streams, assesses merchant risk, and computes recovery probabilities (0–100%) by correlating historical customer lifetime value with failure codes.
-          </p>
-          <div className="pt-2 flex items-center gap-2 text-[11px] font-mono text-slate-500">
-            <span>PHASE 3 ENGINE</span>
-            <span>•</span>
-            <span>0-100% PROBABILITY</span>
-          </div>
-        </div>
+      {/* Capabilities Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {capabilities.map((cap) => (
+          <SystemPanel key={cap.chapter} borderVariant="subtle" className="p-6 sm:p-7 space-y-4">
+            <div className="flex justify-between items-center text-[10px]">
+              <span className="text-primary font-bold">{cap.chapter}</span>
+              <StatusIndicator status={cap.status} label={cap.statusLabel} />
+            </div>
 
-        {/* Capability 2 */}
-        <div className="p-7 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
-            <Cpu className="w-5 h-5" />
-          </div>
-          <h3 className="text-lg font-bold text-white">Gemini AI Diagnostics</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Translates cryptic gateway error payloads into standardized failure categories with structured JSON outputs, reasoning factors, and instant deterministic fallback guarantees.
-          </p>
-          <div className="pt-2 flex items-center gap-2 text-[11px] font-mono text-slate-500">
-            <span>GEMINI 3.5 FLASH</span>
-            <span>•</span>
-            <span>ZERO DOWNTIME FALLBACK</span>
-          </div>
-        </div>
+            <h3 className="text-base sm:text-lg font-bold font-geist text-on-surface">
+              {cap.title}
+            </h3>
 
-        {/* Capability 3 */}
-        <div className="p-7 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
-            <Layers className="w-5 h-5" />
-          </div>
-          <h3 className="text-lg font-bold text-white">Authoritative Decision Engine</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Deterministic hard safety rules enforce contextual actions (<span className="font-mono text-white text-[11px]">RETRY</span>, <span className="font-mono text-white text-[11px]">WAIT</span>, <span className="font-mono text-white text-[11px]">REMIND</span>, <span className="font-mono text-white text-[11px]">STOP</span>). Prevents AI hallucinations and limits max retries.
-          </p>
-          <div className="pt-2 flex items-center gap-2 text-[11px] font-mono text-slate-500">
-            <span>HARD SAFETY OVERRIDES</span>
-            <span>•</span>
-            <span>MAX RETRY GUARDS</span>
-          </div>
-        </div>
-
-        {/* Capability 4 */}
-        <div className="p-7 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4">
-          <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center">
-            <RotateCcw className="w-5 h-5" />
-          </div>
-          <h3 className="text-lg font-bold text-white">BullMQ Worker Queue</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Scalable asynchronous execution backed by Upstash Redis, supporting concurrency = 5, automated exponential retry backoff, and strict idempotency locks.
-          </p>
-          <div className="pt-2 flex items-center gap-2 text-[11px] font-mono text-slate-500">
-            <span>UPSTASH REDIS</span>
-            <span>•</span>
-            <span>BULLMQ QUEUES</span>
-          </div>
-        </div>
-
-        {/* Capability 5 */}
-        <div className="p-7 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <h3 className="text-lg font-bold text-white">Payment Evidence Ledger</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Financial reconciliation architecture ensuring revenue is counted if and only if Razorpay emits a verified <span className="font-mono text-white text-[11px]">payment.captured</span> HMAC webhook matching the exact paise amount.
-          </p>
-          <div className="pt-2 flex items-center gap-2 text-[11px] font-mono text-slate-500">
-            <span>POSTGRESQL EVIDENCE</span>
-            <span>•</span>
-            <span>ZERO FALSE POSITIVES</span>
-          </div>
-        </div>
-
-        {/* Capability 6 */}
-        <div className="p-7 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
-            <Activity className="w-5 h-5" />
-          </div>
-          <h3 className="text-lg font-bold text-white">System Telemetry & Health</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Real-time multi-service telemetry calculating live query latencies, queue depths, AI fallback rates, and webhook error rates without hardcoded values.
-          </p>
-          <div className="pt-2 flex items-center gap-2 text-[11px] font-mono text-slate-500">
-            <span>GET /api/system/health</span>
-            <span>•</span>
-            <span>20S POLLING</span>
-          </div>
-        </div>
+            <p className="text-xs text-on-surface-variant/70 leading-relaxed">
+              {cap.desc}
+            </p>
+          </SystemPanel>
+        ))}
       </div>
 
-      {/* Navigation Footer CTA */}
-      <div className="pt-8 text-center space-y-4">
-        <NavLink
-          to="/how-it-works"
-          className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all shadow-md shadow-emerald-900/30"
-        >
-          See 6-Stage Workflow & Timelines
-          <ArrowRight className="w-4 h-4" />
+      {/* Navigation Footer */}
+      <div className="pt-6 text-center">
+        <NavLink to="/how-it-works">
+          <ActionButton>
+            SEE 6-STAGE WORKFLOW &rarr;
+          </ActionButton>
         </NavLink>
       </div>
     </div>

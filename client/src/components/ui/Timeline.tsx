@@ -133,47 +133,47 @@ export const Timeline: React.FC<TimelineProps> = ({ transaction }) => {
   ];
 
   return (
-    <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-3 sm:before:left-4 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-800">
+    <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-3 sm:before:left-4 before:top-3 before:bottom-3 before:w-[2px] before:bg-outline-variant/30">
       {steps.map((step, idx) => {
         const Icon = step.icon;
 
         const accentColors: Record<string, string> = {
-          rose: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
-          emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-          indigo: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
-          purple: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
-          blue: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-          amber: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+          rose: 'bg-rose-500/15 text-rose-300 border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.25)]',
+          emerald: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40 shadow-[0_0_10px_rgba(52,211,153,0.25)]',
+          indigo: 'bg-primary-container/20 text-primary-fixed-dim border-primary/40 shadow-[0_0_10px_rgba(91,91,247,0.25)]',
+          purple: 'bg-purple-500/15 text-purple-300 border-purple-500/40 shadow-[0_0_10px_rgba(168,85,247,0.25)]',
+          blue: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 shadow-[0_0_10px_rgba(6,182,212,0.25)]',
+          amber: 'bg-amber-500/15 text-amber-300 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.25)]',
         };
 
         return (
           <div key={idx} className="relative group">
             {/* Step Icon */}
             <div
-              className={`absolute -left-6 sm:-left-8 top-0.5 w-6 h-6 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-transform group-hover:scale-110 ${
-                step.active ? accentColors[step.accent] : 'bg-slate-900 text-slate-600 border-slate-800'
+              className={`absolute -left-6 sm:-left-8 top-1 w-6 h-6 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-all group-hover:scale-110 ${
+                step.active ? accentColors[step.accent] : 'bg-surface-container-high text-outline border-outline-variant/30'
               }`}
             >
               <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
 
             {/* Step Card */}
-            <div className={`p-4 rounded-xl border transition-all ${
+            <div className={`p-4 sm:p-5 rounded-2xl border transition-all ${
               step.active
-                ? 'bg-slate-900/90 border-slate-800 hover:border-slate-700'
-                : 'bg-slate-900/40 border-slate-800/60 opacity-60'
+                ? 'bg-surface-container-lowest/80 border-outline-variant/30 backdrop-blur-xl hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5'
+                : 'bg-surface-container-lowest/40 border-outline-variant/20 opacity-50'
             }`}>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1.5">
-                <span className="text-xs font-bold text-white tracking-wide">{step.title}</span>
+                <span className="text-xs font-bold font-geist text-on-surface tracking-wide uppercase">{step.title}</span>
                 {step.timestamp && (
-                  <span className="text-[11px] text-slate-400">
+                  <span className="font-mono text-[11px] text-outline">
                     {new Date(step.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                   </span>
                 )}
               </div>
 
-              <div className="text-xs font-semibold text-slate-300 mb-1">{step.subtitle}</div>
-              <p className="text-xs text-slate-400 leading-relaxed">{step.description}</p>
+              <div className="text-xs font-semibold font-geist text-primary-fixed-dim mb-1">{step.subtitle}</div>
+              <p className="text-xs font-mono text-on-surface-variant leading-relaxed">{step.description}</p>
             </div>
           </div>
         );

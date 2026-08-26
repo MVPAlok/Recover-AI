@@ -5,17 +5,20 @@ interface MetricCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   badge?: {
     text: string;
-    variant: 'emerald' | 'rose' | 'amber' | 'indigo';
+    variant: 'emerald' | 'rose' | 'amber' | 'indigo' | 'cyan';
   };
   trend?: string;
 }
 
 export function formatINR(val: number): string {
+  if (val >= 10000000) {
+    return `₹${(val / 10000000).toFixed(2)} Cr`;
+  }
   if (val >= 100000) {
-    return `₹${(val / 100000).toFixed(2)}L`;
+    return `₹${(val / 100000).toFixed(2)} L`;
   }
   return `₹${val.toLocaleString('en-IN')}`;
 }
@@ -28,34 +31,31 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   badge,
   trend,
 }) => {
-  const badgeStyles = {
-    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    rose: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    amber: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    indigo: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-  };
-
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm hover:border-slate-700 transition-all flex flex-col justify-between">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{title}</span>
-        <div className="p-2 rounded-lg bg-slate-800/80 text-slate-300">
-          <Icon className="w-5 h-5" />
-        </div>
+    <div className="bg-surface-container-high/80 backdrop-blur-xl border border-white/10 rounded-xl p-4 sm:p-5 relative overflow-hidden transition-all duration-200 hover:border-primary/30">
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-mono text-[10px] sm:text-[11px] tracking-wider text-on-surface-variant/70 uppercase">
+          {title}
+        </span>
+        {Icon && (
+          <div className="text-primary/70">
+            <Icon className="w-3.5 h-3.5" />
+          </div>
+        )}
       </div>
 
-      <div className="my-1">
-        <div className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{value}</div>
+      <div className="text-xl sm:text-2xl md:text-3xl font-bold font-geist text-on-surface tracking-tight my-1">
+        {value}
       </div>
 
-      <div className="flex items-center justify-between mt-3 text-xs">
-        {subtitle && <span className="text-slate-400">{subtitle}</span>}
+      <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/5 font-mono text-[10px] sm:text-[11px]">
+        {subtitle && <span className="text-on-surface-variant/70 truncate">{subtitle}</span>}
         {badge && (
-          <span className={`px-2 py-0.5 rounded-full border text-[11px] font-medium ${badgeStyles[badge.variant]}`}>
+          <span className="text-primary border border-primary/20 bg-primary/5 px-2 py-0.5 rounded text-[9px] sm:text-[10px]">
             {badge.text}
           </span>
         )}
-        {trend && <span className="text-emerald-400 font-medium">{trend}</span>}
+        {trend && <span className="text-secondary font-bold">{trend}</span>}
       </div>
     </div>
   );

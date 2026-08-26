@@ -1,22 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Zap,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-  Layers,
-  Key,
-  RotateCcw,
-  Store,
-  Sparkles,
-} from 'lucide-react';
-import {
   setActiveMerchantId,
   getOnboardingProfile,
   setOnboardingProfile,
   createMerchantWorkspace,
 } from '../../services/api';
+import { SectionTag } from '../../components/system/SectionTag';
+import { SystemPanel } from '../../components/system/SystemPanel';
+import { ActionButton } from '../../components/system/ActionButton';
+import { StatusIndicator } from '../../components/system/StatusIndicator';
+import { DataRow } from '../../components/system/DataRow';
 
 export const OnboardingPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -57,34 +51,34 @@ export const OnboardingPage: React.FC = () => {
 
   const handleRunSimulation = () => {
     setSimulationState('running');
-    setSimulationLogs(['Ingesting failed transaction (₹2,499 - GATEWAY_TIMEOUT)...']);
+    setSimulationLogs(['01 / INGEST: Failed transaction stream received (₹18,000 - GATEWAY_TIMEOUT)...']);
 
     setTimeout(() => {
       setSimulationLogs((prev) => [
         ...prev,
-        'Google Gemini diagnosed root cause: TEMPORARY_GATEWAY_FAILURE (94% confidence)...',
+        '02 / DIAGNOSE: Google Gemini root cause: TEMPORARY_GATEWAY_FAILURE (94% confidence)...',
       ]);
-    }, 600);
+    }, 500);
 
     setTimeout(() => {
       setSimulationLogs((prev) => [
         ...prev,
-        'Deterministic Policy Engine executed RETRY via Razorpay Test Order...',
+        '03 / DECIDE: Policy engine selected strategy: RETRY (95% confidence score)...',
+        '04 / EXECUTE: Attempt #1 dispatched via Razorpay Test Mode Order (ID: order_sim_001)...',
       ]);
-    }, 1200);
+    }, 1100);
 
     setTimeout(() => {
       setSimulationLogs((prev) => [
         ...prev,
-        'HMAC SHA-256 Webhook received: payment.captured (Verified Signature)...',
-        'Reconciled ₹2,499 in PostgreSQL Payment Ledger (Status: RECOVERED)!',
+        '05 / VERIFY: HMAC SHA-256 Webhook payment.captured verified cryptographically...',
+        '06 / RECOVER: Reconciled ₹18,000 in PostgreSQL Payment Ledger (STATUS: RECOVERED)!',
       ]);
       setSimulationState('complete');
-    }, 1800);
+    }, 1700);
   };
 
   const handleFinish = async () => {
-    // Persist final selections
     setOnboardingProfile({
       ...profile,
       gatewayKey: keyId,
@@ -107,159 +101,107 @@ export const OnboardingPage: React.FC = () => {
     }
   };
 
+  const steps = [
+    { num: '01', title: 'INITIALIZATION', label: 'Workspace' },
+    { num: '02', title: 'GATEWAY', label: 'Razorpay Test' },
+    { num: '03', title: 'POLICY', label: 'Safety Rules' },
+    { num: '04', title: 'VERIFICATION', label: 'Pipeline Test' },
+  ];
+
   return (
-    <div className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-12">
+    <div className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-8">
       {/* Onboarding Header */}
-      <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-300">
-          <Zap className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="font-mono text-emerald-400">MERCHANT ONBOARDING WIZARD</span>
-        </div>
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-          Welcome to RecoverAI, {profile.businessName}
+      <div className="text-center space-y-2">
+        <SectionTag label="SYSTEM INITIALIZATION" />
+        <h1 className="text-2xl sm:text-4xl font-bold font-geist text-on-surface tracking-tight mt-2">
+          CONFIGURE RECOVERY INFRASTRUCTURE
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400">
-          Complete the 4-step setup below to connect your sandbox gateway and launch autonomous revenue recovery.
+        <p className="text-xs sm:text-sm font-mono text-on-surface-variant max-w-lg mx-auto leading-relaxed">
+          Initialize workspace parameters for {profile.businessName} across the 4-stage deployment pipeline.
         </p>
       </div>
 
-      {/* Step Indicators */}
-      <div className="grid grid-cols-4 gap-2 text-center text-xs font-mono">
-        <div
-          onClick={() => setCurrentStep(1)}
-          className={`p-3 rounded-xl border cursor-pointer transition-all ${
-            currentStep === 1
-              ? 'bg-indigo-950/40 border-indigo-500 text-white shadow-md'
-              : currentStep > 1
-              ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-300'
-              : 'bg-slate-900 border-slate-800 text-slate-500'
-          }`}
-        >
-          <div className="font-bold flex items-center justify-center gap-1">
-            {currentStep > 1 && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-            01. WORKSPACE
-          </div>
-          <div className="text-[10px] hidden sm:block mt-0.5">Profile Info</div>
-        </div>
+      {/* Step Pipeline Navigation matching Landing Page Chapters */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
+        {steps.map((step, idx) => {
+          const stepNum = idx + 1;
+          const isActive = currentStep === stepNum;
+          const isComplete = currentStep > stepNum;
 
-        <div
-          onClick={() => currentStep > 1 && setCurrentStep(2)}
-          className={`p-3 rounded-xl border transition-all ${
-            currentStep === 2
-              ? 'bg-indigo-950/40 border-indigo-500 text-white shadow-md'
-              : currentStep > 2
-              ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-300 cursor-pointer'
-              : 'bg-slate-900 border-slate-800 text-slate-500'
-          }`}
-        >
-          <div className="font-bold flex items-center justify-center gap-1">
-            {currentStep > 2 && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-            02. GATEWAY
-          </div>
-          <div className="text-[10px] hidden sm:block mt-0.5">Razorpay Test</div>
-        </div>
-
-        <div
-          onClick={() => currentStep > 2 && setCurrentStep(3)}
-          className={`p-3 rounded-xl border transition-all ${
-            currentStep === 3
-              ? 'bg-indigo-950/40 border-indigo-500 text-white shadow-md'
-              : currentStep > 3
-              ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-300 cursor-pointer'
-              : 'bg-slate-900 border-slate-800 text-slate-500'
-          }`}
-        >
-          <div className="font-bold flex items-center justify-center gap-1">
-            {currentStep > 3 && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-            03. POLICY
-          </div>
-          <div className="text-[10px] hidden sm:block mt-0.5">AI Rules</div>
-        </div>
-
-        <div
-          className={`p-3 rounded-xl border transition-all ${
-            currentStep === 4
-              ? 'bg-emerald-950/40 border-emerald-500 text-white shadow-md'
-              : 'bg-slate-900 border-slate-800 text-slate-500'
-          }`}
-        >
-          <div className="font-bold">04. LAUNCH</div>
-          <div className="text-[10px] hidden sm:block mt-0.5">Verification</div>
-        </div>
+          return (
+            <button
+              key={step.num}
+              type="button"
+              onClick={() => (isComplete ? setCurrentStep(stepNum) : null)}
+              className={`p-3 rounded border text-left transition-all ${
+                isActive
+                  ? 'border-primary/40 bg-primary/10 text-primary shadow-[0_0_15px_rgba(193,193,255,0.15)]'
+                  : isComplete
+                  ? 'border-secondary/30 bg-secondary/5 text-secondary cursor-pointer'
+                  : 'border-white/5 bg-surface/30 text-on-surface-variant/50'
+              }`}
+            >
+              <div className="flex items-center justify-between text-[10px] mb-1">
+                <span>{step.num} / {step.title}</span>
+                {isComplete && <span>&#10003;</span>}
+              </div>
+              <div className={`text-xs font-bold ${isActive ? 'text-on-surface' : ''}`}>
+                {step.label}
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Step Body */}
-      <div className="p-8 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-6 shadow-2xl backdrop-blur-xl">
-        {/* ========================================================================= */}
-        {/* Step 1: Confirm Workspace Profile */}
-        {/* ========================================================================= */}
+      {/* Main Step System Panel */}
+      <SystemPanel borderVariant="primary" className="p-6 sm:p-8 space-y-6">
+        {/* Step 1: Workspace Profile */}
         {currentStep === 1 && (
           <div className="space-y-6">
-            <div className="space-y-1">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Store className="w-5 h-5 text-indigo-400" />
-                Step 1: Confirm Workspace Profile
-              </h2>
-              <p className="text-xs text-slate-400">
-                Verify your merchant organization details and administrator role.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
-                <span className="text-slate-500 font-mono text-[11px]">BUSINESS NAME</span>
-                <div className="text-white font-bold text-sm truncate">{profile.businessName}</div>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
-                <span className="text-slate-500 font-mono text-[11px]">PRIMARY EMAIL</span>
-                <div className="text-white font-bold text-sm truncate">{profile.email}</div>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
-                <span className="text-slate-500 font-mono text-[11px]">SETTLEMENT</span>
-                <div className="text-emerald-400 font-bold font-mono text-sm">{profile.currency} (₹)</div>
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-950 border border-indigo-500/20 flex items-center justify-between text-xs text-slate-300">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                <span>Assigned Role: <strong className="text-white font-mono">OWNER</strong> (Multi-Tenant Master RBAC)</span>
-              </div>
-              <span className="text-emerald-400 font-mono text-[11px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                ACTIVE
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <span className="font-mono text-xs sm:text-sm font-bold text-primary uppercase tracking-wider">
+                01 / WORKSPACE CONFIGURATION
               </span>
+              <StatusIndicator status="OPERATIONAL" label="ACTIVE PROFILE" />
+            </div>
+
+            <div className="space-y-2">
+              <DataRow label="BUSINESS IDENTIFIER" value={profile.businessName} />
+              <DataRow label="PRIMARY OPERATIONS EMAIL" value={profile.email} />
+              <DataRow label="SETTLEMENT CURRENCY" value={`${profile.currency} (Indian Rupee)`} />
+              <DataRow
+                label="SECURITY CONTEXT"
+                value="Multi-Tenant Master RBAC (OWNER Role)"
+                badge={<StatusIndicator status="VERIFIED" label="ISOLATED" />}
+              />
             </div>
 
             <div className="pt-2 flex justify-end">
-              <button
-                onClick={() => setCurrentStep(2)}
-                className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all flex items-center gap-2 shadow-md shadow-indigo-900/30"
-              >
-                Continue to Gateway Setup
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <ActionButton onClick={() => setCurrentStep(2)}>
+                CONTINUE TO GATEWAY CONFIGURATION
+              </ActionButton>
             </div>
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* Step 2: Connect Razorpay Test Sandbox */}
-        {/* ========================================================================= */}
+        {/* Step 2: Gateway Configuration */}
         {currentStep === 2 && (
           <div className="space-y-6">
-            <div className="space-y-1">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Key className="w-5 h-5 text-amber-400" />
-                Step 2: Connect Razorpay Test Sandbox
-              </h2>
-              <p className="text-xs text-slate-400">
-                RecoverAI requires Test Mode credentials prefixed with <span className="font-mono text-amber-400">rzp_test_</span> for isolated execution.
-              </p>
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <span className="font-mono text-xs sm:text-sm font-bold text-primary uppercase tracking-wider">
+                02 / GATEWAY INTEGRATION (TEST MODE)
+              </span>
+              <StatusIndicator
+                status={gatewayVerified ? 'VERIFIED' : 'PENDING'}
+                label={gatewayVerified ? 'KEY VERIFIED' : 'AWAITING VERIFICATION'}
+              />
             </div>
 
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-300">Razorpay Key ID</label>
+            <div className="space-y-4 font-mono">
+              <div className="space-y-1">
+                <label className="block text-[10px] text-on-surface-variant/70 uppercase tracking-wider">
+                  RAZORPAY TEST MODE KEY ID
+                </label>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -268,193 +210,172 @@ export const OnboardingPage: React.FC = () => {
                       setKeyId(e.target.value);
                       setGatewayVerified(false);
                     }}
-                    className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs font-mono focus:outline-none focus:border-indigo-500"
+                    className="flex-1 px-3 py-2.5 rounded bg-surface/50 border border-white/10 text-on-surface text-xs font-mono focus:outline-none focus:border-primary"
                   />
-                  <button
+                  <ActionButton
                     type="button"
+                    variant="outline"
+                    arrow={false}
                     onClick={handleVerifyGateway}
                     disabled={verifyingGateway || gatewayVerified}
-                    className={`px-4 py-2.5 rounded-xl text-xs font-semibold font-mono transition-all ${
-                      gatewayVerified
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
-                    }`}
                   >
-                    {verifyingGateway
-                      ? 'Verifying...'
-                      : gatewayVerified
-                      ? '✓ Verified'
-                      : 'Test Connection'}
-                  </button>
+                    {verifyingGateway ? 'TESTING...' : gatewayVerified ? '✓ VERIFIED' : 'TEST CONNECTION'}
+                  </ActionButton>
                 </div>
               </div>
 
-              {gatewayVerified && (
-                <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-xs text-emerald-300 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Sandbox connected successfully. Razorpay Test Mode orders and webhook listeners are active.</span>
-                </div>
-              )}
+              <div className="p-3 rounded bg-surface/30 border border-white/5 text-[11px] text-on-surface-variant/70 space-y-1">
+                <div className="text-on-surface font-bold text-xs">Sandbox Security Guardrails:</div>
+                <p>
+                  RecoverAI operates exclusively with <code className="text-primary">rzp_test_...</code> credentials. All production fund movements fail closed.
+                </p>
+              </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+            <div className="pt-2 flex justify-between items-center">
               <button
+                type="button"
                 onClick={() => setCurrentStep(1)}
-                className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition-colors"
+                className="font-mono text-xs text-on-surface-variant hover:text-white px-3 py-2"
               >
-                Back
+                &larr; BACK
               </button>
-              <button
-                onClick={() => setCurrentStep(3)}
-                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all flex items-center gap-2 shadow-md shadow-indigo-900/30"
-              >
-                Continue to Policy Rules
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <ActionButton onClick={() => setCurrentStep(3)}>
+                CONTINUE TO RECOVERY POLICY
+              </ActionButton>
             </div>
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* Step 3: Choose Recovery Policy Mode */}
-        {/* ========================================================================= */}
+        {/* Step 3: Policy Selection */}
         {currentStep === 3 && (
           <div className="space-y-6">
-            <div className="space-y-1">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Layers className="w-5 h-5 text-indigo-400" />
-                Step 3: Choose Recovery Policy Strategy
-              </h2>
-              <p className="text-xs text-slate-400">
-                Select how the deterministic policy engine balances recovery aggressiveness with customer friction.
-              </p>
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <span className="font-mono text-xs sm:text-sm font-bold text-primary uppercase tracking-wider">
+                03 / RECOVERY DECISION POLICY
+              </span>
+              <StatusIndicator status="OPERATIONAL" label="DETERMINISTIC ENGINE" />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+              <button
+                type="button"
                 onClick={() => setPolicyProfile('BALANCED')}
-                className={`p-5 rounded-2xl border cursor-pointer space-y-2 transition-all ${
+                className={`p-4 rounded border text-left space-y-2 transition-all ${
                   policyProfile === 'BALANCED'
-                    ? 'bg-indigo-950/40 border-indigo-500 text-white shadow-lg'
-                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                    ? 'border-primary/40 bg-primary/10 text-on-surface shadow-[0_0_15px_rgba(193,193,255,0.15)]'
+                    : 'border-white/5 bg-surface/30 text-on-surface-variant/70 hover:border-white/15'
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs">BALANCED</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">
-                    Recommended
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-on-surface">BALANCED</span>
+                  <span className="text-primary text-[9px] border border-primary/20 bg-primary/5 px-1.5 py-0.5 rounded">
+                    DEFAULT
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Immediate smart retries for network drops + 30m cooldown for bank congestion + 3DS reminder links.
+                <p className="text-[11px] text-on-surface-variant/70 leading-relaxed">
+                  Immediate smart retries for gateway timeouts + 30m bank cooldown + 3DS reminder link.
                 </p>
-                <div className="text-[10px] text-emerald-400 font-mono pt-1">
-                  Expected retention: 45% – 65%
-                </div>
-              </div>
+                <div className="text-secondary text-[10px] font-bold">Retention: 45% – 65%</div>
+              </button>
 
-              <div
+              <button
+                type="button"
                 onClick={() => setPolicyProfile('AGGRESSIVE')}
-                className={`p-5 rounded-2xl border cursor-pointer space-y-2 transition-all ${
+                className={`p-4 rounded border text-left space-y-2 transition-all ${
                   policyProfile === 'AGGRESSIVE'
-                    ? 'bg-indigo-950/40 border-indigo-500 text-white shadow-lg'
-                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                    ? 'border-primary/40 bg-primary/10 text-on-surface shadow-[0_0_15px_rgba(193,193,255,0.15)]'
+                    : 'border-white/5 bg-surface/30 text-on-surface-variant/70 hover:border-white/15'
                 }`}
               >
-                <div className="font-bold text-xs">HIGH RECOVERY</div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Shorter wait windows and immediate re-attempts on all recoverable failures.
+                <div className="font-bold text-on-surface">HIGH RETENTION</div>
+                <p className="text-[11px] text-on-surface-variant/70 leading-relaxed">
+                  Immediate re-attempts on all recoverable failures with shorter wait windows.
                 </p>
-                <div className="text-[10px] text-cyan-400 font-mono pt-1">
-                  Expected retention: 55% – 75%
-                </div>
-              </div>
+                <div className="text-primary text-[10px] font-bold">Retention: 55% – 75%</div>
+              </button>
 
-              <div
+              <button
+                type="button"
                 onClick={() => setPolicyProfile('CONSERVATIVE')}
-                className={`p-5 rounded-2xl border cursor-pointer space-y-2 transition-all ${
+                className={`p-4 rounded border text-left space-y-2 transition-all ${
                   policyProfile === 'CONSERVATIVE'
-                    ? 'bg-indigo-950/40 border-indigo-500 text-white shadow-lg'
-                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                    ? 'border-primary/40 bg-primary/10 text-on-surface shadow-[0_0_15px_rgba(193,193,255,0.15)]'
+                    : 'border-white/5 bg-surface/30 text-on-surface-variant/70 hover:border-white/15'
                 }`}
               >
-                <div className="font-bold text-xs">LOW FRICTION</div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Focus on customer payment links and extended cooldown periods before retries.
+                <div className="font-bold text-on-surface">LOW FRICTION</div>
+                <p className="text-[11px] text-on-surface-variant/70 leading-relaxed">
+                  Primary emphasis on customer payment links and extended cooldown periods.
                 </p>
-                <div className="text-[10px] text-indigo-400 font-mono pt-1">
-                  Expected retention: 35% – 50%
-                </div>
-              </div>
+                <div className="text-tertiary text-[10px] font-bold">Retention: 35% – 50%</div>
+              </button>
             </div>
 
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+            <div className="pt-2 flex justify-between items-center">
               <button
+                type="button"
                 onClick={() => setCurrentStep(2)}
-                className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition-colors"
+                className="font-mono text-xs text-on-surface-variant hover:text-white px-3 py-2"
               >
-                Back
+                &larr; BACK
               </button>
-              <button
-                onClick={() => setCurrentStep(4)}
-                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all flex items-center gap-2 shadow-md shadow-indigo-900/30"
-              >
-                Continue to Simulation
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <ActionButton onClick={() => setCurrentStep(4)}>
+                CONTINUE TO SIMULATION
+              </ActionButton>
             </div>
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* Step 4: Webhook Simulation & Dashboard Launch */}
-        {/* ========================================================================= */}
+        {/* Step 4: Verification Simulation */}
         {currentStep === 4 && (
           <div className="space-y-6">
-            <div className="space-y-1">
-              <h2 className="text-lg font-bold text-emerald-400 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-emerald-400" />
-                Step 4: End-to-End Recovery Simulation & Launch
-              </h2>
-              <p className="text-xs text-slate-400">
-                Simulate an end-to-end failed payment recovery to test the full pipeline before entering the dashboard.
-              </p>
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <span className="font-mono text-xs sm:text-sm font-bold text-secondary uppercase tracking-wider">
+                04 / PIPELINE VERIFICATION & LAUNCH
+              </span>
+              <StatusIndicator
+                status={simulationState === 'complete' ? 'VERIFIED' : 'EXECUTING'}
+                label={simulationState === 'complete' ? 'PIPELINE VERIFIED' : 'TEST RUNNER READY'}
+              />
             </div>
 
-            <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono text-cyan-400 font-semibold">TEST RUNNER</span>
-                <button
+            <div className="space-y-3 font-mono">
+              <div className="flex justify-between items-center">
+                <span className="text-[11px] uppercase text-on-surface-variant/70">
+                  END-TO-END RECOVERY SIMULATION
+                </span>
+                <ActionButton
                   type="button"
+                  variant="secondary"
+                  arrow={false}
                   onClick={handleRunSimulation}
                   disabled={simulationState === 'running' || simulationState === 'complete'}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all shadow-md shadow-emerald-900/30 flex items-center gap-2 disabled:opacity-50"
                 >
-                  <RotateCcw className={`w-3.5 h-3.5 ${simulationState === 'running' ? 'animate-spin' : ''}`} />
                   {simulationState === 'running'
-                    ? 'Simulating Recovery...'
+                    ? 'SIMULATING...'
                     : simulationState === 'complete'
-                    ? '✓ Simulation Verified'
-                    : 'Dispatch Simulated Recovery'}
-                </button>
+                    ? '✓ SIMULATION COMPLETED'
+                    : 'RUN PIPELINE SIMULATION →'}
+                </ActionButton>
               </div>
 
-              {/* Simulation Terminal Box */}
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800/80 font-mono text-xs space-y-1.5 min-h-[100px]">
+              {/* Terminal Log Output */}
+              <div className="p-4 rounded bg-surface/80 border border-white/10 text-xs space-y-1.5 min-h-[130px]">
                 {simulationLogs.length === 0 ? (
-                  <div className="text-slate-500 italic">
-                    Click &ldquo;Dispatch Simulated Recovery&rdquo; above to run the 6-stage pipeline...
+                  <div className="text-on-surface-variant/40 italic">
+                    Click &ldquo;RUN PIPELINE SIMULATION&rdquo; to test the 6-stage recovery lifecycle...
                   </div>
                 ) : (
                   simulationLogs.map((log, idx) => (
                     <div
                       key={idx}
                       className={
-                        log.includes('Reconciled')
-                          ? 'text-emerald-400 font-bold'
-                          : log.includes('Gemini')
-                          ? 'text-indigo-300'
-                          : 'text-slate-300'
+                        log.includes('RECOVER')
+                          ? 'text-secondary font-bold'
+                          : log.includes('DECIDE') || log.includes('DIAGNOSE')
+                          ? 'text-primary'
+                          : 'text-on-surface-variant/80'
                       }
                     >
                       {log}
@@ -464,24 +385,21 @@ export const OnboardingPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+            <div className="pt-2 flex justify-between items-center">
               <button
+                type="button"
                 onClick={() => setCurrentStep(3)}
-                className="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition-colors"
+                className="font-mono text-xs text-on-surface-variant hover:text-white px-3 py-2"
               >
-                Back
+                &larr; BACK
               </button>
-              <button
-                onClick={handleFinish}
-                className="px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-lg shadow-emerald-900/40 flex items-center gap-2 active:scale-95"
-              >
-                Launch Merchant Operations Dashboard
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              <ActionButton onClick={handleFinish}>
+                ENTER RECOVERY CONSOLE
+              </ActionButton>
             </div>
           </div>
         )}
-      </div>
+      </SystemPanel>
     </div>
   );
 };

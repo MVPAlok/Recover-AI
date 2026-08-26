@@ -56,9 +56,9 @@ export const SettingsPage: React.FC = () => {
 
   return (
     <div className="space-y-8 max-w-5xl pb-12">
-      {/* 1. Header Hierarchy with 32px Spacing */}
+      {/* 1. Header Hierarchy */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <SectionTag label="06 / SYSTEM" />
           <div className="text-xs font-mono text-primary bg-primary/10 border border-primary/20 px-3 py-1.5 rounded">
             SANDBOX ISOLATED
@@ -66,7 +66,7 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         <div>
-          <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-geist text-on-surface tracking-tight">
             SYSTEM CONFIGURATION
           </h1>
           <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-2xl mt-2 leading-relaxed">
@@ -75,11 +75,11 @@ export const SettingsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. System Infrastructure Health (Telemetry Surface 1) */}
+      {/* 2. System Infrastructure Health */}
       <SystemHealthCard />
 
       {/* 3. Live Infrastructure Readiness Status */}
-      <SystemPanel borderVariant="subtle" className="p-6 sm:p-8 space-y-4 font-mono">
+      <SystemPanel borderVariant="subtle" className="p-4 sm:p-6 lg:p-8 space-y-4 font-mono">
         <div className="flex justify-between items-center border-b border-white/10 pb-3">
           <span className="text-xs font-bold text-primary uppercase tracking-wider">
             LIVE INFRASTRUCTURE READINESS

@@ -103,14 +103,14 @@ export const TransactionsPage: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-12">
-      {/* 1. Header Hierarchy with 32px Spacing */}
+      {/* 1. Header Hierarchy */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <SectionTag label="02 / TRANSACTION LEDGER" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={toggleNeedsAttention}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-mono transition-all ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded text-xs font-mono transition-all ${
                 needsAttention
                   ? 'border border-tertiary/50 bg-tertiary/10 text-tertiary font-bold shadow-[0_0_10px_rgba(249,188,69,0.2)]'
                   : 'border border-white/10 bg-surface/50 text-on-surface-variant hover:text-white'
@@ -119,14 +119,14 @@ export const TransactionsPage: React.FC = () => {
               <span>●</span>
               Needs Attention
             </button>
-            <div className="text-xs font-mono text-on-surface-variant/70 bg-surface/50 border border-white/10 px-3 py-1.5 rounded">
+            <div className="text-xs font-mono text-on-surface-variant/70 bg-surface/50 border border-white/10 px-2.5 sm:px-3 py-1.5 rounded">
               TOTAL: <span className="text-white font-bold">{total}</span>
             </div>
           </div>
         </div>
 
         <div>
-          <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-geist text-on-surface tracking-tight">
             TRANSACTION EXPLORER
           </h1>
           <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-2xl mt-2 leading-relaxed">
@@ -135,14 +135,14 @@ export const TransactionsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Compressed Filter Toolbar (Surface 1) */}
-      <SystemPanel borderVariant="subtle" className="p-4 sm:p-5 space-y-3">
-        <form onSubmit={handleSearchSubmit} className="flex gap-2">
+      {/* 2. Compressed Filter Toolbar */}
+      <SystemPanel borderVariant="subtle" className="p-3.5 sm:p-5 space-y-3">
+        <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-on-surface-variant/40 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search by Transaction ID, Customer Name, Email, or Failure Code..."
+              placeholder="Search by Transaction ID, Customer Name, Email..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               className="w-full bg-surface/50 border border-white/10 rounded pl-9 pr-3 py-2 text-xs font-mono text-white placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary"
@@ -150,18 +150,18 @@ export const TransactionsPage: React.FC = () => {
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-primary/10 text-primary border border-primary/30 hover:bg-primary hover:text-surface-dim font-bold text-xs uppercase font-mono tracking-wider rounded transition-all"
+            className="px-4 py-2 bg-primary/10 text-primary border border-primary/30 hover:bg-primary hover:text-surface-dim font-bold text-xs uppercase font-mono tracking-wider rounded transition-all shrink-0"
           >
             Search
           </button>
         </form>
 
-        <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-xs">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 pt-1 font-mono text-xs">
           <select
             value={status}
             onChange={(e) => handleFilterChange('status', e.target.value)}
             aria-label="Filter by Status"
-            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs"
+            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs w-full sm:w-auto"
           >
             <option value="" className="bg-[#070B17] text-white">All Statuses</option>
             <option value="FAILED" className="bg-[#070B17] text-white">Failed Only</option>
@@ -172,7 +172,7 @@ export const TransactionsPage: React.FC = () => {
             value={paymentStatus}
             onChange={(e) => handleFilterChange('paymentStatus', e.target.value)}
             aria-label="Filter by Payment State"
-            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs"
+            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs w-full sm:w-auto"
           >
             <option value="" className="bg-[#070B17] text-white">All Payment States</option>
             <option value="CAPTURED" className="bg-[#070B17] text-white">Captured</option>
@@ -185,7 +185,7 @@ export const TransactionsPage: React.FC = () => {
             value={recoveryStatus}
             onChange={(e) => handleFilterChange('recoveryStatus', e.target.value)}
             aria-label="Filter by Recovery State"
-            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs"
+            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs w-full sm:w-auto"
           >
             <option value="" className="bg-[#070B17] text-white">All Recovery States</option>
             <option value="RECOVERED" className="bg-[#070B17] text-white">Recovered</option>
@@ -198,7 +198,7 @@ export const TransactionsPage: React.FC = () => {
             value={decision}
             onChange={(e) => handleFilterChange('decision', e.target.value)}
             aria-label="Filter by AI Policy"
-            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs"
+            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs w-full sm:w-auto"
           >
             <option value="" className="bg-[#070B17] text-white">All AI Decisions</option>
             <option value="RETRY" className="bg-[#070B17] text-white">RETRY</option>
@@ -211,7 +211,7 @@ export const TransactionsPage: React.FC = () => {
           {(status || paymentStatus || recoveryStatus || decision || risk || search || needsAttention) && (
             <button
               onClick={handleResetFilters}
-              className="flex items-center gap-1 text-xs text-error hover:underline ml-auto"
+              className="flex items-center gap-1 text-xs text-error hover:underline col-span-2 sm:col-span-1 sm:ml-auto"
             >
               <RotateCcw className="w-3 h-3" />
               Reset Filters
@@ -220,11 +220,11 @@ export const TransactionsPage: React.FC = () => {
         </div>
       </SystemPanel>
 
-      {/* 3. Main Financial Ledger Table (16px Row Spacing, Clickable Rows) */}
+      {/* 3. Transaction Explorer Table */}
       {loading ? (
         <TableSkeleton rows={8} cols={7} />
       ) : error ? (
-        <ErrorBanner message={error} onRetry={loadTransactions} />
+        <ErrorBanner title="Failed to Fetch Transactions" message={error} onRetry={loadTransactions} />
       ) : transactions.length === 0 ? (
         <EmptyState
           title="No Transactions Found"
@@ -233,7 +233,7 @@ export const TransactionsPage: React.FC = () => {
       ) : (
         <div className="bg-surface-container-high/80 border border-white/10 rounded-xl overflow-hidden backdrop-blur-md shadow-2xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs min-w-[720px]">
               <thead className="bg-surface/80 text-on-surface-variant/70 border-b border-white/10 text-[10px] uppercase font-mono font-bold tracking-wider">
                 <tr>
                   <th className="py-4 px-5">TX ID</th>

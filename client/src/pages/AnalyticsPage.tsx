@@ -51,9 +51,9 @@ export const AnalyticsPage: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-12">
-      {/* 1. Header Hierarchy with 32px Spacing */}
+      {/* 1. Header Hierarchy */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <SectionTag label="04 / INTELLIGENCE" />
           <div className="text-xs font-mono text-on-surface-variant/70 bg-surface/50 border border-white/10 px-3 py-1.5 rounded">
             SCOPE: <span className="text-white font-bold">ALL HISTORICAL SESSIONS</span>
@@ -61,7 +61,7 @@ export const AnalyticsPage: React.FC = () => {
         </div>
 
         <div>
-          <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-geist text-on-surface tracking-tight">
             RECOVERY ANALYTICS
           </h1>
           <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-2xl mt-2 leading-relaxed">
@@ -70,12 +70,12 @@ export const AnalyticsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Top Quantitative KPIs Panel (Surface 1) */}
-      <SystemPanel borderVariant="primary" className="p-6 sm:p-8 font-mono">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="space-y-1">
+      {/* 2. Top Quantitative KPIs Panel */}
+      <SystemPanel borderVariant="primary" className="p-4 sm:p-6 lg:p-8 font-mono">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+          <div className="space-y-1 p-3 rounded bg-surface/30 sm:bg-transparent border border-white/5 sm:border-none">
             <span className="text-[10px] sm:text-xs text-on-surface-variant/70 uppercase">OVERALL RECOVERY RATE</span>
-            <div className="text-3xl sm:text-4xl font-bold font-geist text-primary tracking-tight">
+            <div className="text-2xl sm:text-4xl font-bold font-geist text-primary tracking-tight truncate">
               {overview.overallRecoveryRate}%
             </div>
             <div className="text-[10px] text-secondary flex items-center gap-1 pt-0.5">
@@ -83,9 +83,9 @@ export const AnalyticsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1 p-3 rounded bg-surface/30 sm:bg-transparent border border-white/5 sm:border-none">
             <span className="text-[10px] sm:text-xs text-on-surface-variant/70 uppercase">TOTAL VERIFIED RECOVERY</span>
-            <div className="text-3xl sm:text-4xl font-bold font-geist text-secondary tracking-tight">
+            <div className="text-2xl sm:text-4xl font-bold font-geist text-secondary tracking-tight truncate">
               {formatINR(overview.totalRecoveredRevenue)}
             </div>
             <div className="text-[10px] text-on-surface-variant/70 pt-0.5">
@@ -93,9 +93,9 @@ export const AnalyticsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1 p-3 rounded bg-surface/30 sm:bg-transparent border border-white/5 sm:border-none">
             <span className="text-[10px] sm:text-xs text-on-surface-variant/70 uppercase">AVG TRANSACTION VALUE</span>
-            <div className="text-3xl sm:text-4xl font-bold font-geist text-white tracking-tight">
+            <div className="text-2xl sm:text-4xl font-bold font-geist text-white tracking-tight truncate">
               {formatINR(overview.averageTransactionValue)}
             </div>
             <div className="text-[10px] text-on-surface-variant/70 pt-0.5">

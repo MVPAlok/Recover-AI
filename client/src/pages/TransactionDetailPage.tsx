@@ -138,10 +138,10 @@ export const TransactionDetailPage: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-12">
-      {/* 1. Header Hierarchy with 32px Spacing */}
+      {/* 1. Header Hierarchy */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               onClick={() => navigate('/transactions')}
               className="p-1.5 rounded bg-surface/50 hover:bg-surface/80 border border-white/10 text-on-surface-variant hover:text-white transition-colors"
@@ -169,11 +169,11 @@ export const TransactionDetailPage: React.FC = () => {
 
           {/* Action Buttons */}
           {transaction.status === 'FAILED' && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 disabled={reEvaluating || executing}
                 onClick={handleReevaluate}
-                className="flex items-center gap-2 px-3 py-2 text-xs font-mono rounded bg-surface/50 hover:bg-surface/80 text-on-surface-variant hover:text-white border border-white/10 transition-all disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-mono rounded bg-surface/50 hover:bg-surface/80 text-on-surface-variant hover:text-white border border-white/10 transition-all disabled:opacity-50"
               >
                 <RotateCw className={`w-3 h-3 ${reEvaluating ? 'animate-spin' : ''}`} />
                 <span>{reEvaluating ? 'Analyzing...' : 'Re-Evaluate AI'}</span>
@@ -190,10 +190,10 @@ export const TransactionDetailPage: React.FC = () => {
         </div>
 
         <div>
-          <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-geist text-on-surface tracking-tight">
             TRANSACTION LIFECYCLE
           </h1>
-          <p className="text-xs sm:text-sm font-mono text-on-surface-variant/80 mt-1">
+          <p className="text-xs sm:text-sm font-mono text-on-surface-variant/80 mt-1 break-all">
             ID: <span className="text-white font-bold">{transaction.id}</span> • Customer: <span className="text-white">{transaction.customer?.name || 'Customer'}</span>
           </p>
         </div>

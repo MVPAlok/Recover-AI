@@ -63,9 +63,9 @@ export const AuditLogPage: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-12 font-mono">
-      {/* 1. Header Hierarchy with 32px Spacing */}
+      {/* 1. Header Hierarchy */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <SectionTag label="05 / AUDIT" />
           <div className="text-xs text-on-surface-variant/70 bg-surface/50 border border-white/10 px-3 py-1.5 rounded">
             TOTAL EVENTS: <span className="text-white font-bold">{total}</span>
@@ -73,7 +73,7 @@ export const AuditLogPage: React.FC = () => {
         </div>
 
         <div>
-          <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-geist text-on-surface tracking-tight">
             SYSTEM AUDIT LOG
           </h1>
           <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-2xl mt-2 leading-relaxed">
@@ -82,13 +82,13 @@ export const AuditLogPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Filter System Panel (Surface 1) */}
-      <SystemPanel borderVariant="subtle" className="p-4 sm:p-5 flex flex-wrap items-center gap-3">
+      {/* 2. Filter System Panel */}
+      <SystemPanel borderVariant="subtle" className="p-3.5 sm:p-5 flex flex-wrap items-center gap-3">
         <select
           value={entityType}
           onChange={(e) => handleFilterChange('entityType', e.target.value)}
           aria-label="Filter by Entity Type"
-          className="bg-surface/50 border border-white/10 text-on-surface rounded px-3 py-2 text-xs focus:outline-none focus:border-primary"
+          className="bg-surface/50 border border-white/10 text-on-surface rounded px-3 py-2 text-xs focus:outline-none focus:border-primary w-full sm:w-auto"
         >
           <option value="" className="bg-[#070B17] text-white">All Entities</option>
           <option value="TRANSACTION" className="bg-[#070B17] text-white">TRANSACTION</option>
@@ -107,7 +107,7 @@ export const AuditLogPage: React.FC = () => {
         )}
       </SystemPanel>
 
-      {/* 3. Immutable Ledger Table with Expandable Rows */}
+      {/* 3. Immutable Ledger Table */}
       {loading ? (
         <TableSkeleton rows={10} cols={5} />
       ) : error ? (
@@ -120,7 +120,7 @@ export const AuditLogPage: React.FC = () => {
       ) : (
         <div className="bg-surface-container-high/80 border border-white/10 rounded-xl overflow-hidden backdrop-blur-md shadow-2xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs min-w-[660px]">
               <thead className="bg-surface/80 text-on-surface-variant/70 border-b border-white/10 text-[10px] uppercase font-bold tracking-wider">
                 <tr>
                   <th className="py-4 px-5">TIMESTAMP</th>

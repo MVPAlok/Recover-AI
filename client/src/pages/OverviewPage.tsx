@@ -71,11 +71,11 @@ export const OverviewPage: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-12">
-      {/* 1. Standardized Header Hierarchy with 32px Spacing Rhythm */}
+      {/* 1. Standardized Header Hierarchy */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <SectionTag label="01 / RECOVERY CONTROL" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={loadData}
               className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-mono rounded bg-surface/50 hover:bg-surface/80 text-on-surface-variant hover:text-white border border-white/10 transition-all"
@@ -91,7 +91,7 @@ export const OverviewPage: React.FC = () => {
         </div>
 
         <div>
-          <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-geist text-on-surface tracking-tight">
             REVENUE RECOVERY OPERATIONS
           </h1>
           <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-2xl mt-2 leading-relaxed">
@@ -100,8 +100,8 @@ export const OverviewPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Dominant Primary System Panel (Surface 1) */}
-      <SystemPanel borderVariant="primary" className="p-6 sm:p-8 space-y-6">
+      {/* 2. Dominant Primary System Panel */}
+      <SystemPanel borderVariant="primary" className="p-4 sm:p-6 lg:p-8 space-y-6">
         <div className="flex justify-between items-center border-b border-white/10 pb-3">
           <span className="font-mono text-xs sm:text-sm font-bold text-primary uppercase tracking-wider">
             PRIMARY RECOVERY LEDGER
@@ -109,45 +109,45 @@ export const OverviewPage: React.FC = () => {
           <StatusIndicator status="OPERATIONAL" label="AUTONOMOUS AGENT ACTIVE" />
         </div>
 
-        {/* 4 Core Financial Metrics in Confident Large Display */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 font-mono">
-          <div className="space-y-1">
+        {/* 4 Core Financial Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 font-mono">
+          <div className="space-y-1 p-3 rounded bg-surface/30 sm:bg-transparent border border-white/5 sm:border-none">
             <div className="text-[10px] sm:text-xs text-on-surface-variant/70 uppercase">REVENUE AT RISK</div>
-            <div className="text-2xl sm:text-4xl text-on-surface font-bold font-geist tracking-tight">
+            <div className="text-xl sm:text-3xl lg:text-4xl text-on-surface font-bold font-geist tracking-tight truncate">
               {formatINR(metrics?.revenueAtRisk || 0)}
             </div>
             <div className="text-[10px] text-error flex items-center gap-1.5 pt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-error" /> {metrics?.failedPayments || 0} Failed Payments
+              <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0" /> {metrics?.failedPayments || 0} Failed Payments
             </div>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1 p-3 rounded bg-surface/30 sm:bg-transparent border border-white/5 sm:border-none">
             <div className="text-[10px] sm:text-xs text-on-surface-variant/70 uppercase">VERIFIED RECOVERY</div>
-            <div className="text-2xl sm:text-4xl text-secondary font-bold font-geist tracking-tight">
+            <div className="text-xl sm:text-3xl lg:text-4xl text-secondary font-bold font-geist tracking-tight truncate">
               {formatINR(metrics?.recoveredRevenue || 0)}
             </div>
             <div className="text-[10px] text-secondary flex items-center gap-1.5 pt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> PostgreSQL Ledger Reconciled
+              <span className="w-1.5 h-1.5 rounded-full bg-secondary shrink-0" /> Ledger Reconciled
             </div>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1 p-3 rounded bg-surface/30 sm:bg-transparent border border-white/5 sm:border-none">
             <div className="text-[10px] sm:text-xs text-on-surface-variant/70 uppercase">RECOVERY RATE</div>
-            <div className="text-2xl sm:text-4xl text-primary font-bold font-geist tracking-tight">
+            <div className="text-xl sm:text-3xl lg:text-4xl text-primary font-bold font-geist tracking-tight truncate">
               {metrics?.recoveryRate || 0}%
             </div>
             <div className="text-[10px] text-primary flex items-center gap-1.5 pt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary" /> {metrics?.recoverablePayments || 0} Recoverable
+              <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" /> {metrics?.recoverablePayments || 0} Recoverable
             </div>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1 p-3 rounded bg-surface/30 sm:bg-transparent border border-white/5 sm:border-none">
             <div className="text-[10px] sm:text-xs text-on-surface-variant/70 uppercase">EXECUTION SUCCESS</div>
-            <div className="text-2xl sm:text-4xl text-on-surface font-bold font-geist tracking-tight">
+            <div className="text-xl sm:text-3xl lg:text-4xl text-on-surface font-bold font-geist tracking-tight truncate">
               {metrics?.executionSuccessRate || 0}%
             </div>
             <div className="text-[10px] text-on-surface-variant/70 flex items-center gap-1.5 pt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-secondary" /> {metrics?.successfulTransactions || 0} Captured Orders
+              <span className="w-1.5 h-1.5 rounded-full bg-secondary shrink-0" /> {metrics?.successfulTransactions || 0} Captured Orders
             </div>
           </div>
         </div>
@@ -155,7 +155,7 @@ export const OverviewPage: React.FC = () => {
         <div className="h-px w-full bg-white/10" />
 
         {/* Inline Subsystem Status Indicators */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 font-mono text-xs">
           <div className="p-3 rounded bg-surface/50 border border-white/5 flex justify-between items-center">
             <span className="text-on-surface-variant/70 text-[11px]">GATEWAY</span>
             <StatusIndicator status="OPERATIONAL" label="RAZORPAY TEST" />
@@ -181,45 +181,45 @@ export const OverviewPage: React.FC = () => {
           <span className="text-xs text-primary font-bold uppercase tracking-wider">
             AUTONOMOUS 6-STAGE RECOVERY LIFECYCLE
           </span>
-          <span className="text-[10px] text-on-surface-variant/60">
+          <span className="text-[10px] text-on-surface-variant/60 hidden sm:inline">
             TRANSACTION &rarr; EVIDENCE
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
-          <div className="p-3.5 rounded bg-surface/50 border border-white/5 space-y-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-2.5 text-xs">
+          <div className="p-3 rounded bg-surface/50 border border-white/5 space-y-1">
             <div className="text-primary text-[10px] font-bold">01 / DETECT</div>
-            <div className="text-white font-bold font-geist">Payment Failure</div>
+            <div className="text-white font-bold font-geist text-xs">Payment Failure</div>
             <div className="text-[10px] text-on-surface-variant/60 font-mono">Webhook Ingested</div>
           </div>
 
-          <div className="p-3.5 rounded bg-surface/50 border border-white/5 space-y-1">
+          <div className="p-3 rounded bg-surface/50 border border-white/5 space-y-1">
             <div className="text-primary text-[10px] font-bold">02 / DIAGNOSE</div>
-            <div className="text-white font-bold font-geist">Root-Cause AI</div>
+            <div className="text-white font-bold font-geist text-xs">Root-Cause AI</div>
             <div className="text-[10px] text-on-surface-variant/60 font-mono">Google Gemini LLM</div>
           </div>
 
-          <div className="p-3.5 rounded bg-surface/50 border border-white/5 space-y-1">
+          <div className="p-3 rounded bg-surface/50 border border-white/5 space-y-1">
             <div className="text-primary text-[10px] font-bold">03 / DECIDE</div>
-            <div className="text-white font-bold font-geist">RETRY / WAIT</div>
+            <div className="text-white font-bold font-geist text-xs">RETRY / WAIT</div>
             <div className="text-[10px] text-on-surface-variant/60 font-mono">Hard Safety Rules</div>
           </div>
 
-          <div className="p-3.5 rounded bg-surface/50 border border-white/5 space-y-1">
+          <div className="p-3 rounded bg-surface/50 border border-white/5 space-y-1">
             <div className="text-primary text-[10px] font-bold">04 / EXECUTE</div>
-            <div className="text-white font-bold font-geist">Attempt #1</div>
+            <div className="text-white font-bold font-geist text-xs">Attempt #1</div>
             <div className="text-[10px] text-on-surface-variant/60 font-mono">BullMQ + Redis</div>
           </div>
 
-          <div className="p-3.5 rounded bg-surface/50 border border-white/5 space-y-1">
+          <div className="p-3 rounded bg-surface/50 border border-white/5 space-y-1">
             <div className="text-secondary text-[10px] font-bold">05 / VERIFY</div>
-            <div className="text-white font-bold font-geist">Captured Webhook</div>
+            <div className="text-white font-bold font-geist text-xs">Captured Webhook</div>
             <div className="text-[10px] text-on-surface-variant/60 font-mono">HMAC SHA-256</div>
           </div>
 
-          <div className="p-3.5 rounded bg-surface/50 border border-secondary/30 bg-secondary/5 space-y-1">
+          <div className="p-3 rounded bg-surface/50 border border-secondary/30 bg-secondary/5 space-y-1">
             <div className="text-secondary text-[10px] font-bold">06 / RECOVER</div>
-            <div className="text-secondary font-bold font-geist">Reconciled</div>
+            <div className="text-secondary font-bold font-geist text-xs">Reconciled</div>
             <div className="text-[10px] text-secondary/80 font-mono">PostgreSQL Ledger</div>
           </div>
         </div>

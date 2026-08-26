@@ -99,7 +99,7 @@ export const RecoveriesPage: React.FC = () => {
         </div>
 
         <div>
-          <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-geist text-on-surface tracking-tight">
             RECOVERY CENTER
           </h1>
           <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-2xl mt-2 leading-relaxed">
@@ -109,9 +109,9 @@ export const RecoveriesPage: React.FC = () => {
       </div>
 
       {/* 2. Compressed Filter System Panel (Surface 1) */}
-      <SystemPanel borderVariant="subtle" className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 font-mono">
+      <SystemPanel borderVariant="subtle" className="p-3.5 sm:p-5 flex flex-wrap items-center justify-between gap-3 font-mono">
         {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
+        <div className="flex items-center gap-1.5 overflow-x-auto text-xs w-full sm:w-auto pb-1 sm:pb-0">
           {[
             { label: 'ALL', val: '' },
             { label: 'EXECUTED', val: 'SUCCESS' },
@@ -122,7 +122,7 @@ export const RecoveriesPage: React.FC = () => {
             <button
               key={tab.val}
               onClick={() => handleFilterChange('status', tab.val)}
-              className={`px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all ${
+              className={`px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all shrink-0 ${
                 status === tab.val
                   ? 'bg-primary/20 text-primary border border-primary/40'
                   : 'text-on-surface-variant/70 hover:text-white hover:bg-surface/50 border border-transparent'
@@ -134,12 +134,12 @@ export const RecoveriesPage: React.FC = () => {
         </div>
 
         {/* Action Type Dropdown */}
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-2 text-xs w-full sm:w-auto">
           <select
             value={actionType}
             onChange={(e) => handleFilterChange('actionType', e.target.value)}
             aria-label="Filter by Policy Action"
-            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs"
+            className="bg-surface/50 border border-white/10 text-on-surface rounded px-2.5 py-1.5 focus:outline-none focus:border-primary text-xs w-full sm:w-auto"
           >
             <option value="" className="bg-[#070B17] text-white">All Action Types</option>
             <option value="RETRY" className="bg-[#070B17] text-white">RETRY</option>
@@ -152,7 +152,7 @@ export const RecoveriesPage: React.FC = () => {
           {(status || actionType || search || needsAttention) && (
             <button
               onClick={() => setSearchParams(new URLSearchParams())}
-              className="flex items-center gap-1 text-xs text-error hover:underline ml-2"
+              className="flex items-center gap-1 text-xs text-error hover:underline ml-auto"
             >
               <RotateCcw className="w-3 h-3" />
               Reset
@@ -161,7 +161,7 @@ export const RecoveriesPage: React.FC = () => {
         </div>
       </SystemPanel>
 
-      {/* 3. Operational Records Table (16px Row Spacing, Clickable Rows) */}
+      {/* 3. Operational Records Table */}
       {loading ? (
         <TableSkeleton rows={8} cols={6} />
       ) : error ? (
@@ -174,7 +174,7 @@ export const RecoveriesPage: React.FC = () => {
       ) : (
         <div className="bg-surface-container-high/80 border border-white/10 rounded-xl overflow-hidden backdrop-blur-md shadow-2xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs min-w-[680px]">
               <thead className="bg-surface/80 text-on-surface-variant/70 border-b border-white/10 text-[10px] uppercase font-mono font-bold tracking-wider">
                 <tr>
                   <th className="py-4 px-5">ATTEMPT ID</th>

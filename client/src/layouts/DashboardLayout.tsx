@@ -195,8 +195,8 @@ export const DashboardLayout: React.FC = () => {
       {/* ========================================================================= */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Mission-Control Bar */}
-        <header className="relative z-40 h-16 border-b border-white/10 bg-[#070B17]/80 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between shrink-0 font-mono text-xs">
-          <div className="flex items-center gap-3">
+        <header className="relative z-40 h-16 border-b border-white/10 bg-[#070B17]/80 backdrop-blur-md px-3 sm:px-8 flex items-center justify-between shrink-0 font-mono text-xs">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="md:hidden p-2 rounded text-on-surface hover:bg-surface/50 border border-white/10"
@@ -212,22 +212,22 @@ export const DashboardLayout: React.FC = () => {
           </div>
 
           {/* Right Header Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Merchant Workspace Switcher */}
             <div className="relative">
               <button
                 onClick={() => setMerchantDropdownOpen(!merchantDropdownOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded bg-surface/50 hover:bg-surface/80 border border-white/10 hover:border-primary/40 text-on-surface text-xs font-mono transition-all"
+                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded bg-surface/50 hover:bg-surface/80 border border-white/10 hover:border-primary/40 text-on-surface text-xs font-mono transition-all"
               >
                 <span className="text-on-surface-variant/50 text-[10px] hidden lg:inline">WORKSPACE:</span>
-                <span className="truncate max-w-[150px] font-bold text-white">
+                <span className="truncate max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] font-bold text-white">
                   {activeMerchant ? activeMerchant.name : 'Loading...'}
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-on-surface-variant/60" />
+                <ChevronDown className="w-3.5 h-3.5 text-on-surface-variant/60 shrink-0" />
               </button>
 
               {merchantDropdownOpen && merchants.length > 0 && (
-                <div className="absolute right-0 mt-2 w-64 bg-[#070B17] border border-white/10 rounded-lg shadow-2xl z-50 p-2 space-y-1 backdrop-blur-2xl font-mono text-xs">
+                <div className="absolute right-0 mt-2 w-64 max-w-[calc(100vw-2rem)] bg-[#070B17] border border-white/10 rounded-lg shadow-2xl z-50 p-2 space-y-1 backdrop-blur-2xl font-mono text-xs">
                   <div className="px-3 py-1.5 text-[9px] uppercase tracking-widest text-on-surface-variant/50">
                     Switch Workspace
                   </div>
@@ -242,7 +242,7 @@ export const DashboardLayout: React.FC = () => {
                       }`}
                     >
                       <span className="truncate">{m.name}</span>
-                      {activeMerchant?.id === m.id && <span className="text-[9px] text-secondary">ACTIVE</span>}
+                      {activeMerchant?.id === m.id && <span className="text-[9px] text-secondary shrink-0">ACTIVE</span>}
                     </button>
                   ))}
                   <div className="border-t border-white/10 my-1"></div>
@@ -267,7 +267,7 @@ export const DashboardLayout: React.FC = () => {
         </header>
 
         {/* Page Content Outlet */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto space-y-8">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6 sm:space-y-8">
           <Outlet />
         </main>
       </div>

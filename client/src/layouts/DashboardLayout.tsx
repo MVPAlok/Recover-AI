@@ -48,11 +48,11 @@ export const DashboardLayout: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#070B17] text-[#dee1f9] flex flex-col md:flex-row font-geist antialiased selection:bg-primary/20 selection:text-white">
+    <div className="h-screen overflow-hidden bg-[#070B17] text-[#dee1f9] flex flex-col md:flex-row font-geist antialiased selection:bg-primary/20 selection:text-white">
       {/* ========================================================================= */}
       {/* Desktop Sidebar (Integrated Mission-Control Navigation) */}
       {/* ========================================================================= */}
-      <aside className="hidden md:flex flex-col w-64 border-r border-white/10 bg-[#070B17]/95 p-6 shrink-0 justify-between">
+      <aside className="hidden md:flex flex-col w-64 border-r border-white/10 bg-[#070B17]/95 p-6 shrink-0 justify-between h-full overflow-y-auto">
         <div className="space-y-8">
           {/* Brand Header matching Landing Page */}
           <div
@@ -193,7 +193,7 @@ export const DashboardLayout: React.FC = () => {
       {/* ========================================================================= */}
       {/* Main Content Area */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Top Mission-Control Bar */}
         <header className="relative z-40 h-16 border-b border-white/10 bg-[#070B17]/80 backdrop-blur-md px-3 sm:px-8 flex items-center justify-between shrink-0 font-mono text-xs">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -267,7 +267,7 @@ export const DashboardLayout: React.FC = () => {
         </header>
 
         {/* Page Content Outlet */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6 sm:space-y-8">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6 sm:space-y-8 scroll-smooth">
           <Outlet />
         </main>
       </div>

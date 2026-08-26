@@ -111,11 +111,11 @@ export const TransactionDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Skeleton className="h-64 lg:col-span-2 rounded-2xl" />
-          <Skeleton className="h-64 rounded-2xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <Skeleton className="h-64 lg:col-span-2 rounded-xl" />
+          <Skeleton className="h-64 rounded-xl" />
         </div>
       </div>
     );
@@ -137,14 +137,14 @@ export const TransactionDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 pb-12 font-mono">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div className="space-y-2">
+    <div className="space-y-8 pb-12">
+      {/* 1. Header Hierarchy with 32px Spacing */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/transactions')}
-              className="p-1.5 rounded bg-surface/50 hover:bg-surface/80 border border-white/10 text-on-surface-variant hover:text-white"
+              className="p-1.5 rounded bg-surface/50 hover:bg-surface/80 border border-white/10 text-on-surface-variant hover:text-white transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
@@ -153,41 +153,56 @@ export const TransactionDetailPage: React.FC = () => {
               status={transaction.status === 'SUCCESS' ? 'OPERATIONAL' : 'FAILED'}
               label={transaction.status}
             />
+            {transaction.recoveryStatus && (
+              <StatusIndicator
+                status={
+                  transaction.recoveryStatus === 'RECOVERED' || transaction.status === 'SUCCESS'
+                    ? 'RECOVERED'
+                    : transaction.recoveryStatus === 'IN_PROGRESS'
+                    ? 'EXECUTING'
+                    : 'WARNING'
+                }
+                label={transaction.recoveryStatus}
+              />
+            )}
           </div>
-          <h1 className="text-xl sm:text-3xl font-bold font-geist text-on-surface tracking-tight">
-            TRANSACTION: {transaction.id}
-          </h1>
-          <p className="text-xs text-on-surface-variant/80 max-w-xl">
-            Cryptographic ledger state, AI root-cause decomposition, and recovery attempt history.
-          </p>
+
+          {/* Action Buttons */}
+          {transaction.status === 'FAILED' && (
+            <div className="flex items-center gap-3">
+              <button
+                disabled={reEvaluating || executing}
+                onClick={handleReevaluate}
+                className="flex items-center gap-2 px-3 py-2 text-xs font-mono rounded bg-surface/50 hover:bg-surface/80 text-on-surface-variant hover:text-white border border-white/10 transition-all disabled:opacity-50"
+              >
+                <RotateCw className={`w-3 h-3 ${reEvaluating ? 'animate-spin' : ''}`} />
+                <span>{reEvaluating ? 'Analyzing...' : 'Re-Evaluate AI'}</span>
+              </button>
+
+              <ActionButton
+                disabled={executing || transaction.retryCount >= 3}
+                onClick={handleExecuteRecovery}
+              >
+                {executing ? 'EXECUTING...' : 'DISPATCH RECOVERY'}
+              </ActionButton>
+            </div>
+          )}
         </div>
 
-        {/* Action Buttons */}
-        {transaction.status === 'FAILED' && (
-          <div className="flex items-center gap-3">
-            <button
-              disabled={reEvaluating || executing}
-              onClick={handleReevaluate}
-              className="flex items-center gap-2 px-3 py-2 text-xs rounded bg-surface/50 hover:bg-surface/80 text-on-surface-variant hover:text-white border border-white/10 transition-all disabled:opacity-50"
-            >
-              <RotateCw className={`w-3.5 h-3.5 ${reEvaluating ? 'animate-spin' : ''}`} />
-              <span>{reEvaluating ? 'Analyzing...' : 'Re-Evaluate AI'}</span>
-            </button>
-
-            <ActionButton
-              disabled={executing || transaction.retryCount >= 3}
-              onClick={handleExecuteRecovery}
-            >
-              {executing ? 'EXECUTING...' : 'DISPATCH RECOVERY'}
-            </ActionButton>
-          </div>
-        )}
+        <div>
+          <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight">
+            TRANSACTION LIFECYCLE
+          </h1>
+          <p className="text-xs sm:text-sm font-mono text-on-surface-variant/80 mt-1">
+            ID: <span className="text-white font-bold">{transaction.id}</span> • Customer: <span className="text-white">{transaction.customer?.name || 'Customer'}</span>
+          </p>
+        </div>
       </div>
 
       {/* Execution Feedback Message */}
       {executionMessage && (
         <div
-          className={`p-3.5 rounded border text-xs flex items-center gap-3 ${
+          className={`p-3.5 rounded border text-xs font-mono flex items-center gap-3 ${
             executionMessage.type === 'success'
               ? 'bg-secondary/10 border-secondary/30 text-secondary'
               : 'bg-error/10 border-error/30 text-error'
@@ -202,22 +217,22 @@ export const TransactionDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* 2-Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Lifecycle Timeline & Evidence Ledger (Span 2) */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Card: Lifecycle Timeline */}
-          <SystemPanel borderVariant="subtle" className="p-6 space-y-4">
+      {/* 2-Column Grid: Timeline & Evidence (Left 2 cols) + Exactly 3 Right Panels (Right 1 col) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Continuous Lifecycle Timeline & Evidence Ledger (Span 2) */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Card: Lifecycle Timeline (Continuous Single Vertical Rail) */}
+          <SystemPanel borderVariant="subtle" className="p-6 sm:p-8 space-y-4">
             <div className="flex justify-between items-center border-b border-white/10 pb-3">
               <div>
-                <span className="text-xs font-bold text-primary uppercase tracking-wider block">
-                  AUTONOMOUS RECOVERY LIFECYCLE
+                <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider block">
+                  CONTINUOUS RECOVERY TIMELINE
                 </span>
-                <p className="text-[11px] text-on-surface-variant/70 mt-0.5">
-                  Chronological trace from gateway failure to payment reconciliation.
+                <p className="text-[11px] font-geist text-on-surface-variant/70 mt-0.5">
+                  Single chronological rail from failure ingestion to cryptographic ledger reconciliation.
                 </p>
               </div>
-              <span className="text-[10px] text-on-surface-variant/70 px-2 py-0.5 rounded bg-surface/50 border border-white/5">
+              <span className="text-[10px] font-mono text-on-surface-variant/70 px-2 py-0.5 rounded bg-surface/50 border border-white/5">
                 {(transaction.recoveryAttempts || []).length} Attempts
               </span>
             </div>
@@ -226,7 +241,7 @@ export const TransactionDetailPage: React.FC = () => {
           </SystemPanel>
 
           {/* Card: Correlation Chain */}
-          <SystemPanel borderVariant="subtle" className="p-6 space-y-3">
+          <SystemPanel borderVariant="subtle" className="p-6 sm:p-8 space-y-3 font-mono">
             <span className="text-xs font-bold text-primary uppercase tracking-wider block border-b border-white/10 pb-2">
               TRACEABILITY & CORRELATION CHAIN
             </span>
@@ -239,7 +254,7 @@ export const TransactionDetailPage: React.FC = () => {
           </SystemPanel>
 
           {/* Card: Payment Evidence Ledger */}
-          <SystemPanel borderVariant="subtle" className="p-6 space-y-4">
+          <SystemPanel borderVariant="subtle" className="p-6 sm:p-8 space-y-4 font-mono">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <span className="text-xs font-bold text-secondary uppercase tracking-wider flex items-center gap-2">
                 <CreditCard className="w-4 h-4" />
@@ -249,7 +264,7 @@ export const TransactionDetailPage: React.FC = () => {
             </div>
 
             {(!transaction.payments || transaction.payments.length === 0) ? (
-              <div className="p-3.5 rounded bg-surface/40 border border-white/5 text-xs text-on-surface-variant/70">
+              <div className="p-3.5 rounded bg-surface/40 border border-white/5 text-xs text-on-surface-variant/70 font-geist">
                 No external payment attempts recorded in ledger yet. Revenue recognition awaits verified gateway capture.
               </div>
             ) : (
@@ -287,10 +302,10 @@ export const TransactionDetailPage: React.FC = () => {
           </SystemPanel>
         </div>
 
-        {/* Right Column: AI Diagnosis, Policy & Customer */}
-        <div className="space-y-6">
-          {/* Card: Financial Summary */}
-          <SystemPanel borderVariant="primary" className="p-6 space-y-4">
+        {/* Right Column: EXACTLY 3 Panels (1. Summary, 2. AI Diagnostics, 3. Customer Profile) */}
+        <div className="space-y-8">
+          {/* Panel 1: Transaction Summary */}
+          <SystemPanel borderVariant="primary" className="p-6 space-y-4 font-mono">
             <span className="text-[10px] text-on-surface-variant/70 uppercase font-bold tracking-wider block">
               TRANSACTION AMOUNT
             </span>
@@ -307,7 +322,18 @@ export const TransactionDetailPage: React.FC = () => {
               <DataRow
                 label="Recovery State"
                 value={transaction.recoveryStatus || 'NOT_STARTED'}
-                badge={<StatusIndicator status={transaction.recoveryStatus === 'RECOVERED' ? 'RECOVERED' : 'WARNING'} />}
+                badge={
+                  <StatusIndicator
+                    status={
+                      transaction.recoveryStatus === 'RECOVERED' || transaction.status === 'SUCCESS'
+                        ? 'RECOVERED'
+                        : transaction.recoveryStatus === 'IN_PROGRESS'
+                        ? 'EXECUTING'
+                        : 'WARNING'
+                    }
+                    label={transaction.recoveryStatus || 'NOT STARTED'}
+                  />
+                }
               />
               <DataRow label="Payment Method" value={transaction.paymentMethod || 'UPI / NetBanking'} />
               <DataRow label="Retry Counter" value={`${transaction.retryCount} of 3 max`} />
@@ -315,8 +341,8 @@ export const TransactionDetailPage: React.FC = () => {
             </div>
           </SystemPanel>
 
-          {/* Card: AI Diagnostic Engine (Mirroring Chapter 02 & 03) */}
-          <SystemPanel borderVariant="primary" className="p-6 space-y-4">
+          {/* Panel 2: AI Diagnostic Engine */}
+          <SystemPanel borderVariant="primary" className="p-6 space-y-4 font-mono">
             <div className="flex justify-between items-center border-b border-white/10 pb-2">
               <div className="flex items-center gap-2">
                 <Brain className="w-4 h-4 text-primary" />
@@ -328,7 +354,7 @@ export const TransactionDetailPage: React.FC = () => {
             {/* AI Model details */}
             <div className="p-3 rounded bg-surface/50 border border-white/5 flex justify-between items-center text-xs">
               <div>
-                <div className="font-bold text-white text-xs">
+                <div className="font-bold text-white text-xs font-geist">
                   {transaction.diagnosis?.isFallback ? 'Deterministic Fallback' : 'Google Gemini LLM'}
                 </div>
                 <div className="text-[10px] text-on-surface-variant/60">
@@ -371,20 +397,20 @@ export const TransactionDetailPage: React.FC = () => {
 
             {/* AI Reasoning */}
             {transaction.decision?.reasoning && (
-              <div className="p-3 rounded bg-surface/30 border border-white/5 text-[11px] text-on-surface-variant/80 leading-relaxed">
-                <strong className="text-primary block mb-1">Reasoning Synthesis:</strong>
+              <div className="p-3 rounded bg-surface/30 border border-white/5 text-[11px] text-on-surface-variant/80 leading-relaxed font-geist">
+                <strong className="text-primary block mb-1 font-mono">Reasoning Synthesis:</strong>
                 {transaction.decision.reasoning}
               </div>
             )}
           </SystemPanel>
 
-          {/* Card: Customer Profile */}
-          <SystemPanel borderVariant="subtle" className="p-6 space-y-3">
+          {/* Panel 3: Customer Profile */}
+          <SystemPanel borderVariant="subtle" className="p-6 space-y-3 font-mono">
             <span className="text-xs font-bold text-primary uppercase tracking-wider block border-b border-white/10 pb-2">
               CUSTOMER PROFILE
             </span>
             <div className="space-y-1.5 text-xs">
-              <DataRow label="Name" value={transaction.customer?.name || 'Customer'} />
+              <DataRow label="Name" value={<span className="font-geist">{transaction.customer?.name || 'Customer'}</span>} />
               <DataRow label="Email" value={transaction.customer?.email || 'N/A'} />
               <DataRow
                 label="Historical Success"

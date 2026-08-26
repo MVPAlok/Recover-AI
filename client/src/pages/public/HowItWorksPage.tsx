@@ -136,7 +136,7 @@ export const HowItWorksPage: React.FC = () => {
       <div className="text-center pt-4">
         <NavLink to="/security">
           <ActionButton>
-            REVIEW SECURITY ARCHITECTURE &rarr;
+            REVIEW SECURITY ARCHITECTURE
           </ActionButton>
         </NavLink>
       </div>

@@ -55,32 +55,31 @@ export const SettingsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 max-w-5xl pb-12 font-mono">
-      {/* Header: 06 / SYSTEM */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <SectionTag label="06 / SYSTEM" />
-            <StatusIndicator status="OPERATIONAL" label="ENVIRONMENT CONFIGURED" />
+    <div className="space-y-8 max-w-5xl pb-12">
+      {/* 1. Header Hierarchy with 32px Spacing */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <SectionTag label="06 / SYSTEM" />
+          <div className="text-xs font-mono text-primary bg-primary/10 border border-primary/20 px-3 py-1.5 rounded">
+            SANDBOX ISOLATED
           </div>
-          <h1 className="text-2xl sm:text-4xl font-bold font-geist text-on-surface tracking-tight">
+        </div>
+
+        <div>
+          <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight">
             SYSTEM CONFIGURATION
           </h1>
-          <p className="text-xs text-on-surface-variant/80 max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-2xl mt-2 leading-relaxed">
             Real-time infrastructure health, cryptographic webhook signature verification, and sandbox security isolation.
           </p>
         </div>
-
-        <div className="text-xs text-primary bg-primary/10 border border-primary/20 px-3 py-2 rounded">
-          SANDBOX ISOLATED
-        </div>
       </div>
 
-      {/* Real-time System Infrastructure Health */}
+      {/* 2. System Infrastructure Health (Telemetry Surface 1) */}
       <SystemHealthCard />
 
-      {/* Live Infrastructure Readiness Status */}
-      <SystemPanel borderVariant="subtle" className="p-6 space-y-4">
+      {/* 3. Live Infrastructure Readiness Status */}
+      <SystemPanel borderVariant="subtle" className="p-6 sm:p-8 space-y-4 font-mono">
         <div className="flex justify-between items-center border-b border-white/10 pb-3">
           <span className="text-xs font-bold text-primary uppercase tracking-wider">
             LIVE INFRASTRUCTURE READINESS
@@ -115,35 +114,35 @@ export const SettingsPage: React.FC = () => {
         </div>
       </SystemPanel>
 
-      {/* Operational Telemetry Summary */}
+      {/* 4. Operational Latency & Traffic Telemetry */}
       {metrics && (
-        <SystemPanel borderVariant="subtle" className="p-6 space-y-4">
+        <SystemPanel borderVariant="subtle" className="p-6 sm:p-8 space-y-4 font-mono">
           <span className="text-xs font-bold text-primary uppercase tracking-wider block border-b border-white/10 pb-2">
             OPERATIONAL LATENCY & TRAFFIC
           </span>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
             <div className="p-3 rounded bg-surface/50 border border-white/5">
               <span className="text-[9px] uppercase text-on-surface-variant/70 block">API Requests</span>
-              <span className="text-base font-bold text-white mt-1 block">{metrics.requests?.total || 0}</span>
+              <span className="text-base font-bold text-white mt-1 block font-geist">{metrics.requests?.total || 0}</span>
             </div>
             <div className="p-3 rounded bg-surface/50 border border-white/5">
               <span className="text-[9px] uppercase text-on-surface-variant/70 block">Avg Latency</span>
-              <span className="text-base font-bold text-primary mt-1 block">{metrics.requests?.avgLatencyMs || 0}ms</span>
+              <span className="text-base font-bold text-primary mt-1 block font-geist">{metrics.requests?.avgLatencyMs || 0}ms</span>
             </div>
             <div className="p-3 rounded bg-surface/50 border border-white/5">
               <span className="text-[9px] uppercase text-on-surface-variant/70 block">Webhooks</span>
-              <span className="text-base font-bold text-secondary mt-1 block">{metrics.webhooks?.total || 0}</span>
+              <span className="text-base font-bold text-secondary mt-1 block font-geist">{metrics.webhooks?.total || 0}</span>
             </div>
             <div className="p-3 rounded bg-surface/50 border border-white/5">
               <span className="text-[9px] uppercase text-on-surface-variant/70 block">AI Latency</span>
-              <span className="text-base font-bold text-primary mt-1 block">{metrics.aiDiagnosis?.avgLatencyMs || 0}ms</span>
+              <span className="text-base font-bold text-primary mt-1 block font-geist">{metrics.aiDiagnosis?.avgLatencyMs || 0}ms</span>
             </div>
           </div>
         </SystemPanel>
       )}
 
-      {/* Gateway Integration Card */}
-      <SystemPanel borderVariant="subtle" className="p-6 space-y-4">
+      {/* 5. Gateway Integration Card */}
+      <SystemPanel borderVariant="subtle" className="p-6 sm:p-8 space-y-4 font-mono">
         <div className="flex justify-between items-center border-b border-white/10 pb-3">
           <span className="text-xs font-bold text-primary uppercase tracking-wider">
             RAZORPAY WEBHOOK SECURITY & TEST ENVIRONMENT
@@ -173,8 +172,8 @@ export const SettingsPage: React.FC = () => {
         </div>
       </SystemPanel>
 
-      {/* Merchant Profile Card */}
-      <SystemPanel borderVariant="subtle" className="p-6 space-y-4">
+      {/* 6. Active Merchant Profile Card */}
+      <SystemPanel borderVariant="subtle" className="p-6 sm:p-8 space-y-4 font-mono">
         <div className="flex justify-between items-center border-b border-white/10 pb-3">
           <span className="text-xs font-bold text-primary uppercase tracking-wider">
             ACTIVE MERCHANT CONTEXT & RBAC
@@ -183,7 +182,7 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <DataRow label="MERCHANT IDENTIFIER" value={overview?.merchant.name || 'Apex Retail India'} />
+          <DataRow label="MERCHANT IDENTIFIER" value={<span className="font-geist font-semibold">{overview?.merchant.name || 'Apex Retail India'}</span>} />
           <DataRow label="PRIMARY EMAIL" value={overview?.merchant.email || 'finance@apexretail.in'} />
           <DataRow label="MERCHANT UUID" value={overview?.merchant.id || '—'} />
           <DataRow

@@ -41,24 +41,24 @@ export const LoginPage: React.FC = () => {
   const currentMerchant = merchants.find((m) => m.id === selectedMerchantId);
 
   return (
-    <div className="min-h-[85vh] flex flex-col justify-center items-center px-4 py-12 relative">
+    <div className="min-h-[85vh] flex flex-col justify-center items-center px-4 py-16 relative font-mono">
       {/* Centered System Access Console */}
-      <div className="w-full max-w-xl space-y-6">
-        <div className="text-center space-y-2">
+      <div className="w-full max-w-lg space-y-8">
+        <div className="text-center space-y-3">
           <SectionTag label="01 / ACCESS" />
-          <h1 className="text-2xl sm:text-4xl font-bold font-geist text-on-surface tracking-tight mt-2">
+          <h1 className="text-3xl sm:text-4xl font-bold font-geist text-on-surface tracking-tight">
             ENTER THE RECOVERY SYSTEM
           </h1>
-          <p className="text-xs sm:text-sm font-mono text-on-surface-variant max-w-md mx-auto leading-relaxed">
+          <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-md mx-auto leading-relaxed">
             Authenticate your merchant environment to access autonomous recovery operations.
           </p>
         </div>
 
-        {/* Main Authentication System Panel */}
+        {/* Main Authentication System Panel (Surface 1) */}
         <SystemPanel borderVariant="primary" className="p-6 sm:p-8 space-y-6">
           {/* Quick Operational Profile Selection */}
           <div className="space-y-3">
-            <div className="flex justify-between items-center text-[10px] font-mono uppercase tracking-widest text-on-surface-variant/70">
+            <div className="flex justify-between items-center text-[10px] uppercase tracking-widest text-on-surface-variant/70">
               <span>ACTIVE WORKSPACE NODES</span>
               <StatusIndicator status="OPERATIONAL" label="TEST MODE" />
             </div>
@@ -69,14 +69,14 @@ export const LoginPage: React.FC = () => {
                   key={m.id}
                   type="button"
                   onClick={() => handleSelectMerchantAndLogin(m.id)}
-                  className={`p-3 rounded bg-surface/50 border text-left transition-all font-mono text-xs flex flex-col justify-between space-y-2 ${
+                  className={`p-3.5 rounded bg-surface/50 border text-left transition-all text-xs flex flex-col justify-between space-y-2 ${
                     selectedMerchantId === m.id
-                      ? 'border-primary/40 bg-primary/5 text-on-surface'
+                      ? 'border-primary/40 bg-primary/10 text-on-surface'
                       : 'border-white/5 hover:border-white/20 text-on-surface-variant/80'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-on-surface text-[11px] truncate">{m.name}</span>
+                    <span className="font-bold text-on-surface text-[11px] truncate font-geist">{m.name}</span>
                     <span className="text-secondary text-[9px] font-bold">
                       {m.role || (idx === 0 ? 'OWNER' : 'ADMIN')}
                     </span>
@@ -91,7 +91,7 @@ export const LoginPage: React.FC = () => {
 
           {/* Form */}
           <form onSubmit={handleLoginSubmit} className="space-y-4">
-            <div className="space-y-1 font-mono">
+            <div className="space-y-1">
               <label className="block text-[10px] sm:text-[11px] text-on-surface-variant/70 uppercase tracking-wider">
                 MERCHANT IDENTIFIER
               </label>
@@ -99,13 +99,13 @@ export const LoginPage: React.FC = () => {
                 value={selectedMerchantId}
                 onChange={(e) => setSelectedMerchantId(e.target.value)}
                 disabled={loading}
-                className="w-full px-3 py-2.5 rounded bg-surface/50 border border-white/10 text-on-surface text-xs font-mono focus:outline-none focus:border-primary transition-colors"
+                className="w-full px-3 py-2.5 rounded bg-surface/50 border border-white/10 text-on-surface text-xs focus:outline-none focus:border-primary transition-colors"
               >
                 {loading ? (
                   <option>Loading merchant environments...</option>
                 ) : (
                   merchants.map((m) => (
-                    <option key={m.id} value={m.id} className="bg-surface-container-lowest text-white">
+                    <option key={m.id} value={m.id} className="bg-[#070B17] text-white">
                       {m.name} — {m.id.slice(0, 16)}...
                     </option>
                   ))
@@ -113,7 +113,7 @@ export const LoginPage: React.FC = () => {
               </select>
             </div>
 
-            <div className="space-y-1 font-mono">
+            <div className="space-y-1">
               <label className="block text-[10px] sm:text-[11px] text-on-surface-variant/70 uppercase tracking-wider">
                 FINANCE & OPERATIONS EMAIL
               </label>
@@ -121,15 +121,15 @@ export const LoginPage: React.FC = () => {
                 type="text"
                 readOnly
                 value={currentMerchant?.email || 'admin@recoverai.local'}
-                className="w-full px-3 py-2.5 rounded bg-surface/30 border border-white/5 text-on-surface/80 text-xs font-mono focus:outline-none"
+                className="w-full px-3 py-2.5 rounded bg-surface/30 border border-white/5 text-on-surface/80 text-xs focus:outline-none"
               />
             </div>
 
-            <div className="space-y-1 font-mono">
+            <div className="space-y-1">
               <label className="block text-[10px] sm:text-[11px] text-on-surface-variant/70 uppercase tracking-wider">
                 SECURITY CONTEXT
               </label>
-              <div className="flex justify-between items-center p-2.5 rounded bg-surface/30 border border-white/5 text-[10px] text-on-surface-variant/70 font-mono">
+              <div className="flex justify-between items-center p-2.5 rounded bg-surface/30 border border-white/5 text-[10px] text-on-surface-variant/70">
                 <span>Multi-Tenant Sandbox Session</span>
                 <span className="text-secondary font-bold">&#10003; ISOLATED</span>
               </div>
@@ -147,10 +147,10 @@ export const LoginPage: React.FC = () => {
           </form>
 
           {/* Panel Footer Status */}
-          <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px] font-mono">
-            <div className="text-on-surface-variant/70">
+          <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px]">
+            <div className="text-on-surface-variant/70 font-geist">
               New merchant?{' '}
-              <NavLink to="/signup" className="text-primary hover:underline font-bold">
+              <NavLink to="/signup" className="text-primary hover:underline font-bold font-mono">
                 CREATE SANDBOX &rarr;
               </NavLink>
             </div>

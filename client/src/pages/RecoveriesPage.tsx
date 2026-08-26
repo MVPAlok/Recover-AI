@@ -75,43 +75,42 @@ export const RecoveriesPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12 font-mono">
-      {/* Header: 03 / EXECUTION PIPELINE */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div className="space-y-2">
+    <div className="space-y-8 pb-12">
+      {/* 1. Header Hierarchy with 32px Spacing */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <SectionTag label="03 / EXECUTION PIPELINE" />
           <div className="flex items-center gap-3">
-            <SectionTag label="03 / EXECUTION PIPELINE" />
-            <StatusIndicator status="OPERATIONAL" label="DISPATCH WORKERS READY" />
+            <button
+              onClick={toggleNeedsAttention}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-mono transition-all ${
+                needsAttention
+                  ? 'border border-tertiary/50 bg-tertiary/10 text-tertiary font-bold shadow-[0_0_10px_rgba(249,188,69,0.2)]'
+                  : 'border border-white/10 bg-surface/50 text-on-surface-variant hover:text-white'
+              }`}
+            >
+              <span>●</span>
+              Needs Attention (&gt;30m)
+            </button>
+            <div className="text-xs font-mono text-on-surface-variant/70 bg-surface/50 border border-white/10 px-3 py-1.5 rounded">
+              TOTAL: <span className="text-white font-bold">{total}</span>
+            </div>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-bold font-geist text-on-surface tracking-tight">
-            RECOVERY CENTER
-          </h1>
-          <p className="text-xs text-on-surface-variant/80 max-w-2xl leading-relaxed">
-            Real-time execution log of autonomous recovery attempts dispatched to Razorpay Test Mode and SMS/email channels.
-          </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={toggleNeedsAttention}
-            className={`flex items-center gap-2 px-3 py-2 rounded text-xs transition-all ${
-              needsAttention
-                ? 'border border-tertiary/50 bg-tertiary/10 text-tertiary font-bold shadow-[0_0_10px_rgba(249,188,69,0.2)]'
-                : 'border border-white/10 bg-surface/50 text-on-surface-variant hover:text-white'
-            }`}
-          >
-            <span>●</span>
-            Needs Attention (&gt;30m)
-          </button>
-          <div className="text-xs text-on-surface-variant/70 bg-surface/50 border border-white/10 px-3 py-2 rounded">
-            TOTAL: <span className="text-white font-bold">{total}</span>
-          </div>
+        <div>
+          <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight">
+            RECOVERY CENTER
+          </h1>
+          <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-2xl mt-2 leading-relaxed">
+            Real-time execution console tracking recovery attempts dispatched to Razorpay Test Mode and background worker queues.
+          </p>
         </div>
       </div>
 
-      {/* Filter Tabs System Panel */}
-      <SystemPanel borderVariant="subtle" className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3">
-        {/* Status Filter Buttons */}
+      {/* 2. Compressed Filter System Panel (Surface 1) */}
+      <SystemPanel borderVariant="subtle" className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 font-mono">
+        {/* Status Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
           {[
             { label: 'ALL', val: '' },
@@ -162,7 +161,7 @@ export const RecoveriesPage: React.FC = () => {
         </div>
       </SystemPanel>
 
-      {/* Main Table */}
+      {/* 3. Operational Records Table (16px Row Spacing, Clickable Rows) */}
       {loading ? (
         <TableSkeleton rows={8} cols={6} />
       ) : error ? (
@@ -176,15 +175,15 @@ export const RecoveriesPage: React.FC = () => {
         <div className="bg-surface-container-high/80 border border-white/10 rounded-xl overflow-hidden backdrop-blur-md shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-surface/80 text-on-surface-variant/70 border-b border-white/10 text-[10px] uppercase font-bold tracking-wider">
+              <thead className="bg-surface/80 text-on-surface-variant/70 border-b border-white/10 text-[10px] uppercase font-mono font-bold tracking-wider">
                 <tr>
-                  <th className="py-3.5 px-4">ATTEMPT ID</th>
-                  <th className="py-3.5 px-4">TX ID & CUSTOMER</th>
-                  <th className="py-3.5 px-4">ACTION DISPATCHED</th>
-                  <th className="py-3.5 px-4">EXECUTION STATUS</th>
-                  <th className="py-3.5 px-4">OUTCOME</th>
-                  <th className="py-3.5 px-4">TIMESTAMP</th>
-                  <th className="py-3.5 px-4 text-right">ACTION</th>
+                  <th className="py-4 px-5">ATTEMPT ID</th>
+                  <th className="py-4 px-5">TX ID & CUSTOMER</th>
+                  <th className="py-4 px-5">ACTION DISPATCHED</th>
+                  <th className="py-4 px-5">EXECUTION STATUS</th>
+                  <th className="py-4 px-5">OUTCOME</th>
+                  <th className="py-4 px-5">TIMESTAMP</th>
+                  <th className="py-4 px-5 text-right">ACTION</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-on-surface-variant">
@@ -194,21 +193,21 @@ export const RecoveriesPage: React.FC = () => {
                     onClick={() => navigate(`/transactions/${rec.transactionId}`)}
                     className="hover:bg-surface/50 cursor-pointer transition-colors group"
                   >
-                    <td className="py-3.5 px-4 font-bold text-white group-hover:text-primary">
-                      {rec.id}
+                    <td className="py-4 px-5 font-mono font-bold text-white group-hover:text-primary">
+                      {rec.id.slice(0, 14)}...
                     </td>
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-white">{rec.transactionId}</div>
-                      <div className="text-[10px] text-on-surface-variant/60">
+                    <td className="py-4 px-5">
+                      <div className="font-mono font-bold text-white">{rec.transactionId}</div>
+                      <div className="text-[10px] font-geist text-on-surface-variant/60">
                         {rec.customerName || 'Customer'}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-4 px-5 font-mono">
                       <span className="text-primary font-bold text-[10px] bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
                         {rec.actionType}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-4 px-5 font-mono">
                       <StatusIndicator
                         status={
                           rec.status === 'SUCCESS'
@@ -220,22 +219,16 @@ export const RecoveriesPage: React.FC = () => {
                         label={rec.status}
                       />
                     </td>
-                    <td className="py-3.5 px-4 text-[11px]">
+                    <td className="py-4 px-5 font-mono text-[11px]">
                       {rec.reason || '—'}
                     </td>
-                    <td className="py-3.5 px-4 text-[10px] text-on-surface-variant/60">
+                    <td className="py-4 px-5 font-mono text-[10px] text-on-surface-variant/60">
                       {new Date(rec.createdAt).toLocaleTimeString()}
                     </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/transactions/${rec.transactionId}`);
-                        }}
-                        className="text-[10px] text-primary hover:text-white border border-primary/30 hover:bg-primary hover:text-surface-dim px-2.5 py-1 rounded transition-all font-bold"
-                      >
+                    <td className="py-4 px-5 text-right font-mono">
+                      <span className="text-[10px] text-primary group-hover:underline font-bold">
                         INSPECT &rarr;
-                      </button>
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -244,7 +237,7 @@ export const RecoveriesPage: React.FC = () => {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-white/10 text-xs text-on-surface-variant/70 bg-surface/40">
+          <div className="flex items-center justify-between px-5 py-3.5 border-t border-white/10 text-xs font-mono text-on-surface-variant/70 bg-surface/40">
             <div>
               PAGE <span className="font-bold text-white">{page}</span> OF <span className="font-bold text-white">{totalPages}</span>
             </div>

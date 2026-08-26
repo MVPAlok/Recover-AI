@@ -102,41 +102,40 @@ export const TransactionsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12 font-mono">
-      {/* Header: 02 / TRANSACTION LEDGER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div className="space-y-2">
+    <div className="space-y-8 pb-12">
+      {/* 1. Header Hierarchy with 32px Spacing */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <SectionTag label="02 / TRANSACTION LEDGER" />
           <div className="flex items-center gap-3">
-            <SectionTag label="02 / TRANSACTION LEDGER" />
-            <StatusIndicator status="OPERATIONAL" label="INGESTION STREAM ACTIVE" />
+            <button
+              onClick={toggleNeedsAttention}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs font-mono transition-all ${
+                needsAttention
+                  ? 'border border-tertiary/50 bg-tertiary/10 text-tertiary font-bold shadow-[0_0_10px_rgba(249,188,69,0.2)]'
+                  : 'border border-white/10 bg-surface/50 text-on-surface-variant hover:text-white'
+              }`}
+            >
+              <span>●</span>
+              Needs Attention
+            </button>
+            <div className="text-xs font-mono text-on-surface-variant/70 bg-surface/50 border border-white/10 px-3 py-1.5 rounded">
+              TOTAL: <span className="text-white font-bold">{total}</span>
+            </div>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-bold font-geist text-on-surface tracking-tight">
+        </div>
+
+        <div>
+          <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight">
             TRANSACTION EXPLORER
           </h1>
-          <p className="text-xs text-on-surface-variant/80 max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-2xl mt-2 leading-relaxed">
             Search and inspect payment failures, AI root-cause decisions, and cryptographic recovery outcomes.
           </p>
         </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={toggleNeedsAttention}
-            className={`flex items-center gap-2 px-3 py-2 rounded text-xs transition-all ${
-              needsAttention
-                ? 'border border-tertiary/50 bg-tertiary/10 text-tertiary font-bold shadow-[0_0_10px_rgba(249,188,69,0.2)]'
-                : 'border border-white/10 bg-surface/50 text-on-surface-variant hover:text-white'
-            }`}
-          >
-            <span>●</span>
-            Needs Attention
-          </button>
-          <div className="text-xs text-on-surface-variant/70 bg-surface/50 border border-white/10 px-3 py-2 rounded">
-            TOTAL: <span className="text-white font-bold">{total}</span>
-          </div>
-        </div>
       </div>
 
-      {/* Filter System Panel */}
+      {/* 2. Compressed Filter Toolbar (Surface 1) */}
       <SystemPanel borderVariant="subtle" className="p-4 sm:p-5 space-y-3">
         <form onSubmit={handleSearchSubmit} className="flex gap-2">
           <div className="relative flex-1">
@@ -146,18 +145,18 @@ export const TransactionsPage: React.FC = () => {
               placeholder="Search by Transaction ID, Customer Name, Email, or Failure Code..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full bg-surface/50 border border-white/10 rounded pl-9 pr-3 py-2 text-xs text-white placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary"
+              className="w-full bg-surface/50 border border-white/10 rounded pl-9 pr-3 py-2 text-xs font-mono text-white placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary"
             />
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-primary/10 text-primary border border-primary/30 hover:bg-primary hover:text-surface-dim font-bold text-xs uppercase tracking-wider rounded transition-all"
+            className="px-4 py-2 bg-primary/10 text-primary border border-primary/30 hover:bg-primary hover:text-surface-dim font-bold text-xs uppercase font-mono tracking-wider rounded transition-all"
           >
             Search
           </button>
         </form>
 
-        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+        <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-xs">
           <select
             value={status}
             onChange={(e) => handleFilterChange('status', e.target.value)}
@@ -221,7 +220,7 @@ export const TransactionsPage: React.FC = () => {
         </div>
       </SystemPanel>
 
-      {/* Main Technical Ledger Table */}
+      {/* 3. Main Financial Ledger Table (16px Row Spacing, Clickable Rows) */}
       {loading ? (
         <TableSkeleton rows={8} cols={7} />
       ) : error ? (
@@ -235,16 +234,16 @@ export const TransactionsPage: React.FC = () => {
         <div className="bg-surface-container-high/80 border border-white/10 rounded-xl overflow-hidden backdrop-blur-md shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-surface/80 text-on-surface-variant/70 border-b border-white/10 text-[10px] uppercase font-bold tracking-wider">
+              <thead className="bg-surface/80 text-on-surface-variant/70 border-b border-white/10 text-[10px] uppercase font-mono font-bold tracking-wider">
                 <tr>
-                  <th className="py-3.5 px-4">TX ID</th>
-                  <th className="py-3.5 px-4">CUSTOMER</th>
-                  <th className="py-3.5 px-4">AMOUNT</th>
-                  <th className="py-3.5 px-4">STATUS / PAYMENT</th>
-                  <th className="py-3.5 px-4">RECOVERY STATE</th>
-                  <th className="py-3.5 px-4">FAILURE CODE</th>
-                  <th className="py-3.5 px-4">AI DECISION</th>
-                  <th className="py-3.5 px-4 text-right">ACTION</th>
+                  <th className="py-4 px-5">TX ID</th>
+                  <th className="py-4 px-5">CUSTOMER</th>
+                  <th className="py-4 px-5">AMOUNT</th>
+                  <th className="py-4 px-5">STATUS / PAYMENT</th>
+                  <th className="py-4 px-5">RECOVERY STATE</th>
+                  <th className="py-4 px-5">FAILURE CODE</th>
+                  <th className="py-4 px-5">AI DECISION</th>
+                  <th className="py-4 px-5 text-right">ACTION</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-on-surface-variant">
@@ -254,17 +253,17 @@ export const TransactionsPage: React.FC = () => {
                     onClick={() => navigate(`/transactions/${tx.id}`)}
                     className="hover:bg-surface/50 cursor-pointer transition-colors group"
                   >
-                    <td className="py-3.5 px-4 font-bold text-white group-hover:text-primary">
+                    <td className="py-4 px-5 font-mono font-bold text-white group-hover:text-primary">
                       {tx.id}
                     </td>
-                    <td className="py-3.5 px-4">
-                      <div className="text-white font-semibold">{tx.customerName}</div>
-                      <div className="text-[10px] text-on-surface-variant/60">{tx.customerEmail}</div>
+                    <td className="py-4 px-5">
+                      <div className="text-white font-semibold font-geist">{tx.customerName}</div>
+                      <div className="text-[10px] font-mono text-on-surface-variant/60">{tx.customerEmail}</div>
                     </td>
-                    <td className="py-3.5 px-4 font-bold text-white">
+                    <td className="py-4 px-5 font-mono font-bold text-white">
                       {formatINR(tx.amount)}
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-4 px-5 font-mono">
                       <div className="flex items-center gap-1.5">
                         <StatusIndicator
                           status={tx.status === 'SUCCESS' ? 'OPERATIONAL' : 'FAILED'}
@@ -277,7 +276,7 @@ export const TransactionsPage: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-4 px-5 font-mono">
                       <StatusIndicator
                         status={
                           tx.recoveryStatus === 'RECOVERED' || tx.status === 'SUCCESS'
@@ -289,10 +288,10 @@ export const TransactionsPage: React.FC = () => {
                         label={tx.recoveryStatus || (tx.status === 'SUCCESS' ? 'RECOVERED' : 'NOT STARTED')}
                       />
                     </td>
-                    <td className="py-3.5 px-4 text-[11px]">
+                    <td className="py-4 px-5 font-mono text-[11px]">
                       {tx.failureCode || '—'}
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-4 px-5 font-mono">
                       {tx.decision ? (
                         <span className="text-primary font-bold text-[10px] bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
                           {tx.decision}
@@ -301,16 +300,10 @@ export const TransactionsPage: React.FC = () => {
                         <span className="text-on-surface-variant/40">—</span>
                       )}
                     </td>
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/transactions/${tx.id}`);
-                        }}
-                        className="text-[10px] text-primary hover:text-white border border-primary/30 hover:bg-primary hover:text-surface-dim px-2.5 py-1 rounded transition-all font-bold"
-                      >
+                    <td className="py-4 px-5 text-right font-mono">
+                      <span className="text-[10px] text-primary group-hover:underline font-bold">
                         INSPECT &rarr;
-                      </button>
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -319,7 +312,7 @@ export const TransactionsPage: React.FC = () => {
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-white/10 text-xs text-on-surface-variant/70 bg-surface/40">
+          <div className="flex items-center justify-between px-5 py-3.5 border-t border-white/10 text-xs font-mono text-on-surface-variant/70 bg-surface/40">
             <div>
               PAGE <span className="font-bold text-white">{page}</span> OF <span className="font-bold text-white">{totalPages}</span>
             </div>

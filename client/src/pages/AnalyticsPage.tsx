@@ -33,8 +33,8 @@ export const AnalyticsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <CardSkeleton />
           <CardSkeleton />
           <CardSkeleton />
@@ -50,72 +50,71 @@ export const AnalyticsPage: React.FC = () => {
   const { overview, failures, decisions } = data;
 
   return (
-    <div className="space-y-8 pb-12 font-mono">
-      {/* Header: 04 / INTELLIGENCE */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <SectionTag label="04 / INTELLIGENCE" />
-            <StatusIndicator status="OPERATIONAL" label="STATISTICAL PIPELINE LIVE" />
+    <div className="space-y-8 pb-12">
+      {/* 1. Header Hierarchy with 32px Spacing */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <SectionTag label="04 / INTELLIGENCE" />
+          <div className="text-xs font-mono text-on-surface-variant/70 bg-surface/50 border border-white/10 px-3 py-1.5 rounded">
+            SCOPE: <span className="text-white font-bold">ALL HISTORICAL SESSIONS</span>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-bold font-geist text-on-surface tracking-tight">
+        </div>
+
+        <div>
+          <h1 className="text-3xl sm:text-5xl font-bold font-geist text-on-surface tracking-tight">
             RECOVERY ANALYTICS
           </h1>
-          <p className="text-xs text-on-surface-variant/80 max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-2xl mt-2 leading-relaxed">
             Quantitative analysis of payment failure codes, AI policy distribution, and verified recovery efficiency.
           </p>
         </div>
-
-        <div className="text-xs text-on-surface-variant/70 bg-surface/50 border border-white/10 px-3 py-2 rounded">
-          SCOPE: <span className="text-white font-bold">ALL HISTORICAL SESSIONS</span>
-        </div>
       </div>
 
-      {/* Top Telemetry Summary Panel */}
-      <SystemPanel borderVariant="primary" className="p-6 sm:p-8">
+      {/* 2. Top Quantitative KPIs Panel (Surface 1) */}
+      <SystemPanel borderVariant="primary" className="p-6 sm:p-8 font-mono">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="space-y-1">
             <span className="text-[10px] sm:text-xs text-on-surface-variant/70 uppercase">OVERALL RECOVERY RATE</span>
-            <div className="text-2xl sm:text-3xl font-bold font-geist text-primary">
+            <div className="text-3xl sm:text-4xl font-bold font-geist text-primary tracking-tight">
               {overview.overallRecoveryRate}%
             </div>
-            <div className="text-[10px] text-secondary">
-              Revenue Saved / Revenue at Risk
+            <div className="text-[10px] text-secondary flex items-center gap-1 pt-0.5">
+              <span>●</span> Revenue Saved / Revenue at Risk
             </div>
           </div>
 
           <div className="space-y-1">
             <span className="text-[10px] sm:text-xs text-on-surface-variant/70 uppercase">TOTAL VERIFIED RECOVERY</span>
-            <div className="text-2xl sm:text-3xl font-bold font-geist text-secondary">
+            <div className="text-3xl sm:text-4xl font-bold font-geist text-secondary tracking-tight">
               {formatINR(overview.totalRecoveredRevenue)}
             </div>
-            <div className="text-[10px] text-on-surface-variant/70">
+            <div className="text-[10px] text-on-surface-variant/70 pt-0.5">
               {overview.successfulRecoveriesCount} successful attempts reconciled
             </div>
           </div>
 
           <div className="space-y-1">
             <span className="text-[10px] sm:text-xs text-on-surface-variant/70 uppercase">AVG TRANSACTION VALUE</span>
-            <div className="text-2xl sm:text-3xl font-bold font-geist text-white">
+            <div className="text-3xl sm:text-4xl font-bold font-geist text-white tracking-tight">
               {formatINR(overview.averageTransactionValue)}
             </div>
-            <div className="text-[10px] text-on-surface-variant/70">
+            <div className="text-[10px] text-on-surface-variant/70 pt-0.5">
               Across all ingested payment failures
             </div>
           </div>
         </div>
       </SystemPanel>
 
-      {/* 2-Column Structured Visualization Panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* 3. 2-Column Structured Visualization Panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 font-mono">
         {/* Failure Cause Breakdown */}
-        <SystemPanel borderVariant="subtle" className="p-6 space-y-4">
+        <SystemPanel borderVariant="subtle" className="p-6 sm:p-8 space-y-4">
           <div className="flex justify-between items-center border-b border-white/10 pb-3">
             <div>
               <span className="text-xs font-bold text-primary uppercase tracking-wider block">
                 FAILURE CAUSE DECOMPOSITION
               </span>
-              <p className="text-[11px] text-on-surface-variant/70 mt-0.5">
+              <p className="text-[11px] font-geist text-on-surface-variant/70 mt-0.5">
                 Frequency and financial volume by gateway decline reason
               </p>
             </div>
@@ -124,9 +123,9 @@ export const AnalyticsPage: React.FC = () => {
             </span>
           </div>
 
-          <div className="space-y-3.5 pt-1">
+          <div className="space-y-4 pt-1">
             {failures.map((item) => (
-              <div key={item.failureCode} className="space-y-1 text-xs">
+              <div key={item.failureCode} className="space-y-1.5 text-xs">
                 <div className="flex justify-between font-semibold">
                   <span className="text-white text-[11px]">{item.failureCode}</span>
                   <span className="text-on-surface-variant/70 text-[10px]">
@@ -145,20 +144,20 @@ export const AnalyticsPage: React.FC = () => {
         </SystemPanel>
 
         {/* AI Decision Policy Distribution */}
-        <SystemPanel borderVariant="subtle" className="p-6 space-y-4">
+        <SystemPanel borderVariant="subtle" className="p-6 sm:p-8 space-y-4">
           <div className="flex justify-between items-center border-b border-white/10 pb-3">
             <div>
               <span className="text-xs font-bold text-primary uppercase tracking-wider block">
                 AI POLICY DISTRIBUTION
               </span>
-              <p className="text-[11px] text-on-surface-variant/70 mt-0.5">
-                Actions determined by deterministic safety policies
+              <p className="text-[11px] font-geist text-on-surface-variant/70 mt-0.5">
+                Recovery actions formulated by deterministic safety engine
               </p>
             </div>
-            <StatusIndicator status="OPERATIONAL" label="DECISION ENGINE" />
+            <StatusIndicator status="OPERATIONAL" label="DETERMINISTIC" />
           </div>
 
-          <div className="space-y-3.5 pt-1">
+          <div className="space-y-4 pt-1">
             {decisions.map((item) => {
               const color =
                 item.decision === 'RETRY'
@@ -170,7 +169,7 @@ export const AnalyticsPage: React.FC = () => {
                   : 'bg-error';
 
               return (
-                <div key={item.decision} className="space-y-1 text-xs">
+                <div key={item.decision} className="space-y-1.5 text-xs">
                   <div className="flex justify-between font-semibold">
                     <span className="text-white font-bold text-[11px]">{item.decision}</span>
                     <span className="text-on-surface-variant/70 text-[10px]">

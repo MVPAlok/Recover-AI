@@ -94,7 +94,7 @@ export const SecurityPage: React.FC = () => {
         </p>
         <NavLink to="/signup" className="inline-block pt-2">
           <ActionButton>
-            INITIALIZE SANDBOX ENVIRONMENT &rarr;
+            INITIALIZE SANDBOX ENVIRONMENT
           </ActionButton>
         </NavLink>
       </SystemPanel>

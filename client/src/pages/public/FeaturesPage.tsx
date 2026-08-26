@@ -88,7 +88,7 @@ export const FeaturesPage: React.FC = () => {
       <div className="pt-6 text-center">
         <NavLink to="/how-it-works">
           <ActionButton>
-            SEE 6-STAGE WORKFLOW &rarr;
+            SEE 6-STAGE WORKFLOW
           </ActionButton>
         </NavLink>
       </div>

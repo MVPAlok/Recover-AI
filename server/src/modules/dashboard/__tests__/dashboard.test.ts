@@ -327,7 +327,7 @@ async function runDashboardTests() {
     await service.getOverview('mer_other_merchant');
     throw new Error('Expected merchant isolation check to fail');
   } catch (err: any) {
-    if (!err.message.includes('No merchant found')) {
+    if (!err.message.includes('not found') && !err.message.includes('No merchant found')) {
       throw err;
     }
   }

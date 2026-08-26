@@ -39,9 +39,9 @@ const App: React.FC = () => {
           <Route path="/dashboard" element={<OverviewPage />} />
           <Route path="/transactions" element={<TransactionsPage />} />
           <Route path="/transactions/:transactionId" element={<TransactionDetailPage />} />
-          <Route path="/transactions/:id" element={<TransactionDetailPage />} />
           <Route path="/recoveries" element={<RecoveriesPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+          <Route path="/audit" element={<AuditLogPage />} />
           <Route path="/audit-log" element={<AuditLogPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>

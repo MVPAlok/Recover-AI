@@ -53,8 +53,10 @@ export class DashboardController {
       res.status(200).json({ success: true, data: overview });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
+      const isAuthError = message.includes('x-merchant-id') || message.includes('required');
+      const statusCode = isAuthError ? 401 : 500;
       logger.error(`[DashboardController] Error in getOverview: ${message}`);
-      res.status(500).json({ success: false, error: { code: 'OVERVIEW_FETCH_ERROR', message } });
+      res.status(statusCode).json({ success: false, error: { code: isAuthError ? 'UNAUTHORIZED' : 'OVERVIEW_FETCH_ERROR', message } });
     }
   };
 

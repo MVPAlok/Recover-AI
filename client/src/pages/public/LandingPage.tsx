@@ -276,7 +276,13 @@ export const LandingPage: React.FC = () => {
         <div className="font-headline-md text-lg sm:text-xl md:text-[24px] font-bold text-on-surface tracking-tight">
           RecoverAI
         </div>
-        <div className="flex items-center space-x-3 sm:space-x-6">
+        <div className="flex items-center space-x-3 sm:space-x-5">
+          <button
+            onClick={() => navigate("/signup")}
+            className="hidden md:block font-label-mono text-[11px] sm:text-label-mono text-on-surface-variant hover:text-white transition-colors"
+          >
+            Create Sandbox
+          </button>
           <button
             onClick={() => navigate("/login")}
             className="hidden sm:block font-label-mono text-[11px] sm:text-label-mono text-on-surface-variant hover:text-white transition-colors"

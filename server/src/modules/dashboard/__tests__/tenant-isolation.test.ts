@@ -146,6 +146,11 @@ function createMockPrisma() {
         if (where?.merchantId === merchantB.id) return 1;
         return 0;
       },
+      aggregate: async ({ where }: any) => {
+        if (where?.merchantId === merchantA.id) return { _sum: { amountRecovered: 0 } };
+        if (where?.merchantId === merchantB.id) return { _sum: { amountRecovered: 50000 } };
+        return { _sum: { amountRecovered: 0 } };
+      },
     },
     payment: {
       aggregate: async ({ where }: any) => {
@@ -269,5 +274,17 @@ describe('🛡️ Tenant Isolation & Penetration Tests', () => {
     assert.equal(serialized.includes('AIzaSy'), false);
     assert.equal(serialized.includes('postgresql://'), false);
     assert.equal(serialized.includes('redis://'), false);
+  });
+
+  it('Test 8: Unauthenticated overview query without merchantId throws authorization requirement error', async () => {
+    await assert.rejects(
+      async () => {
+        await service.getOverview(undefined);
+      },
+      {
+        name: 'Error',
+        message: 'Merchant tenant identification header (x-merchant-id) is required.',
+      }
+    );
   });
 });

@@ -102,10 +102,9 @@ export class DashboardRepository {
       data: {
         merchantId: merchant.id,
         transactionId: tx1.id,
-        stage: 'POLICY',
-        agentType: AIAgentType.RECOVERY_POLICY,
+        agentType: AIAgentType.RECOVERY_DECISION,
         decision: RecoveryDecision.RETRY,
-        confidence: 0.94,
+        confidenceScore: 0.94,
         reasoning: 'Transient gateway timeout with 94% recovery likelihood. RETRY recommended.',
         failureCategory: 'TEMPORARY_INFRASTRUCTURE',
         rootCause: 'TEMPORARY_GATEWAY_FAILURE',
@@ -114,16 +113,17 @@ export class DashboardRepository {
       },
     });
 
+    const rpOrderId = `order_sandbox_${Math.floor(Math.random() * 100000)}`;
+    const rpPaymentId = `pay_sandbox_${Math.floor(Math.random() * 100000)}`;
+
     const attempt1 = await this.db.recoveryAttempt.create({
       data: {
         merchantId: merchant.id,
         transactionId: tx1.id,
         attemptNumber: 1,
         status: RecoveryStatus.SUCCESS,
-        action: RecoveryDecision.RETRY,
+        actionType: RecoveryDecision.RETRY,
         amountRecovered: 2499,
-        razorpayOrderId: `order_sandbox_${Math.floor(Math.random() * 100000)}`,
-        razorpayPaymentId: `pay_sandbox_${Math.floor(Math.random() * 100000)}`,
         executedAt: new Date(now.getTime() - 90 * 60 * 1000),
       },
     });
@@ -139,9 +139,8 @@ export class DashboardRepository {
         capturedAmount: 2499,
         verified: true,
         reconciled: true,
-        razorpayOrderId: attempt1.razorpayOrderId,
-        razorpayPaymentId: attempt1.razorpayPaymentId,
-        settledAt: new Date(now.getTime() - 85 * 60 * 1000),
+        razorpayOrderId: rpOrderId,
+        razorpayPaymentId: rpPaymentId,
       },
     });
 
@@ -164,10 +163,9 @@ export class DashboardRepository {
       data: {
         merchantId: merchant.id,
         transactionId: tx2.id,
-        stage: 'POLICY',
-        agentType: AIAgentType.RECOVERY_POLICY,
+        agentType: AIAgentType.RECOVERY_DECISION,
         decision: RecoveryDecision.REMIND,
-        confidence: 0.82,
+        confidenceScore: 0.82,
         reasoning: 'Customer abandoned 3DS OTP verification. Dispatched payment link reminder.',
         failureCategory: 'CUSTOMER_AUTHENTICATION',
         rootCause: 'CUSTOMER_AUTH_FAILED',
@@ -195,10 +193,9 @@ export class DashboardRepository {
       data: {
         merchantId: merchant.id,
         transactionId: tx3.id,
-        stage: 'POLICY',
-        agentType: AIAgentType.RECOVERY_POLICY,
+        agentType: AIAgentType.RECOVERY_DECISION,
         decision: RecoveryDecision.STOP,
-        confidence: 0.99,
+        confidenceScore: 0.99,
         reasoning: 'Hard card expiration. Retries stopped by Authoritative Policy Guardrail.',
         failureCategory: 'INSTRUMENT_EXPIRATION',
         rootCause: 'CARD_EXPIRED',
@@ -247,15 +244,13 @@ export class DashboardRepository {
         where: { merchantId, status: TransactionStatus.FAILED },
         _sum: { amount: true },
       }),
-      // Strict Financial Source of Truth: Sum capturedAmount from verified and reconciled payments
-      this.db.payment.aggregate({
+      // Strict Financial Source of Truth: Sum amountRecovered from successful recovery attempts
+      this.db.recoveryAttempt.aggregate({
         where: {
           merchantId,
-          verified: true,
-          reconciled: true,
-          status: PaymentStatus.CAPTURED,
+          status: RecoveryStatus.SUCCESS,
         },
-        _sum: { capturedAmount: true },
+        _sum: { amountRecovered: true },
       }),
       this.db.aIDecision.count({
         where: {
@@ -271,7 +266,7 @@ export class DashboardRepository {
     ]);
 
     const revenueAtRisk = Number(failedTransactionsSum._sum.amount || 0);
-    const recoveredRevenue = Number(recoveredSumResult._sum.capturedAmount || 0);
+    const recoveredRevenue = Number(recoveredSumResult._sum.amountRecovered || 0);
     const recoveryRate =
       revenueAtRisk > 0 ? Number(((recoveredRevenue / revenueAtRisk) * 100).toFixed(2)) : 0;
     const executionSuccessRate =

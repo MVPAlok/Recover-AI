@@ -22,12 +22,15 @@ export class DashboardService {
   }
 
   /**
-   * Resolves effective merchant ID (using provided merchantId or defaulting to primary seeded merchant).
+   * Resolves effective merchant ID (validates merchant context or throws authorization error).
    */
   async resolveMerchantId(merchantId?: string): Promise<string> {
+    if (!merchantId) {
+      throw new Error('Merchant tenant identification header (x-merchant-id) is required.');
+    }
     const merchant = await this.repo.getMerchant(merchantId);
     if (!merchant) {
-      throw new Error('No merchant found in the database. Please run the database seeder.');
+      throw new Error(`Merchant tenant ${merchantId} not found.`);
     }
     return merchant.id;
   }

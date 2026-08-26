@@ -45,23 +45,26 @@ export const SignupPage: React.FC = () => {
 
   return (
     <div className="min-h-[85vh] flex flex-col justify-center items-center px-4 py-16 relative font-mono">
-      <div className="w-full max-w-lg space-y-8">
+      <div className="w-full max-w-md space-y-8">
+
+        {/* Header */}
         <div className="text-center space-y-3">
           <SectionTag label="01 / INITIALIZATION" />
-          <h1 className="text-3xl sm:text-4xl font-bold font-geist text-on-surface tracking-tight">
-            CREATE RECOVERY ENVIRONMENT
+          <h1 className="text-2xl sm:text-4xl font-bold font-geist text-on-surface tracking-tight">
+            CREATE SANDBOX
           </h1>
-          <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-md mx-auto leading-relaxed">
-            Configure your isolated merchant infrastructure and autonomous recovery rules.
+          <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-sm mx-auto leading-relaxed">
+            Set up your isolated merchant workspace. No production funds are touched — all transactions are synthetic.
           </p>
         </div>
 
-        {/* Configuration System Panel (Surface 1) */}
-        <SystemPanel borderVariant="primary" className="p-6 sm:p-8 space-y-6">
+        <SystemPanel borderVariant="primary" className="p-5 sm:p-8 space-y-6">
           <form onSubmit={handleSignup} className="space-y-4">
+
+            {/* Business Name */}
             <div className="space-y-1">
               <label className="block text-[10px] sm:text-[11px] text-on-surface-variant/70 uppercase tracking-wider">
-                BUSINESS / STORE NAME
+                Business / Store Name
               </label>
               <input
                 type="text"
@@ -73,23 +76,25 @@ export const SignupPage: React.FC = () => {
               />
             </div>
 
+            {/* Email */}
             <div className="space-y-1">
               <label className="block text-[10px] sm:text-[11px] text-on-surface-variant/70 uppercase tracking-wider">
-                FINANCE & OPERATIONS EMAIL
+                Email Address
               </label>
               <input
                 type="email"
                 required
-                placeholder="finance@yourcompany.com"
+                placeholder="you@yourcompany.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3 py-2.5 rounded bg-surface/50 border border-white/10 text-on-surface text-xs placeholder:text-on-surface-variant/40 focus:outline-none focus:border-primary transition-colors"
               />
             </div>
 
+            {/* Currency */}
             <div className="space-y-1">
               <label className="block text-[10px] sm:text-[11px] text-on-surface-variant/70 uppercase tracking-wider">
-                SETTLEMENT CURRENCY
+                Settlement Currency
               </label>
               <select
                 value={currency}
@@ -101,34 +106,45 @@ export const SignupPage: React.FC = () => {
               </select>
             </div>
 
-            {/* Sandbox Environment notice */}
-            <div className="p-3.5 rounded bg-surface/30 border border-white/5 space-y-1 text-xs">
+            {/* What happens next info box */}
+            <div className="p-3.5 rounded bg-surface/30 border border-white/5 space-y-2 text-xs">
               <div className="flex justify-between items-center text-[10px] uppercase font-bold text-on-surface">
-                <span>SANDBOX ENVIRONMENT</span>
+                <span>What happens next</span>
                 <StatusIndicator status="OPERATIONAL" label="SYNTHETIC READY" />
               </div>
-              <p className="text-[11px] text-on-surface-variant/70 leading-relaxed font-geist">
-                Synthetic transactions enabled. No production funds are touched during evaluation.
-              </p>
+              <ul className="space-y-1.5 text-[11px] text-on-surface-variant/70 font-geist leading-relaxed">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5 shrink-0">→</span>
+                  Your isolated sandbox workspace is created
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5 shrink-0">→</span>
+                  Onboarding wizard guides Razorpay setup (2 min)
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5 shrink-0">→</span>
+                  Synthetic transactions are auto-seeded for evaluation
+                </li>
+              </ul>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-1">
               <ActionButton
                 type="submit"
                 disabled={isSubmitting}
                 className="w-full justify-center"
               >
-                {isSubmitting ? 'INITIALIZING ENVIRONMENT...' : 'INITIALIZE RECOVERY ENVIRONMENT'}
+                {isSubmitting ? 'CREATING SANDBOX...' : 'CREATE SANDBOX →'}
               </ActionButton>
             </div>
           </form>
 
-          {/* Panel Footer */}
+          {/* Footer */}
           <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px]">
             <div className="text-on-surface-variant/70 font-geist">
-              Existing environment?{' '}
+              Already have a sandbox?{' '}
               <NavLink to="/login" className="text-primary hover:underline font-bold font-mono">
-                SIGN IN &rarr;
+                SIGN IN →
               </NavLink>
             </div>
             <StatusIndicator status="VERIFIED" label="TENANT ISOLATED" />
@@ -138,3 +154,5 @@ export const SignupPage: React.FC = () => {
     </div>
   );
 };
+
+export default SignupPage;

@@ -276,24 +276,18 @@ export const LandingPage: React.FC = () => {
         <div className="font-headline-md text-lg sm:text-xl md:text-[24px] font-bold text-on-surface tracking-tight">
           RecoverAI
         </div>
-        <div className="flex items-center space-x-3 sm:space-x-5">
-          <button
-            onClick={() => navigate("/signup")}
-            className="hidden md:block font-label-mono text-[11px] sm:text-label-mono text-on-surface-variant hover:text-white transition-colors"
-          >
-            Create Sandbox
-          </button>
+        <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => navigate("/login")}
-            className="hidden sm:block font-label-mono text-[11px] sm:text-label-mono text-on-surface-variant hover:text-white transition-colors"
+            className="font-label-mono text-[11px] sm:text-label-mono text-on-surface-variant hover:text-white transition-colors"
           >
             Sign In
           </button>
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/signup")}
             className="bg-primary/10 text-primary border border-primary/30 font-label-mono text-[10px] sm:text-[11px] px-3.5 sm:px-6 py-2 sm:py-2.5 rounded hover:bg-primary hover:text-surface-dim transition-all flex items-center gap-1.5 sm:gap-2 uppercase tracking-wider sm:tracking-widest pointer-events-auto"
           >
-            Enter Sandbox
+            Create Sandbox
           </button>
         </div>
       </nav>
@@ -752,12 +746,18 @@ export const LandingPage: React.FC = () => {
                     <div className="text-sm sm:text-lg md:text-xl text-primary font-bold">20.5%</div>
                   </div>
                 </div>
-                <div className="text-center pt-3 sm:pt-6 border-t border-white/10">
+                <div className="text-center pt-3 sm:pt-6 border-t border-white/10 flex flex-col sm:flex-row gap-3 justify-center">
+                  <button
+                    onClick={() => navigate("/signup")}
+                    className="bg-primary hover:bg-primary-fixed hover:text-surface-dim text-surface-dim font-label-mono text-xs sm:text-sm tracking-wider sm:tracking-widest px-6 sm:px-10 py-3 sm:py-4 rounded transition-all shadow-[0_0_40px_rgba(193,193,255,0.4)] hover:scale-105 transform pointer-events-auto"
+                  >
+                    CREATE SANDBOX
+                  </button>
                   <button
                     onClick={() => navigate("/login")}
-                    className="bg-primary hover:bg-primary-fixed hover:text-surface-dim text-surface-dim font-label-mono text-xs sm:text-sm tracking-wider sm:tracking-widest px-6 sm:px-12 py-3 sm:py-4 rounded transition-all shadow-[0_0_40px_rgba(193,193,255,0.4)] hover:scale-105 transform pointer-events-auto w-full md:w-auto"
+                    className="border border-primary/40 text-primary hover:bg-primary/10 font-label-mono text-xs sm:text-sm tracking-wider sm:tracking-widest px-6 sm:px-10 py-3 sm:py-4 rounded transition-all pointer-events-auto"
                   >
-                    ENTER DEMO SANDBOX
+                    SIGN IN
                   </button>
                 </div>
               </div>

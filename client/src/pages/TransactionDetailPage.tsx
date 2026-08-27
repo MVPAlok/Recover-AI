@@ -316,12 +316,10 @@ export const TransactionDetailPage: React.FC = () => {
             <div className="pt-3 border-t border-white/10 space-y-2 text-xs">
               <DataRow
                 label="Payment Status"
-                value={transaction.paymentStatus || 'FAILED'}
                 badge={<StatusIndicator status={transaction.paymentStatus === 'CAPTURED' ? 'VERIFIED' : 'FAILED'} />}
               />
               <DataRow
                 label="Recovery State"
-                value={transaction.recoveryStatus || 'NOT_STARTED'}
                 badge={
                   <StatusIndicator
                     status={

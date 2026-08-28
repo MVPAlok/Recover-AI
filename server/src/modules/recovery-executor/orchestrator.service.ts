@@ -131,8 +131,53 @@ export class RecoveryOrchestratorService {
       stagesCompleted.push('03_DECIDE');
 
       // -------------------------------------------------------------
-      // STAGE 4: EXECUTE (Queue / Provider Execution)
+      // STAGE 4: EXECUTE (Safety Guardrails + Provider Execution)
       // -------------------------------------------------------------
+      const { FinancialSafetyService } = await import('../system/financial-safety.service.js');
+      const safetyService = new FinancialSafetyService();
+      const safetyValidation = await safetyService.validateSafetyGuardrails({
+        merchantId: tx.merchantId,
+        customerId: tx.customerId,
+        action: decisionResult.decision,
+      });
+
+      if (!safetyValidation.allowed) {
+        logger.warn(
+          `[RecoveryOrchestrator] Recovery blocked by financial safety rule: ${safetyValidation.blockedReason}`
+        );
+
+        await prisma.auditLog.create({
+          data: {
+            merchantId: tx.merchantId,
+            transactionId: tx.id,
+            entityType: 'AUTONOMOUS_PIPELINE',
+            entityId: transactionId,
+            action: 'PIPELINE_HALTED_BY_SAFETY_GUARDRAIL',
+            actor: 'System Financial Safety Monitor',
+            actorType: 'SYSTEM',
+            details: {
+              blockedReason: safetyValidation.blockedReason,
+              decision: decisionResult.decision,
+              correlationId,
+              requestId,
+            },
+          },
+        });
+
+        return {
+          success: true,
+          transactionId,
+          correlationId,
+          requestId,
+          detectionScore: detectionResult.recoveryProbability,
+          diagnosisCode: diagnosisResult.diagnosisCode,
+          decision: decisionResult.decision,
+          status: 'HALTED_BY_POLICY',
+          message: `Autonomous pipeline halted by financial safety guardrail: ${safetyValidation.blockedReason}`,
+          stagesCompleted,
+        };
+      }
+
       logger.info(`[RecoveryOrchestrator] [04 / EXECUTE] Dispatching recovery action '${decisionResult.decision}'...`);
       const executionResult = await this.executorService.executeDecision({
         transactionId,

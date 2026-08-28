@@ -1,14 +1,17 @@
 import { Queue, Worker, Job } from 'bullmq';
 import { createRedisConnection } from '../../config/redis.js';
 import { RecoveryExecutorService } from '../recovery-executor/recovery-executor.service.js';
+import { RecoveryOrchestratorService } from '../recovery-executor/orchestrator.service.js';
 import { RecoveryExecutionJobData, RecoveryJobResult } from './queue.types.js';
 import { logger } from '../../utils/logger.js';
+import { prisma } from '../../config/prisma.js';
 
 export const RECOVERY_QUEUE_NAME = 'recovery-execution-queue';
 
 let recoveryQueue: Queue<RecoveryExecutionJobData, RecoveryJobResult> | undefined;
 let recoveryWorker: Worker<RecoveryExecutionJobData, RecoveryJobResult> | undefined;
 let executorService: RecoveryExecutorService | undefined;
+let orchestratorService: RecoveryOrchestratorService | undefined;
 
 /**
  * Gets or initializes the BullMQ Recovery Queue instance.
@@ -39,20 +42,50 @@ export function startRecoveryWorker(): Worker<RecoveryExecutionJobData, Recovery
   if (!recoveryWorker) {
     const connection = createRedisConnection();
     executorService = executorService || new RecoveryExecutorService();
+    orchestratorService = orchestratorService || new RecoveryOrchestratorService();
 
     recoveryWorker = new Worker<RecoveryExecutionJobData, RecoveryJobResult>(
       RECOVERY_QUEUE_NAME,
       async (job: Job<RecoveryExecutionJobData, RecoveryJobResult>): Promise<RecoveryJobResult> => {
-        logger.info(`[QueueWorker] Processing job ${job.id} for transaction ${job.data.transactionId}`);
+        const { transactionId, decisionId, executionMode, pipelineType, correlationId, requestId } = job.data;
+        logger.info(
+          `[QueueWorker] Processing job ${job.id} (Type: ${pipelineType || 'DIRECT_EXECUTION'}) for transaction ${transactionId}`
+        );
 
         try {
+          if (pipelineType === 'FULL_AUTONOMOUS_PIPELINE') {
+            const pipelineResult = await orchestratorService!.runAutonomousRecovery({
+              transactionId,
+              correlationId,
+              requestId,
+              executionMode,
+            });
+
+            logger.info(
+              `[QueueWorker] Autonomous pipeline job ${job.id} completed: ${pipelineResult.status} (${pipelineResult.message})`
+            );
+
+            return {
+              success: pipelineResult.success,
+              transactionId,
+              status: pipelineResult.status,
+              outcomeCode: pipelineResult.executionResult?.outcomeCode || pipelineResult.status,
+              message: pipelineResult.message,
+              correlationId: pipelineResult.correlationId,
+              stagesCompleted: pipelineResult.stagesCompleted,
+            };
+          }
+
+          // Direct Execution
           const result = await executorService!.executeDecision({
-            transactionId: job.data.transactionId,
-            decisionId: job.data.decisionId,
-            executionMode: job.data.executionMode,
+            transactionId,
+            decisionId,
+            executionMode,
           });
 
-          logger.info(`[QueueWorker] Job ${job.id} completed: ${result.action} -> ${result.status} (${result.outcomeCode})`);
+          logger.info(
+            `[QueueWorker] Direct execution job ${job.id} completed: ${result.action} -> ${result.status} (${result.outcomeCode})`
+          );
 
           return {
             success: true,
@@ -63,7 +96,38 @@ export function startRecoveryWorker(): Worker<RecoveryExecutionJobData, Recovery
           };
         } catch (err: unknown) {
           const errorMessage = err instanceof Error ? err.message : String(err);
-          logger.error(`[QueueWorker] Job ${job.id} failed: ${errorMessage}`);
+          logger.error(`[QueueWorker] Job ${job.id} failed (Attempt ${job.attemptsMade}/${job.opts.attempts}): ${errorMessage}`);
+
+          // Dead-Letter audit logging on final failed attempt
+          if (job.attemptsMade >= (job.opts.attempts || 3)) {
+            logger.error(`[QueueWorker] Job ${job.id} reached DEAD_LETTER status after max attempts.`);
+            try {
+              const tx = await prisma.transaction.findUnique({ where: { id: transactionId } });
+              if (tx) {
+                await prisma.auditLog.create({
+                  data: {
+                    merchantId: tx.merchantId,
+                    transactionId: tx.id,
+                    entityType: 'QUEUE_DEAD_LETTER',
+                    entityId: job.id || transactionId,
+                    action: 'RECOVERY_JOB_DEAD_LETTER_FAILURE',
+                    actor: 'BullMQ Queue Worker',
+                    actorType: 'SYSTEM_WORKER',
+                    correlationId: correlationId || null,
+                    requestId: requestId || null,
+                    details: {
+                      jobId: job.id,
+                      attemptsMade: job.attemptsMade,
+                      error: errorMessage,
+                    },
+                  },
+                });
+              }
+            } catch (auditErr) {
+              logger.warn(`[QueueWorker] Could not record dead-letter audit log: ${auditErr}`);
+            }
+          }
+
           throw err;
         }
       },
@@ -75,7 +139,7 @@ export function startRecoveryWorker(): Worker<RecoveryExecutionJobData, Recovery
     });
 
     recoveryWorker.on('failed', (job, err) => {
-      logger.error(`[QueueWorker] Event 'failed': Job ${job?.id} failed with error ${err.message}`);
+      logger.error(`[QueueWorker] Event 'failed': Job ${job?.id} failed with error: ${err.message}`);
     });
   }
 

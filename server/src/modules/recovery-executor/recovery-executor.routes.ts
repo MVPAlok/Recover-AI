@@ -8,6 +8,8 @@ router.get('/metrics', controller.getMetrics);
 router.post('/run', controller.runBatchExecution);
 router.post('/:transactionId/execute', controller.executeTransaction);
 router.post('/:transactionId/enqueue', controller.enqueueTransaction);
+router.post('/:transactionId/orchestrate', controller.orchestrateAutonomousPipeline);
+router.post('/:transactionId/enqueue-pipeline', controller.enqueuePipeline);
 router.get('/:transactionId', controller.getLatestExecution);
 
 export default router;

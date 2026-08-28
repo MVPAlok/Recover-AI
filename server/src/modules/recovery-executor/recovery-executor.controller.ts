@@ -91,7 +91,93 @@ export class RecoveryExecutorController {
     }
   };
 
+  /**
+   * POST /api/recovery-executor/:transactionId/orchestrate
+   * Synchronously runs the full 6-stage autonomous recovery pipeline with correlation tracing.
+   */
+  orchestrateAutonomousPipeline = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { transactionId } = req.params;
+      const { correlationId, requestId, executionMode } = req.body || {};
 
+      if (!transactionId) {
+        res.status(400).json({
+          success: false,
+          error: 'Transaction ID is required in URL parameter',
+        });
+        return;
+      }
+
+      const { RecoveryOrchestratorService } = await import('./orchestrator.service.js');
+      const orchestrator = new RecoveryOrchestratorService();
+      const result = await orchestrator.runAutonomousRecovery({
+        transactionId,
+        correlationId,
+        requestId,
+        executionMode,
+      });
+
+      res.status(result.success ? 200 : 400).json({
+        success: result.success,
+        data: result,
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(`[RecoveryExecutorController] Error in orchestrateAutonomousPipeline: ${message}`);
+      res.status(500).json({
+        success: false,
+        error: message,
+      });
+    }
+  };
+
+  /**
+   * POST /api/recovery-executor/:transactionId/enqueue-pipeline
+   * Asynchronously enqueues the full 6-stage autonomous recovery pipeline into BullMQ.
+   */
+  enqueuePipeline = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { transactionId } = req.params;
+      const { executionMode, correlationId, requestId } = req.body || {};
+
+      if (!transactionId) {
+        res.status(400).json({
+          success: false,
+          error: 'Transaction ID is required in URL parameter',
+        });
+        return;
+      }
+
+      const { enqueueRecoveryJob } = await import('../queue/recovery.queue.js');
+
+      const jobId = await enqueueRecoveryJob({
+        transactionId,
+        pipelineType: 'FULL_AUTONOMOUS_PIPELINE',
+        executionMode,
+        correlationId,
+        requestId,
+        enqueuedAt: new Date().toISOString(),
+      });
+
+      res.status(202).json({
+        success: true,
+        message: 'Full autonomous recovery pipeline enqueued successfully',
+        data: {
+          jobId,
+          transactionId,
+          pipelineType: 'FULL_AUTONOMOUS_PIPELINE',
+          status: 'QUEUED',
+        },
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(`[RecoveryExecutorController] Error in enqueuePipeline: ${message}`);
+      res.status(500).json({
+        success: false,
+        error: message,
+      });
+    }
+  };
 
   /**
    * GET /api/recovery-executor/:transactionId

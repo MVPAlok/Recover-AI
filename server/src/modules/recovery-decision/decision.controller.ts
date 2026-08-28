@@ -79,4 +79,29 @@ export class DecisionController {
       res.status(500).json({ success: false, error: err.message });
     }
   };
+
+  /**
+   * GET /api/recovery-decision/:transactionId/intelligence
+   * Generates comparative multi-strategy intelligence report with EV and AI counterfactuals.
+   */
+  getIntelligence = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { transactionId } = req.params;
+      if (!transactionId) {
+        res.status(400).json({ success: false, error: 'Transaction ID is required' });
+        return;
+      }
+
+      const { RecoveryIntelligenceService } = await import('./recovery-intelligence.service.js');
+      const intelligenceService = new RecoveryIntelligenceService();
+      const report = await intelligenceService.generateIntelligenceReport(transactionId);
+
+      res.status(200).json({ success: true, data: report });
+    } catch (err: any) {
+      logger.error(`[DecisionController.getIntelligence] Error: ${err.message}`);
+      const status = err.message?.includes('not found') ? 404 : 500;
+      res.status(status).json({ success: false, error: err.message });
+    }
+  };
 }
+

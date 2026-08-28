@@ -8,6 +8,7 @@ const controller = new DecisionController();
 router.post('/run', controller.runBatch);
 
 // Single transaction decision inspection (pure / side-effect free)
+router.get('/:transactionId/intelligence', controller.getIntelligence);
 router.get('/:transactionId', controller.getDecision);
 
 // Single transaction decision evaluation & persistence (AIDecision + AuditLog)

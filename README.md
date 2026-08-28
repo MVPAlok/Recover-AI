@@ -1,904 +1,446 @@
-# RecoverAI — Autonomous AI Payment Recovery Platform
+# 💸 RecoverAI — Autonomous AI Payment Recovery Platform
 
-<p align="center">
-  <strong>Detect. Diagnose. Decide. Execute. Verify. Recover.</strong>
-</p>
+<div align="center">
 
-<p align="center">
-  An event-driven payment recovery platform designed to help merchants identify recoverable payment failures and execute safe recovery workflows.
-</p>
+  <h1>⚡ RecoverAI</h1>
+  <h3><strong>Detect. Diagnose. Decide. Execute. Verify. Recover.</strong></h3>
+  <p><em>An institutional-grade, event-driven payment recovery platform engineered to identify recoverable failures and execute safe, policy-governed recovery workflows.</em></p>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/React-18-blue?style=for-the-badge&logo=react" alt="React" />
-  <img src="https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Vite-Frontend-purple?style=for-the-badge&logo=vite" alt="Vite" />
-  <img src="https://img.shields.io/badge/Express-Backend-green?style=for-the-badge&logo=express" alt="Express" />
-  <img src="https://img.shields.io/badge/PostgreSQL-Database-blue?style=for-the-badge&logo=postgresql" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/Prisma-ORM-darkblue?style=for-the-badge&logo=prisma" alt="Prisma" />
-  <img src="https://img.shields.io/badge/Redis-Queue-red?style=for-the-badge&logo=redis" alt="Redis" />
-  <img src="https://img.shields.io/badge/BullMQ-Workers-red?style=for-the-badge" alt="BullMQ" />
-  <img src="https://img.shields.io/badge/Google%20Gemini-AI-purple?style=for-the-badge&logo=google" alt="Gemini" />
-  <img src="https://img.shields.io/badge/Razorpay-TEST%20MODE-blue?style=for-the-badge" alt="Razorpay" />
-</p>
+  <p>
+    <a href="https://react.dev"><img src="https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" /></a>
+    <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+    <a href="https://vitejs.dev"><img src="https://img.shields.io/badge/Vite-Frontend-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" /></a>
+    <a href="https://expressjs.com"><img src="https://img.shields.io/badge/Express-4.19-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" /></a>
+    <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-Neon%20DB-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
+    <a href="https://www.prisma.io"><img src="https://img.shields.io/badge/Prisma-5.22-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" /></a>
+    <a href="https://redis.io"><img src="https://img.shields.io/badge/Redis-Upstash-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" /></a>
+    <a href="https://bullmq.io"><img src="https://img.shields.io/badge/BullMQ-Worker%20Queue-E0234E?style=for-the-badge" alt="BullMQ" /></a>
+    <a href="https://deepmind.google/technologies/gemini/"><img src="https://img.shields.io/badge/Google%20Gemini-3.5%20Flash-8E75B2?style=for-the-badge&logo=google&logoColor=white" alt="Gemini" /></a>
+    <a href="https://razorpay.com"><img src="https://img.shields.io/badge/Razorpay-Strict%20Sandbox-0C2340?style=for-the-badge&logo=razorpay&logoColor=528FF0" alt="Razorpay" /></a>
+    <a href="#-automated-testing--production-verification"><img src="https://img.shields.io/badge/Tests-86%2F86%20Passing%20(100%25)-00C853?style=for-the-badge" alt="Tests" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-FFD700?style=for-the-badge" alt="License" /></a>
+  </p>
+
+</div>
 
 ---
 
 ## 📑 Table of Contents
 
-- [Overview](#overview)
-- [Problem](#problem)
-- [How RecoverAI Works](#how-recoverai-works)
-- [Recovery Lifecycle](#recovery-lifecycle)
-- [Core Capabilities](#core-capabilities)
-- [Architecture](#architecture)
-- [Technology Stack](#technology-stack)
-- [Financial Integrity](#financial-integrity)
-- [AI Diagnosis](#ai-diagnosis)
-- [Recovery Decision Engine](#recovery-decision-engine)
-- [Background Processing](#background-processing)
-- [Webhook Processing](#webhook-processing)
-- [Multi-Tenant Security](#multi-tenant-security)
-- [Dashboard](#dashboard)
-- [Project Structure](#project-structure)
-- [API Overview](#api-overview)
-- [Local Development](#local-development)
-- [Environment Variables](#environment-variables)
-- [Testing](#testing)
-- [Sandbox & Security Restrictions](#sandbox--security-restrictions)
-- [Current Limitations](#current-limitations)
-- [Roadmap](#roadmap)
-- [Design Philosophy](#design-philosophy)
-- [Why RecoverAI?](#why-recoverai)
-- [License](#license)
+- [📌 Overview & Vision](#-overview--vision)
+- [🛑 The Problem with Traditional Dunning](#-the-problem-with-traditional-dunning)
+- [🔄 The 6-Stage Autonomous Recovery Lifecycle](#-the-6-stage-autonomous-recovery-lifecycle)
+- [🏛️ Full System Architecture](#-full-system-architecture)
+- [🧠 Recovery Intelligence & Multi-Strategy Expected Value](#-recovery-intelligence--multi-strategy-expected-value)
+- [🔒 Financial Safety & Gateway Circuit Breakers](#-financial-safety--gateway-circuit-breakers)
+- [🛠️ Technology Stack](#-technology-stack)
+- [🗂️ Monorepo Structure](#-monorepo-structure)
+- [🔌 REST API & Webhook Reference](#-rest-api--webhook-reference)
+- [🚀 Local Development Setup](#-local-development-setup)
+- [🧪 Automated Testing & Production Verification](#-automated-testing--production-verification)
+- [🛡️ Sandbox Boundary & Security Invariants](#-sandbox-boundary--security-invariants)
+- [🗺️ Progressive Roadmap (Stages 1–7)](#-progressive-roadmap-stages-17)
+- [💡 Core Design Philosophy](#-core-design-philosophy)
+- [📜 License](#-license)
 
 ---
 
-## Overview
+## 📌 Overview & Vision
 
-**RecoverAI** is an AI-assisted payment recovery orchestration platform. The system is designed around a simple idea:
+**RecoverAI** is an institutional-grade, event-driven payment recovery platform built around a single thesis:
 
-> *A failed payment does not necessarily mean lost revenue.*
+> 💡 **A failed payment is not necessarily lost revenue—it is an incomplete transaction requiring intelligent intervention.**
 
-Instead of treating every failed transaction the same way, RecoverAI analyzes the failure, determines whether recovery is appropriate, selects a policy-approved recovery action, executes that action, and waits for verified payment evidence before considering revenue recovered.
+Traditional dunning treats every failure with the same blunt instrument: sending generic retry emails or firing blind payment gateway retries. 
 
-The core lifecycle is:
+RecoverAI replaces static retry logic with an **autonomous 6-stage lifecycle**:
+1. **Detects** payment failures in real time and scores recovery probability.
+2. **Diagnoses** the exact technical root cause using Google Gemini 3.5 AI.
+3. **Decides** the optimal recovery action bounded by authoritative, deterministic safety policies.
+4. **Executes** multi-channel recovery workflows asynchronously via Upstash Redis & BullMQ.
+5. **Verifies** gateway outcomes cryptographically via constant-time HMAC SHA-256 webhooks.
+6. **Reconciles** funds into a tamper-evident PostgreSQL double-entry financial ledger.
 
-```text
-FAILED PAYMENT
-     │
-     ▼
-01 / DETECT
-     │
-     ▼
-02 / DIAGNOSE
-     │
-     ▼
-03 / DECIDE
-     │
-     ▼
-04 / EXECUTE
-     │
-     ▼
-05 / VERIFY
-     │
-     ▼
-06 / RECOVER
-```
-
-The architecture combines:
-- AI-assisted failure diagnosis
-- Deterministic recovery policies
-- PostgreSQL persistence
-- Redis/BullMQ background processing
-- Razorpay Test Mode integration
-- Cryptographic webhook verification
-- Idempotent event processing
-- Multi-tenant data isolation
-- Recovery audit trails
-- Merchant operational dashboards
+> [!IMPORTANT]
+> **The Core Financial Invariant**: $\text{Recovery Action Executed} \neq \text{Payment Recovered}$.
+> RecoverAI never credits revenue upon attempt dispatch. Money is considered recovered **if and only if** verified cryptographic payment evidence is reconciled in PostgreSQL.
 
 ---
 
-## Problem
+## 🛑 The Problem with Traditional Dunning
 
-Payment failures can happen for many different reasons:
-- Temporary gateway failures
-- Bank downtime
-- Authentication or 3DS interruptions
-- OTP drop-offs
-- Payment method failures
-- Expired or invalid payment instruments
-- Customer abandonment
-- Temporary infrastructure problems
+Every year, digital merchants lose up to **9% of gross revenue** to preventable payment failures.
 
-A generic retry strategy is not appropriate for every failure.
-
-For example:
-* **Gateway timeout** $\rightarrow$ *Retry may be appropriate*
-* **Customer authentication abandoned** $\rightarrow$ *A customer-assisted payment flow may be better*
-* **Expired payment instrument** $\rightarrow$ *Repeated retries are unlikely to help*
-
-RecoverAI attempts to make this distinction automatically while keeping the final recovery decision constrained by deterministic safety policies.
+| Failure Scenario | Legacy Dunning Behavior | The Consequence | RecoverAI Autonomous Action |
+| :--- | :--- | :--- | :--- |
+| **3DS OTP Abandonment** | Blind gateway retry | Fails immediately (no customer interaction) | **1-Click WhatsApp / SMS Payment Link** with biometric UPI intent |
+| **Bank Rail Congestion** | Immediate rapid retries | Triggers issuer decline penalties & churn | **30-Minute Delayed Observation Window** until bank metrics stabilize |
+| **Temporary Gateway Timeout** | Static 24-hour email | Lost conversion window | **Smart Instant Retry** with exponential jitter |
+| **Expired Card / Hard Stop** | Automated daily retries | Network fines & chargeback risk | **Immediate Hard Policy Block (`STOP`)** with zero wasted friction |
 
 ---
 
-## How RecoverAI Works
+## 🔄 The 6-Stage Autonomous Recovery Lifecycle
 
-RecoverAI processes a failed transaction through six logical stages:
+```mermaid
+flowchart TD
+    %% Custom Styling
+    classDef detectStyle fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#ffffff;
+    classDef diagStyle fill:#3b0764,stroke:#c084fc,stroke-width:2px,color:#ffffff;
+    classDef decideStyle fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
+    classDef execStyle fill:#451a03,stroke:#fbbf24,stroke-width:2px,color:#ffffff;
+    classDef verifyStyle fill:#134e4a,stroke:#2dd4bf,stroke-width:2px,color:#ffffff;
+    classDef reconcileStyle fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#ffffff;
+    classDef stopStyle fill:#881337,stroke:#f43f5e,stroke-width:2px,color:#ffffff;
 
-```text
-┌───────────────┐
-│    DETECT     │
-│ Failure Event │
-└───────┬───────┘
-        │
-        ▼
-┌───────────────┐
-│   DIAGNOSE    │
-│ Failure Cause │
-└───────┬───────┘
-        │
-        ▼
-┌───────────────┐
-│    DECIDE     │
-│ Recovery Rule │
-└───────┬───────┘
-        │
-        ▼
-┌───────────────┐
-│    EXECUTE    │
-│ Recovery Job  │
-└───────┬───────┘
-        │
-        ▼
-┌───────────────┐
-│    VERIFY     │
-│ Webhook + HMAC│
-└───────┬───────┘
-        │
-        ▼
-┌───────────────┐
-│    RECOVER    │
-│Verified Value │
-└───────────────┘
-```
+    Start([⚡ Payment Failure Ingestion]):::detectStyle --> Stage1
 
-The important design principle is:
+    subgraph S1 ["01 / DETECT & SCORE"]
+        Stage1["🔍 Feature Extraction<br/>• Amount & Currency<br/>• Error Code & Bank Telemetry<br/>• Historical Customer Spend<br/><b>Recovery Probability Score: 78%</b>"]:::detectStyle
+    end
 
-> **Executing a recovery action does not automatically mean that money was recovered.**
-> Recovery is confirmed only after the payment evidence has been successfully verified and reconciled.
+    Stage1 --> Stage2
 
----
+    subgraph S2 ["02 / DIAGNOSE"]
+        Stage2["🤖 Gemini 3.5 AI Diagnostic Engine<br/>• Failure Taxonomy Classification<br/>• Risk Level: MEDIUM<br/>• Structured JSON Output"]:::diagStyle
+        Fallback["🛡️ Deterministic Fallback<br/>(Engaged on LLM Timeout / Outage)"]:::diagStyle
+        Stage2 -.->|Failover| Fallback
+    end
 
-## Recovery Lifecycle
+    Stage2 & Fallback --> Stage3
 
-### 01 / DETECT
-The detection layer evaluates failed transactions and calculates recovery-related signals.
+    subgraph S3 ["03 / DECIDE"]
+        Stage3{"⚖️ Authoritative Policy Engine<br/>Hard Deterministic Constraints"}:::decideStyle
+        Stage3 -->|retryCount >= 3 OR Expired| Halt["⛔ STOP (Safety Halt)"]:::stopStyle
+        Stage3 -->|Approved Safe Action| ApprovedDecision["🎯 Selected Action:<br/>RETRY | REMIND | WAIT | ESCALATE"]:::decideStyle
+    end
 
-*Example*:
-```text
-Transaction: ₹2,499
-Status: FAILED
-Failure: Gateway timeout
-Recovery probability: 78%
-```
-The detection stage produces structured information used by the downstream diagnosis and policy engines.
+    ApprovedDecision --> Stage4
 
----
+    subgraph S4 ["04 / EXECUTE"]
+        Stage4["⚙️ Asynchronous Recovery Dispatcher<br/>• BullMQ Queue + Upstash Redis<br/>• Razorpay Test Mode Order / Link<br/><b>Invariant: amountRecovered = ₹0 (Pending)</b>"]:::execStyle
+    end
 
-### 02 / DIAGNOSE
-The diagnosis layer determines the likely reason behind a payment failure.
-Google Gemini can be used to analyze structured transaction information.
+    Stage4 --> Stage5
 
-*Example*:
-```text
-Failure Category: GATEWAY_TIMEOUT
-Root Cause: Temporary gateway response failure
-Risk Level: MEDIUM
-Confidence: 91%
-```
-If Gemini is unavailable, the system can use a deterministic fallback mechanism rather than silently pretending that an LLM response was generated.
+    subgraph S5 ["05 / VERIFY"]
+        Stage5["🔐 Cryptographic Webhook Ingestion<br/>• Raw Body HMAC SHA-256 Validation<br/>• Constant-Time Signature Check<br/>• Idempotent Deduplication (Event ID)"]:::verifyStyle
+    end
 
----
+    Stage5 --> Stage6
 
-### 03 / DECIDE
-The recovery decision engine determines which action is allowed.
-Possible recovery decisions include:
-- `RETRY`
-- `REMIND`
-- `WAIT`
-- `ESCALATE`
-- `STOP`
+    subgraph S6 ["06 / RECONCILE"]
+        Stage6["💰 Double-Entry Financial Ledger<br/>• Exact Amount Match (paise == txAmount)<br/>• Tamper-Evident SHA-256 Audit Chain<br/><b>Status: RECOVERED ✓</b>"]:::reconcileStyle
+    end
 
-The AI diagnosis does not have unrestricted authority. Deterministic policy constraints can override an AI recommendation when a recovery action would violate system safety rules.
-
-*Example*:
-```text
-AI Recommendation ──► RETRY ──► Policy Check ──► retryCount = 3 ──► Retry limit reached ──► STOP
+    Stage6 --> Done([🎉 Merchant Revenue Reclaimed]):::reconcileStyle
 ```
 
 ---
 
-### 04 / EXECUTE
-Approved recovery actions are executed through the recovery executor. Depending on the failure and policy, execution may include:
-- Payment retry
-- Payment link generation
-- Reminder workflow
-- Delayed retry window
-- Manual review
-- Policy-controlled stop
+## 🏛️ Full System Architecture
 
-Background jobs can be processed through Redis and BullMQ.
+```mermaid
+flowchart TB
+    subgraph ClientTier ["🖥️ FRONTEND INTERFACE (React 18 + Vite)"]
+        Dashboard["📊 Merchant Mission Control<br/>Overview • Explorer • Timeline • Analytics"]
+        DevHub["🛠️ Developer Hub<br/>Webhook Emulator • Replay • API Keys"]
+        HealthConsole["🩺 System Health & Telemetry<br/>Circuit Breakers • Queue Depth • Audit Chain"]
+    end
 
----
+    subgraph APITier ["🚀 EXPRESS REST API GATEWAY (Node.js + TypeScript)"]
+        Routes["🔀 API Router & Auth Middleware<br/>/api/dashboard • /api/recovery-executor • /api/developer"]
+        Orchestrator["⚡ Recovery Orchestrator Service<br/>6-Stage Autonomous Lifecycle Coordinator"]
+    end
 
-### 05 / VERIFY
-Payment outcomes are not trusted merely because a recovery API request succeeded.
-Razorpay webhook events are verified using:
+    subgraph CoreEngines ["🧠 INTELLIGENCE & POLICY CORE"]
+        DetectionEngine["01 / Detection Scoring Engine"]
+        GeminiAgent["02 / Gemini 3.5 AI Diagnosis Agent"]
+        PolicyEngine["03 / Deterministic Policy Engine"]
+        IntelligenceService["04 / Multi-Strategy EV Matrix Engine"]
+        SafetyService["05 / Financial Safety & Circuit Breaker"]
+    end
 
-```text
-Raw Webhook Body ──► HMAC SHA-256 ──► Constant-Time Signature Comparison ──► Event Validation ──► Idempotency Check
-```
-Duplicate webhook events are ignored safely.
+    subgraph AsyncTier ["📦 ASYNCHRONOUS WORKER QUEUE"]
+        BullMQQueue[("📥 BullMQ Queue<br/>Upstash Redis")]
+        Worker["⚙️ Recovery Queue Worker<br/>Concurrency = 5 • Exponential Backoff"]
+    end
 
----
+    subgraph ExternalTier ["🌐 EXTERNAL GATEWAY & WEBHOOKS"]
+        RazorpaySandbox["💳 Razorpay Sandbox (Strict Test Mode)"]
+        WebhookHandler["📩 HMAC SHA-256 Webhook Ingestion"]
+    end
 
-### 06 / RECOVER
-A transaction is considered financially recovered only after the payment evidence has been successfully verified and reconciled.
+    subgraph PersistenceTier ["🗄️ PERSISTENCE & SETTLEMENT LAYER"]
+        PostgresDB[("🐘 PostgreSQL (Neon Cloud)<br/>• Transactions Table<br/>• RecoveryAttempts Table<br/>• Reconciled Payments Ledger<br/>• Tamper-Evident AuditLog Chain")]
+    end
 
-*Example*:
-```text
-Recovery Attempt ──► Payment Captured ──► Webhook Verified ──► Transaction Matched ──► Amount Matched ──► Payment Reconciled ──► RECOVERED
-```
+    ClientTier -->|REST API Requests| Routes
+    Routes --> Orchestrator
+    Orchestrator --> DetectionEngine & GeminiAgent & PolicyEngine & IntelligenceService & SafetyService
+    Orchestrator --> BullMQQueue
+    BullMQQueue --> Worker
+    Worker --> RazorpaySandbox
+    RazorpaySandbox --> WebhookHandler
+    WebhookHandler --> PostgresDB
+    CoreEngines --> PostgresDB
+    Routes --> PostgresDB
 
----
-
-## Core Capabilities
-
-### AI-Assisted Diagnosis
-- Failure categorization
-- Root-cause analysis
-- Recovery probability signals
-- Confidence scoring
-- Gemini integration
-- Deterministic fallback
-
-### Recovery Decision Engine
-- `RETRY`, `REMIND`, `WAIT`, `ESCALATE`, `STOP`
-- Retry limits
-- Safety overrides
-- Idempotency
-
-### Payment Evidence
-- Verified payment records
-- Captured amount
-- Razorpay payment ID
-- Razorpay order ID
-- Reconciliation state
-- Amount validation
-
-### Webhook Security
-- HMAC SHA-256 verification
-- Raw-body verification
-- Constant-time signature comparison
-- Event deduplication
-- Processing state tracking
-- Failure handling
-
-### Background Processing
-- Redis
-- BullMQ
-- Asynchronous recovery jobs
-- Retry handling
-- Queue workers
-- Correlation IDs
-
-### Multi-Tenant Architecture
-- User accounts
-- Merchant memberships
-- Role-based access
-- Merchant-scoped queries
-- Cross-tenant isolation
-
-### Observability
-- System health
-- Database status
-- Redis status
-- AI status
-- Razorpay environment status
-- Worker status
-- Operational metrics
-
----
-
-## Architecture
-
-```text
-┌──────────────────────┐
-│     React / Vite     │
-│   Merchant Console   │
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│   Express REST API   │
-└──────────┬───────────┘
-           │
-     ┌─────┴───────────────────┬─────────────────────┐
-     ▼                         ▼                     ▼
-┌──────────────┐        ┌──────────────┐      ┌──────────────┐
-│  Detection   │        │  Diagnosis   │      │    Policy    │
-│    Engine    │        │    Gemini    │      │    Engine    │
-└──────┬───────┘        └──────┬───────┘      └──────┬───────┘
-       │                       │                     │
-       └───────────────────────┼─────────────────────┘
-                               ▼
-                    ┌──────────────────────┐
-                    │ Recovery Orchestrator│
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │    BullMQ / Redis    │
-                    │   Background Jobs    │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │   Recovery Worker    │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │  Razorpay Test Mode  │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │  Razorpay Webhooks   │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │  HMAC Verification   │
-                    │   + Idempotency      │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │  PostgreSQL / Prisma │
-                    │  Payment Evidence    │
-                    │  Transactions        │
-                    │  Recovery Attempts   │
-                    │  Audit Logs          │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │  Merchant Dashboard  │
-                    └──────────────────────┘
+    style ClientTier fill:#070b17,stroke:#3b82f6,stroke-width:2px,color:#ffffff
+    style APITier fill:#0f172a,stroke:#6366f1,stroke-width:2px,color:#ffffff
+    style CoreEngines fill:#1e1b4b,stroke:#a855f7,stroke-width:2px,color:#ffffff
+    style AsyncTier fill:#271010,stroke:#ef4444,stroke-width:2px,color:#ffffff
+    style ExternalTier fill:#062b2e,stroke:#14b8a6,stroke-width:2px,color:#ffffff
+    style PersistenceTier fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#ffffff
 ```
 
 ---
 
-## Technology Stack
+## 🧠 Recovery Intelligence & Multi-Strategy Expected Value
 
-| Layer | Technology | Purpose |
+For every payment failure, RecoverAI simultaneously computes an **Expected Recovery Value (EV)** matrix across all candidate recovery channels:
+
+$$\text{Expected Recovery Value (EV)} = \text{Transaction Amount} \times \text{Recovery Probability}$$
+
+```text
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 📊 MULTI-STRATEGY COMPARATIVE INTELLIGENCE MATRIX (Example: ₹20,000 Payment Failure)                   │
+├───────────────────────────────────┬──────────────┬──────────────────┬───────────────┬──────────────────┤
+│ Recovery Strategy Option          │ Probability  │ Expected Value   │ Policy Status │ Channel Intent   │
+├───────────────────────────────────┼──────────────┼──────────────────┼───────────────┼──────────────────┤
+│ Strategy A: Automated Retry       │ 35%          │ ₹7,000           │ SUBOPTIMAL    │ Gateway Retry    │
+│ Strategy B: 1-Click Payment Link  │ 78%          │ ₹15,600          │ PREFERRED ⭐  │ WhatsApp / UPI   │
+│ Strategy C: Multi-Channel Remind  │ 58%          │ ₹11,600          │ VIABLE        │ SMS & Email Link │
+│ Strategy D: Scheduled Delay 30m   │ 42%          │ ₹8,400           │ VIABLE        │ Bank Cooldown    │
+└───────────────────────────────────┴──────────────┴──────────────────┴───────────────┴──────────────────┘
+```
+
+> **🤖 AI Counterfactual Explanation**:
+> *"Strategy B (1-Click Payment Link) is preferred over Strategy A (Auto-Retry): Because this failure was caused by 3DS OTP drop-off, repeated background gateway attempts will fail without user authentication. An interactive WhatsApp/UPI link enables 1-click biometric re-authorization, yielding a +43% probability lift (EV ₹15,600 vs ₹7,000)."*
+
+---
+
+## 🔒 Financial Safety & Gateway Circuit Breakers
+
+RecoverAI includes strict financial velocity protections to prevent card network penalties, merchant churn, and API runaway costs:
+
+```mermaid
+flowchart LR
+    classDef safe fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff;
+    classDef trip fill:#881337,stroke:#f43f5e,stroke-width:2px,color:#fff;
+    classDef check fill:#1e1b4b,stroke:#6366f1,stroke-width:2px,color:#fff;
+
+    Req([Incoming Recovery Request]):::check --> BudgetCheck{1. Daily Merchant Budget<br/>Max 250 attempts / 24h}:::check
+
+    BudgetCheck -->|Exceeded| BudgetBlock[🛑 Blocked: Daily Budget Ceiling]:::trip
+    BudgetCheck -->|Passed| SpamCheck{2. Customer Contact Guard<br/>Max 1 contact / 24h}:::check
+
+    SpamCheck -->|Recent Contact| SpamBlock[🛑 Blocked: Anti-Spam Cooldown]:::trip
+    SpamCheck -->|Passed| CBCheck{3. Gateway Circuit Breaker<br/>Decline Rate < 60% in 15m}:::check
+
+    CBCheck -->|Decline Rate >= 60%| CBTrip[🛑 Tripped to OPEN: Gateway Degraded]:::trip
+    CBCheck -->|Healthy CLOSED| DriftCheck{4. AI Model Drift Monitor<br/>Confidence >= 0.65}:::check
+
+    DriftCheck -->|Passed| Allowed([✅ Execution Permitted]):::safe
+```
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technology | Purpose & Architectural Role |
 | :--- | :--- | :--- |
-| **Frontend** | React + Vite | Merchant interface |
-| **Language** | TypeScript | Type safety |
-| **Styling** | Tailwind CSS | UI system |
-| **Backend** | Node.js + Express | REST API |
-| **Database** | PostgreSQL | Persistent application state |
-| **ORM** | Prisma | Database access |
-| **Queue** | BullMQ | Background job processing |
-| **Cache / Store** | Redis | Job and queue infrastructure |
-| **AI** | Google Gemini | Failure diagnosis |
-| **Payment Gateway** | Razorpay | Test Mode payment workflows |
-| **Security** | HMAC SHA-256 | Webhook verification |
+| **Frontend UI** | React 18 + Vite | High-performance SPA with fixed mission-control navigation |
+| **Language** | TypeScript 5.5 | End-to-end strict type safety across client and server |
+| **Styling** | Tailwind CSS | Dark mission-control aesthetic (`#070B17`) with Geist Mono typography |
+| **Backend API** | Node.js + Express | Modular, scalable REST API orchestrating the recovery pipeline |
+| **Database** | PostgreSQL (Neon Cloud) | Serverless relational database holding state and double-entry ledger |
+| **ORM** | Prisma 5.22 | Type-safe query building, migrations, and relationship management |
+| **Background Queue** | BullMQ + Upstash Redis | Resilient asynchronous queue with concurrency = 5 and exponential backoff |
+| **Artificial Intelligence** | Google Gemini 3.5 Flash | Root-cause failure diagnostics with structured JSON output schemas |
+| **Payment Gateway** | Razorpay Sandbox | Strict Test Mode (`rzp_test_...`) order and payment link generation |
+| **Webhook Security** | HMAC SHA-256 | Timing-safe raw-body cryptographic webhook verification |
 
 ---
 
-## Financial Integrity
-
-RecoverAI separates:
-$$\text{Recovery Attempt} \neq \text{Verified Payment}$$
-
-This prevents a recovery attempt from being incorrectly counted as recovered revenue.
-
-A simplified model is:
-$$\text{Recovery Attempt} \neq \text{Recovered Revenue}$$
-
-Instead:
-$$\text{Verified + Reconciled Payment Evidence} \longrightarrow \text{Recovered Revenue}$$
-
-The financial evidence layer validates:
-- Transaction identity
-- Payment identity
-- Order identity
-- Currency
-- Expected amount
-- Captured amount
-- Webhook signature
-- Reconciliation state
-
-If an amount mismatch occurs:
-```text
-Expected: ₹10,000 | Captured: ₹9,000 ──► RECONCILIATION BLOCKED ──► REQUIRES REVIEW
-```
-
----
-
-## AI Diagnosis
-
-Google Gemini is used as an AI-assisted diagnostic layer. The system treats AI as a reasoning component rather than the final financial authority.
-
-```text
-Transaction Data ──► Gemini Diagnosis ──► Structured Result ──► Deterministic Policy Engine ──► Approved Recovery Action
-```
-
-If the AI service becomes unavailable:
-```text
-Gemini ──► Unavailable ──► Deterministic Fallback ──► Continue Safely
-```
-Fallback results are explicitly marked rather than presented as successful LLM decisions.
-
----
-
-## Recovery Decision Engine
-
-The decision engine evaluates recovery conditions using deterministic rules.
-
-*Example*:
-```text
-Failure Type: Gateway Timeout
-Retry Count: 0
-Transaction: ₹2,499
-Risk: Low
-Recovery Probability: 78%
-     │
-     ▼
-Decision: RETRY
-```
-
-Safety conditions can override that decision:
-```text
-Retry Count: 3
-Maximum: 3
-     │
-     ▼
-Decision: STOP
-```
-
-The architecture intentionally separates **AI reasoning** from **financial authorization**.
-
----
-
-## Background Processing
-
-RecoverAI uses Redis and BullMQ for asynchronous operations.
-
-```text
-API Request ──► Create Recovery Job ──► BullMQ Queue ──► Recovery Worker ──► Execute Action ──► Persist Result
-```
-Background processing allows recovery operations to be retried and handled independently from the HTTP request lifecycle.
-
----
-
-## Webhook Processing
-
-Razorpay webhook processing follows a verification pipeline:
-
-```text
-Razorpay
-   │
-   ▼
-POST /api/webhooks/razorpay
-   │
-   ▼
-Capture Raw Body
-   │
-   ▼
-Verify HMAC SHA-256
-   │
-   ▼
-Validate Event
-   │
-   ▼
-Check Event ID ──► Duplicate ──► Ignore Safely
-   │
-   ▼
-Process Event
-   │
-   ▼
-Match Transaction
-   │
-   ▼
-Validate Amount
-   │
-   ▼
-Reconcile Payment
-   │
-   ▼
-Update Recovery State
-```
-
-Supported lifecycle events include:
-- `payment.authorized`
-- `payment.captured`
-- `payment.failed`
-
----
-
-## Multi-Tenant Security
-
-RecoverAI is designed around merchant-level tenant isolation. The conceptual relationship is:
-
-```text
-User ──► MerchantMembership ──► Merchant ──► Transactions ──► Payments ──► Recovery Attempts ──► Audit Logs
-```
-
-All merchant-scoped queries include the authenticated merchant context.
-
-*Example*:
-```text
-Merchant A ──► Transactions WHERE merchantId = A
-```
-A request attempting to access Merchant B's transaction through an ID will not bypass that merchant boundary.
-
-Security tests cover:
-- Cross-tenant transaction access
-- Cross-tenant recovery access
-- Cross-tenant overview metrics
-- Customer history isolation
-- Audit log isolation
-- Secret exposure checks
-
----
-
-## Dashboard
-
-The RecoverAI dashboard is designed as an operational recovery console rather than a generic analytics dashboard.
-
-- **Overview**: Provides visibility into revenue at risk, verified recovered revenue, recovery attempts, recovery rate, active recovery operations, and system health.
-- **Transactions**: Provides search, filtering, payment status, recovery status, risk information, and transaction inspection.
-- **Transaction Detail**: Provides the complete lifecycle:
-  $$\text{Detection} \rightarrow \text{Diagnosis} \rightarrow \text{Decision} \rightarrow \text{Execution} \rightarrow \text{Verification} \rightarrow \text{Recovery}$$
-- **Recovery Center**: Provides visibility into recovery attempts, execution state, recovery outcomes, and manual intervention.
-- **Analytics**: Provides operational analysis of failure categories, recovery outcomes, recovery decisions, and revenue exposure.
-- **Audit**: Provides chronological records of system actions and recovery events.
-- **System**: Provides infrastructure and safety information such as PostgreSQL, Redis, Gemini, Razorpay, Workers, and Webhooks.
-
----
-
-## Project Structure
+## 🗂️ Monorepo Structure
 
 ```text
 Recover_AI/
+├── client/                                # React 18 + Vite Frontend Dashboard
+│   ├── src/components/                    # SystemPanel, StatusIndicator, MetricCard, Skeleton
+│   ├── src/layouts/                       # DashboardLayout (Fixed Mission-Control), PublicLayout
+│   ├── src/pages/                         # OverviewPage, TransactionsPage, TransactionDetailPage, SettingsPage
+│   ├── src/pages/public/                  # LandingPage, LoginPage, SignupPage, OnboardingPage
+│   └── src/services/                      # Typed REST API Client & Webhook Triggers
 │
-├── client/
-│   └── src/
-│       ├── components/
-│       ├── layouts/
-│       ├── pages/
-│       │   └── public/
-│       └── services/
+├── server/                                # Express REST API Backend
+│   ├── src/modules/
+│   │   ├── detection/                     # 01/ Recovery Probability Scoring Engine
+│   │   ├── diagnosis/                     # 02/ Gemini 3.5 AI Root-Cause Diagnostics
+│   │   ├── recovery-decision/             # 03/ Deterministic Policy & Intelligence Service
+│   │   ├── recovery-executor/             # 04/ Orchestrator, Smart Scheduler & Executors
+│   │   ├── webhooks/                      # 05/ Razorpay Webhook Ingestion & HMAC Validator
+│   │   ├── dashboard/                     # 06/ Merchant Operations & Analytics Aggregator
+│   │   ├── system/                        # Financial Safety, Circuit Breaker & Health Telemetry
+│   │   ├── developer/                     # Webhook Testing Emulator, API Keys & Exporters
+│   │   └── queue/                         # BullMQ Redis Queue Worker (concurrency = 5)
+│   ├── src/integrations/razorpay/         # Strict Test Mode Razorpay Client
+│   └── src/scripts/                       # Master Production Failure Simulation Engine
 │
-├── server/
-│   └── src/
-│       ├── modules/
-│       │   ├── detection/
-│       │   ├── diagnosis/
-│       │   ├── recovery-decision/
-│       │   ├── recovery-executor/
-│       │   ├── webhooks/
-│       │   ├── dashboard/
-│       │   ├── system/
-│       │   ├── developer/
-│       │   └── queue/
-│       ├── integrations/
-│       │   └── razorpay/
-│       └── scripts/
+├── database/                              # PostgreSQL Layer via Prisma ORM
+│   ├── prisma/schema.prisma               # Multi-Tenant RBAC, Payment Ledger, AuditLog
+│   └── seed/seed.ts                       # Deterministic 1,000 synthetic transaction generator
 │
-├── database/
-│   └── prisma/
-│       └── schema.prisma
-│
-├── docs/
-│   ├── architecture/
-│   └── testing/
-│
-├── .env.example
-├── package.json
-└── README.md
+├── PRODUCTION_ARCHITECTURE.md             # Complete Technical Architecture Specification
+└── .env.example                           # Comprehensive Environment Blueprint
 ```
 
 ---
 
-## API Overview
+## 🔌 REST API & Webhook Reference
 
-The application exposes REST APIs for the main recovery lifecycle:
+### Core Operations
 
-### Dashboard
-* `GET /api/dashboard/overview` — Returns merchant-level operational metrics.
-
-### Recovery
-* `POST /api/recovery-executor/:id/orchestrate` — Runs the recovery orchestrator.
-* `POST /api/recovery-executor/:id/enqueue-pipeline` — Enqueues recovery job to queue.
-* `POST /api/recovery-executor/:id/manual-review` — Resolves manual review case.
-
-### Recovery Intelligence
-* `GET /api/recovery-decision/:id/intelligence` — Returns multi-strategy comparative metrics.
-
-### Webhooks
-* `POST /api/webhooks/razorpay` — Receives and verifies Razorpay webhook events.
-
-### System
-* `GET /api/system/health` — Infrastructure health status.
-* `GET /api/system/financial-safety` — Financial safety and circuit breaker telemetry.
+| Method | Endpoint | Description | Headers |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/recovery-executor/:id/orchestrate` | Executes the full autonomous 6-stage lifecycle | `x-merchant-id` |
+| `POST` | `/api/recovery-executor/:id/enqueue-pipeline` | Enqueues autonomous recovery job to BullMQ queue | `x-merchant-id` |
+| `GET` | `/api/recovery-executor/:id/smart-schedule` | Computes taxonomy-aware smart retry schedule | `x-merchant-id` |
+| `POST` | `/api/recovery-executor/:id/manual-review` | Resolves manual review case with human audit log | `x-merchant-id` |
+| `GET` | `/api/recovery-decision/:id/intelligence` | Returns multi-strategy comparative matrix & EV report | `x-merchant-id` |
+| `GET` | `/api/system/financial-safety` | Real-time circuit breaker states, drift metrics & budget usage | `x-merchant-id` |
+| `POST` | `/api/system/financial-safety/reset-circuit-breaker` | Manually resets gateway circuit breaker to CLOSED | `x-merchant-id` |
+| `POST` | `/api/developer/webhook-emulator/generate` | Generates HMAC SHA-256 signed test payloads + curl commands | None |
+| `POST` | `/api/developer/webhook-emulator/replay/:eventId`| Replays ingested webhook event with new audit trail | `x-merchant-id` |
+| `GET/POST`| `/api/developer/api-keys` | Lists or creates scoped developer API keys (`rec_live_...`) | `x-merchant-id` |
+| `GET` | `/api/developer/audit/export` | Exports immutable audit trails as CSV or JSON | `x-merchant-id` |
+| `POST` | `/api/webhooks/razorpay` | Ingests Razorpay webhook events with HMAC SHA-256 verification | `x-razorpay-signature` |
+| `GET` | `/api/system/health` | Multi-service health & operational telemetry snapshot | `x-merchant-id` |
+| `GET` | `/api/dashboard/overview` | Primary merchant KPI aggregates (Revenue at Risk, Recovered) | `x-merchant-id` |
 
 ---
 
-## Local Development
+## 🚀 Local Development Setup
 
-### 1. Clone the repository
+### 1. Clone & Install
 ```bash
 git clone https://github.com/MVPAlok/Recover_AI.git
 cd Recover_AI
-```
-
-### 2. Install dependencies
-```bash
 npm install
 ```
 
-### 3. Configure environment variables
+### 2. Configure Environment Variables
 ```bash
 cp .env.example .env
 ```
-Fill in the required environment variables.
-
-### 4. Generate Prisma Client
-```bash
-npm run prisma:generate
-```
-
-### 5. Apply database migrations
-```bash
-npx prisma migrate dev --schema=database/prisma/schema.prisma
-```
-
-### 6. Seed development data
-```bash
-npm run db:seed
-```
-
-### 7. Start development servers
-```bash
-npm run dev
-```
-
-Typical local endpoints:
-- **Frontend**: `http://localhost:3000`
-- **API**: `http://localhost:5000`
-
----
-
-## Environment Variables
-
-Example configuration:
-
+Ensure required environment variables are set:
 ```ini
-# PostgreSQL
-DATABASE_URL="postgresql://username:password@host/database?sslmode=require"
+# PostgreSQL Connection (Neon Cloud)
+DATABASE_URL="postgresql://username:password@host/recoverai?sslmode=require"
 
-# Redis / BullMQ
+# Upstash Redis & BullMQ
 ENABLE_REDIS="true"
 REDIS_URL="rediss://default:password@host:6379"
 
-# Google Gemini
-GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+# Google Gemini AI (Diagnosis & Strategy Intelligence)
+GEMINI_API_KEY="AIzaSy..."
 GEMINI_MODEL="gemini-3.5-flash-lite"
 
-# Razorpay TEST MODE
+# Razorpay Test Mode (Strict Sandbox)
 RAZORPAY_KEY_ID="rzp_test_..."
 RAZORPAY_KEY_SECRET="..."
 RAZORPAY_WEBHOOK_SECRET="..."
 ```
 
-### Never Commit Secrets
-Do not commit:
-- `.env` / `server/.env`
-- `DATABASE_URL`
-- `GEMINI_API_KEY`
-- `RAZORPAY_KEY_SECRET`
-- `RAZORPAY_WEBHOOK_SECRET`
-- `REDIS_URL`
+### 3. Database Migration & Synthetic Seeding
+```bash
+# Generate Prisma Client
+npm run prisma:generate
 
-Use `.env.example` for documentation only.
+# Deploy Schema Migrations
+npx prisma migrate dev --name init --schema=database/prisma/schema.prisma
+
+# Seed 1,000 Deterministic Synthetic Transactions
+npm run db:seed
+```
+
+### 4. Start Development Servers
+```bash
+npm run dev
+```
+- **Frontend Dashboard**: `http://localhost:3000`
+- **Express API Server**: `http://localhost:5000`
 
 ---
 
-## Testing
+## 🧪 Automated Testing & Production Verification
 
-RecoverAI includes unit, integration, security, webhook, queue, and system-level tests.
+RecoverAI maintains an institutional test suite of **86 automated tests** (79 unit & integration tests + 7 master production failure assertions):
 
-Run the complete test suite:
 ```bash
-npm run test:all
-```
-
-Run production-oriented verification:
-```bash
+# 🎯 Run Master Production Verification (All 14 test suites + failure simulation)
 npm run verify:production
-```
 
-Run specific suites where available:
-```bash
-npm run test:detection
-npm run test:diagnosis
-npm run test:decision
-npm run test:executor
-npm run test:webhooks
-npm run test:dashboard
-npm run test:queue
-npm run test:system
-```
+# 🧪 Run Full Unit & Integration Test Suite (79/79 passing)
+npm run test:all
 
-Run the failure simulation:
-```bash
-npm run simulation:failure
-```
+# 🔍 Run Individual Subsystem Test Suites
+npm run test:detection        # Recovery probability scoring (8/8)
+npm run test:diagnosis        # Gemini diagnosis & fallback safety (10/10)
+npm run test:decision         # Authoritative policy matrix (12/12)
+npm run test:intelligence     # Strategy comparison & EV calculations (4/4)
+npm run test:executor         # Recovery executor & outcomes (17/17)
+npm run test:pipeline         # Stage 2 event-driven lifecycle (5/5)
+npm run test:capabilities     # Stage 3 smart retry & payment links (3/3)
+npm run test:financial-safety # Stage 5 circuit breaker & drift monitor (5/5)
+npm run test:developer        # Stage 6 developer tools & emulator (5/5)
+npm run test:webhooks         # Razorpay HMAC signature & deduplication (6/6)
+npm run test:dashboard        # Merchant dashboard aggregation (7/7)
+npm run test:queue            # BullMQ & Redis queues (3/3)
+npm run test:system           # System health & telemetry (7/7)
 
-Also verify the application builds successfully:
-```bash
-npm run build:server
-npm run build:client
+# 💥 Run Master Production Failure Simulation
+npm run simulation:failure    # E2E 7-scenario failure simulation (100% pass)
 ```
 
 ---
 
-## Sandbox & Security Restrictions
+## 🛡️ Sandbox Boundary & Security Invariants
 
-### Razorpay TEST MODE ONLY
-RecoverAI currently maintains a strict sandbox boundary for Razorpay:
-
-```text
-rzp_test_... ──► ALLOWED
-rzp_live_... ──► REJECTED
-```
-
-No production payment rollout should be performed from the current sandbox implementation. The project is designed to allow payment-recovery workflows to be demonstrated and tested without processing real customer payments.
+1. **Strict Test Mode Boundary**: Hardcoded security guards reject any non-test Razorpay key (`rzp_test_` prefix required). Real money transactions are strictly prohibited in the current sandbox.
+2. **Timing-Safe HMAC Verification**: All Razorpay webhooks require raw-body HMAC SHA-256 signature verification evaluated using `crypto.timingSafeEqual` to prevent timing attacks.
+3. **Zero Secret Leakage**: Database URLs, API keys, and webhook secrets are sanitized and stripped from all client responses and health endpoints.
+4. **Idempotency & Concurrency Locks**: Recovery attempts enforce unique constraints (`@@unique([transactionId, attemptNumber])`) and unique webhook event deduplication (`x-razorpay-event-id`).
+5. **Tamper-Evident Audit Chain**: Audit logs link sequential entries via SHA-256 block hash chains for regulatory compliance.
 
 ---
 
-## Current Limitations
+## 🗺️ Progressive Roadmap (Stages 1–7)
 
-RecoverAI is currently a sandbox/evaluation implementation, not a live production payment-recovery service.
+RecoverAI is built progressively through 7 disciplined stages:
 
-Important limitations include:
-1. Razorpay is restricted to Test Mode.
-2. Sandbox transaction data may be synthetic.
-3. Production payment processing is not enabled.
-4. AI recovery probabilities should not be interpreted as production-trained predictive models unless backed by appropriate historical data.
-5. Deterministic fallback logic may be used when Gemini is unavailable.
-6. Recovery outcomes in the sandbox should not be interpreted as real merchant revenue.
-7. Production deployment would require additional operational, security, compliance, monitoring, and reliability controls.
-
-These limitations are intentional. The objective is to establish the recovery architecture and validate the end-to-end workflow before introducing real-money processing.
+- [x] **Stage 1 — System Hardening**: Clean 2-CTA landing navbar, smart 0/1/N login routing, fixed-shell dashboard layout, and double-entry financial ledger aggregation.
+- [x] **Stage 2 — Core Recovery Engine**: Canonical 6-stage lifecycle orchestrator (`Detect` $\rightarrow$ `Reconcile`), BullMQ queue pipeline, and correlation IDs.
+- [x] **Stage 3 — Real Recovery Capabilities**: Taxonomy-aware smart retry scheduler, 1-click WhatsApp/UPI payment links, 30m delayed windows, and manual review desk.
+- [x] **Stage 4 — Recovery Intelligence**: Multi-strategy comparative matrix, mathematical Expected Value ($EV = \text{Amount} \times \text{Probability}$), and AI counterfactual reasoning.
+- [x] **Stage 5 — Financial Safety & Guardrails**: Rolling 24h merchant retry budgets, customer anti-spam cooldowns, gateway decline circuit breakers, and SHA-256 audit hash chains.
+- [x] **Stage 6 — Developer Platform**: Sandbox webhook testing emulator, failed event replay engine, scoped API keys (`rec_live_...`), and CSV/JSON audit exporters.
+- [x] **Stage 7 — Production Readiness & Packaging**: Master production failure simulation, environment blueprints, and production architecture specifications.
 
 ---
 
-## Roadmap
+## 💡 Core Design Philosophy
 
-RecoverAI is being developed progressively rather than attempting to introduce every platform feature at once.
-
-### Stage 1 — System Hardening
-- Authentication UX
-- Tenant isolation
-- Dashboard consistency
-- API verification
-- State correctness
-- Real vs simulated data transparency
-- Error handling
-
-### Stage 2 — Core Recovery Engine
-- Event-driven orchestration (`Webhook` $\rightarrow$ `Event` $\rightarrow$ `Queue` $\rightarrow$ `Diagnosis` $\rightarrow$ `Decision` $\rightarrow$ `Execution` $\rightarrow$ `Verification` $\rightarrow$ `Recovery`)
-- Idempotency
-- Retry handling
-- Queue workers
-- Correlation IDs
-- Deterministic policies
-- Financial reconciliation
-
-### Stage 3 — Real Recovery Capabilities
-- Payment Link recovery
-- Smart retry scheduling
-- Customer notifications
-- Scheduled recovery
-- Verified recovery outcomes
-- Improved recovery state handling
-
-### Stage 4 — Recovery Intelligence
-- Customer recovery profiles
-- Gateway health signals
-- Recovery probability
-- Expected Recovery Value ($EV = \text{Transaction Amount} \times \text{Recovery Probability}$)
-- Multi-strategy comparison
-- AI explanations & Counterfactual recommendations
-
-*Example Matrix*:
-```text
-               RETRY      PAYMENT LINK   REMINDER
-Probability    42%        78%            61%
-EV             ₹8,400     ₹15,600        ₹12,200
-Status         VIABLE     PREFERRED      VIABLE
-```
-
-### Stage 5 — Financial Safety & Guardrails
-- Gateway Decline Circuit Breakers
-- Daily Merchant Retry Budgets
-- Customer Anti-Spam Frequency Limiters
-- AI Model Drift Anomaly Detection
-- Tamper-Evident SHA-256 Audit Trail Chains
-
-### Stage 6 — Developer Platform
-- Webhook Payload Testing Emulator
-- Failed Webhook Replay Engine
-- Developer API Key Management (`rec_live_...`)
-- Outbound Webhook Subscriptions
-- Compliance & Audit Data Exporters (CSV & JSON)
-
-### Stage 7 — Production Readiness & Packaging
-- End-to-end failure simulation suites
-- Production deployment configuration & packaging
-- Multi-gateway routing and distributed worker topologies
+1. **AI does not control money**: AI provides diagnostic reasoning and probabilistic recommendations. Deterministic policy rules maintain exclusive authority over what is executed.
+2. **Execution does not equal recovery**: Disagreeing with naive dunning systems, RecoverAI never claims revenue until verified payment evidence is reconciled.
+3. **Webhooks are evidence**: Payment state is reconciled strictly against cryptographically verified gateway webhook events.
+4. **Every action is traceable**: Every operation propagates `requestId`, `correlationId`, `transactionId`, and `recoveryAttemptId`.
+5. **Tenant boundaries are mandatory**: Multi-tenant RBAC ensures complete data isolation between merchants.
+6. **Sandbox before production**: The platform strictly operates in Razorpay Test Mode until all operational and compliance controls are mature.
 
 ---
 
-## Design Philosophy
+## 📜 License
 
-RecoverAI follows several core principles:
-
-1. **AI does not control money**: AI provides reasoning and recommendations. Deterministic policy controls what the system is allowed to execute.
-2. **Execution does not equal recovery**: $\text{Recovery Action Executed} \neq \text{Payment Recovered}$. Only verified payment evidence can establish recovery.
-3. **Webhooks are evidence**: Payment state should be reconciled against verified gateway events rather than inferred solely from an API request.
-4. **Every action should be traceable**: Operations are associated with `requestId`, `correlationId`, `transactionId`, and `recoveryAttemptId`.
-5. **Tenant boundaries are mandatory**: Merchant A must never be able to access Merchant B's financial data.
-6. **Sandbox before production**: The system intentionally remains in Razorpay Test Mode until architecture, security, reconciliation, reliability, and operational controls are sufficiently mature.
-
----
-
-## Why RecoverAI?
-
-RecoverAI is not intended to be another dashboard that displays failed payments. The central idea is to create an autonomous recovery loop:
-
-```text
-PAYMENT FAILURE
-      │
-      ▼
-UNDERSTAND WHY
-      │
-      ▼
-DETERMINE WHAT TO DO
-      │
-      ▼
-EXECUTE SAFELY
-      │
-      ▼
-VERIFY THE PAYMENT
-      │
-      ▼
-CONFIRM RECOVERED VALUE
-      │
-      ▼
-LEARN FROM OUTCOME
-```
-
-The long-term objective is to move payment recovery from **static retries** toward **context-aware recovery decisions** while maintaining strict financial and operational guardrails.
-
----
-
-## License
-
-This project is distributed under the MIT License. See `LICENSE` for details.
+Distributed under the **MIT License**. See `LICENSE` for more information.

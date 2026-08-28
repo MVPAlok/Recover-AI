@@ -180,6 +180,124 @@ export class RecoveryExecutorController {
   };
 
   /**
+   * GET /api/recovery-executor/:transactionId/smart-schedule
+   * Calculates dynamic smart retry schedule and channel recommendation based on failure taxonomy.
+   */
+  getSmartSchedule = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { transactionId } = req.params;
+      const { prisma } = await import('../../config/prisma.js');
+      const { SmartRetryScheduler } = await import('./smart-retry-scheduler.js');
+
+      const tx = await prisma.transaction.findUnique({
+        where: { id: transactionId },
+        select: { id: true, failureCode: true, retryCount: true, amount: true },
+      });
+
+      if (!tx) {
+        res.status(404).json({ success: false, error: 'Transaction not found' });
+        return;
+      }
+
+      const schedule = SmartRetryScheduler.calculateSchedule({
+        failureCode: tx.failureCode,
+        retryCount: tx.retryCount,
+        amount: tx.amount.toNumber(),
+      });
+
+      res.status(200).json({
+        success: true,
+        data: schedule,
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ success: false, error: message });
+    }
+  };
+
+  /**
+   * POST /api/recovery-executor/:transactionId/manual-review
+   * Allows a human operator to resolve an ambiguous or high-value transaction flagged for review.
+   */
+  resolveManualReview = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { transactionId } = req.params;
+      const { action, notes, operatorEmail } = req.body || {};
+      const { prisma } = await import('../../config/prisma.js');
+
+      if (!transactionId || !action) {
+        res.status(400).json({
+          success: false,
+          error: "Fields 'transactionId' and 'action' ('APPROVE_RETRY' | 'APPROVE_PAYMENT_LINK' | 'PERMANENT_STOP') are required.",
+        });
+        return;
+      }
+
+      const tx = await prisma.transaction.findUnique({ where: { id: transactionId } });
+      if (!tx) {
+        res.status(404).json({ success: false, error: 'Transaction not found' });
+        return;
+      }
+
+      if (action === 'PERMANENT_STOP') {
+        await prisma.transaction.update({
+          where: { id: transactionId },
+          data: { recoveryStatus: 'CANCELLED' },
+        });
+
+        await prisma.auditLog.create({
+          data: {
+            merchantId: tx.merchantId,
+            transactionId: tx.id,
+            entityType: 'MANUAL_REVIEW',
+            entityId: tx.id,
+            action: 'MANUAL_REVIEW_PERMANENT_STOP',
+            actor: operatorEmail || 'Finance Operator Desk',
+            actorType: 'HUMAN_OPERATOR',
+            details: { notes, action },
+          },
+        });
+
+        res.status(200).json({
+          success: true,
+          message: 'Recovery permanently stopped by operator review.',
+          data: { status: 'CANCELLED', action: 'STOP' },
+        });
+        return;
+      }
+
+      // Execute approved action
+      const executionResult = await this.service.executeDecision({
+        transactionId,
+        executionMode: 'simulation',
+      });
+
+      await prisma.auditLog.create({
+        data: {
+          merchantId: tx.merchantId,
+          transactionId: tx.id,
+          recoveryAttemptId: executionResult.recoveryAttemptId,
+          entityType: 'MANUAL_REVIEW',
+          entityId: tx.id,
+          action: `MANUAL_REVIEW_${action}`,
+          actor: operatorEmail || 'Finance Operator Desk',
+          actorType: 'HUMAN_OPERATOR',
+          details: { notes, action, outcome: executionResult.outcomeCode },
+        },
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `Manual review action '${action}' approved and dispatched.`,
+        data: executionResult,
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ success: false, error: message });
+    }
+  };
+
+  /**
    * GET /api/recovery-executor/:transactionId
    * Inspects the latest execution/attempt result. Side-effect free.
    */

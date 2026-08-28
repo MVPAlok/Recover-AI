@@ -10,6 +10,8 @@ router.post('/:transactionId/execute', controller.executeTransaction);
 router.post('/:transactionId/enqueue', controller.enqueueTransaction);
 router.post('/:transactionId/orchestrate', controller.orchestrateAutonomousPipeline);
 router.post('/:transactionId/enqueue-pipeline', controller.enqueuePipeline);
+router.get('/:transactionId/smart-schedule', controller.getSmartSchedule);
+router.post('/:transactionId/manual-review', controller.resolveManualReview);
 router.get('/:transactionId', controller.getLatestExecution);
 
 export default router;

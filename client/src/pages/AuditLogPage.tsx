@@ -57,7 +57,15 @@ export const AuditLogPage: React.FC = () => {
     } else {
       newParams.delete(key);
     }
-    newParams.set('page', '1');
+    if (key !== 'page') {
+      newParams.set('page', '1');
+    }
+    setSearchParams(newParams);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', newPage.toString());
     setSearchParams(newParams);
   };
 
@@ -210,15 +218,17 @@ export const AuditLogPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 disabled={page <= 1}
-                onClick={() => handleFilterChange('page', (page - 1).toString())}
+                onClick={() => handlePageChange(page - 1)}
                 className="p-1.5 rounded bg-surface/50 hover:bg-surface/80 disabled:opacity-30 text-white border border-white/10 transition-colors"
+                title="Previous page"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 disabled={page >= totalPages}
-                onClick={() => handleFilterChange('page', (page + 1).toString())}
+                onClick={() => handlePageChange(page + 1)}
                 className="p-1.5 rounded bg-surface/50 hover:bg-surface/80 disabled:opacity-30 text-white border border-white/10 transition-colors"
+                title="Next page"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

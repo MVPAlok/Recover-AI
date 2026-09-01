@@ -1,29 +1,49 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { InitialLoader } from "../../components/ui/InitialLoader";
 
-// RecoverAI Cinematic Landing Page — Fully Responsive with Local Asset Fallback
+export const CHAPTERS = [
+  { id: 0, label: "00/HERO", title: "HERO REVEAL", badge: "AUTONOMOUS CORE", hint: "Scroll to explore the architecture" },
+  { id: 1, label: "01/FAILURE", title: "THE PROBLEM", badge: "2,491 TXNS AT RISK", hint: "Payment failure isolation & telemetry" },
+  { id: 2, label: "02/DIAGNOSIS", title: "NEURAL DIAGNOSIS", badge: "92% PROBABILITY", hint: "Sub-second error classification" },
+  { id: 3, label: "03/DECISION", title: "DECISION ENGINE", badge: "DYNAMIC EV ROUTING", hint: "Calculates expected value across gateways" },
+  { id: 4, label: "04/EXECUTION", title: "EXECUTION AGENT", badge: "SAFE RETRY DISPATCH", hint: "Circuit breaker & retry execution" },
+  { id: 5, label: "05/VERIFICATION", title: "VERIFICATION", badge: "PROOF OF SETTLEMENT", hint: "Cryptographic state verification" },
+  { id: 6, label: "06/RECOVERY", title: "REVENUE RECOVERED", badge: "₹18,000 RECOVERED", hint: "Zero-loss autonomous settlement" },
+  { id: 7, label: "07/ARCHITECTURE", title: "ARCHITECTURE", badge: "EVENT-DRIVEN MESH", hint: "Microservices, queues & circuit breakers" },
+  { id: 8, label: "08/SANDBOX", title: "TEST SANDBOX", badge: "LIVE SIMULATION", hint: "Launch live developer simulation" },
+];
+
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const tickingRef = useRef(false);
+  const [activeChapterState, setActiveChapterState] = useState(0);
+
+  const stages = [
+    { start: 0.0, end: 0.12 },
+    { start: 0.12, end: 0.22 },
+    { start: 0.22, end: 0.35 },
+    { start: 0.35, end: 0.48 },
+    { start: 0.48, end: 0.62 },
+    { start: 0.62, end: 0.75 },
+    { start: 0.75, end: 0.85 },
+    { start: 0.85, end: 0.95 },
+    { start: 0.95, end: 1.0 },
+  ];
+
+  const scrollToChapter = (chapterIndex: number) => {
+    const maxScroll = document.body.scrollHeight - window.innerHeight;
+    const stage = stages[chapterIndex];
+    if (!stage) return;
+    const targetY = stage.start * maxScroll + (chapterIndex === 0 ? 0 : 20);
+    window.scrollTo({ top: targetY, behavior: "smooth" });
+  };
 
   useEffect(() => {
     const root = document.documentElement;
-    const numChapters = 9;
+    const numChapters = stages.length;
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-
-    const stages = [
-      { start: 0.0, end: 0.12 },
-      { start: 0.12, end: 0.22 },
-      { start: 0.22, end: 0.35 },
-      { start: 0.35, end: 0.48 },
-      { start: 0.48, end: 0.62 },
-      { start: 0.62, end: 0.75 },
-      { start: 0.75, end: 0.85 },
-      { start: 0.85, end: 0.95 },
-      { start: 0.95, end: 1.0 },
-    ];
 
     // Initialise CSS variables
     root.style.setProperty("--scroll-progress", "0");
@@ -33,68 +53,77 @@ export const LandingPage: React.FC = () => {
     root.style.setProperty("--hero-scale", "1");
     root.style.setProperty("--hero-blur", "0px");
 
-    function updateScroll() {
+    let targetProgress = 0;
+    let currentProgress = 0;
+    let animFrameId: number;
+
+    const smoothStep = (edge0: number, edge1: number, x: number) => {
+      const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+      return t * t * (3 - 2 * t);
+    };
+
+    const updateTargetScroll = () => {
       const scrollY = window.scrollY;
       const maxScroll = document.body.scrollHeight - window.innerHeight;
-      const progress = Math.max(0, Math.min(1, scrollY / maxScroll));
+      targetProgress = maxScroll > 0 ? Math.max(0, Math.min(1, scrollY / maxScroll)) : 0;
+    };
 
-      root.style.setProperty("--scroll-progress", String(progress));
-      let activeChapter = 0;
+    const physicsLoop = () => {
+      // Smooth Damped Lerp (0.09 factor gives luxurious inertia feel)
+      const diff = targetProgress - currentProgress;
+      currentProgress += diff * 0.09;
+      const velocity = Math.abs(diff);
+
+      const progress = currentProgress;
+      root.style.setProperty("--scroll-progress", progress.toFixed(4));
+      root.style.setProperty("--scroll-velocity", velocity.toFixed(4));
+
+      let activeChap = 0;
+      let maxOpacity = 0;
 
       for (let i = 0; i < numChapters; i++) {
         const stage = stages[i];
         let opacity = 0;
 
-        if (progress >= stage.start && progress <= stage.end) {
-          const width = stage.end - stage.start;
-          const localP = (progress - stage.start) / width;
-          if (i === 0) {
-            // Chapter 0 starts fully visible at scrollY = 0 and fades out when scrolling into chapter 1
-            if (localP > 0.8) opacity = (1 - localP) / 0.2;
-            else opacity = 1;
-          } else {
-            if (localP < 0.2) opacity = localP / 0.2;
-            else if (localP > 0.8) opacity = (1 - localP) / 0.2;
-            else opacity = 1;
+        if (i === 0) {
+          if (progress <= stage.end) {
+            opacity = 1 - smoothStep(stage.end - 0.04, stage.end, progress);
           }
-          if (opacity > 0.5) activeChapter = i;
+        } else if (i === numChapters - 1) {
+          if (progress >= stage.start) {
+            opacity = smoothStep(stage.start, stage.start + 0.035, progress);
+          }
+        } else {
+          if (progress >= stage.start && progress <= stage.end) {
+            const fadeIn = smoothStep(stage.start, stage.start + 0.035, progress);
+            const fadeOut = 1 - smoothStep(stage.end - 0.035, stage.end, progress);
+            opacity = Math.min(fadeIn, fadeOut);
+          }
         }
 
-        if (
-          i === numChapters - 1 &&
-          progress >= stages[numChapters - 1].start
-        ) {
-          const localP =
-            (progress - stage.start) / (stage.end - stage.start);
-          opacity = Math.min(1, localP / 0.2);
-          activeChapter = i;
+        if (opacity > maxOpacity) {
+          maxOpacity = opacity;
+          activeChap = i;
         }
 
-        root.style.setProperty(
-          `--chap-${i}-opacity`,
-          Math.max(0, opacity).toFixed(3)
-        );
+        root.style.setProperty(`--chap-${i}-opacity`, Math.max(0, opacity).toFixed(3));
       }
 
+      setActiveChapterState(activeChap);
+
       if (!prefersReducedMotion) {
-        root.style.setProperty(
-          "--hero-scale",
-          (1 + progress * 0.05).toFixed(3)
-        );
-        root.style.setProperty(
-          "--hero-blur",
-          `${(Math.sin(progress * Math.PI) * 5).toFixed(1)}px`
-        );
+        root.style.setProperty("--hero-scale", (1 + progress * 0.06).toFixed(3));
+        root.style.setProperty("--hero-blur", `${(Math.sin(progress * Math.PI) * 4).toFixed(1)}px`);
       }
 
       document.querySelectorAll(".chapter-dot").forEach((dot, index) => {
-        if (index === activeChapter) dot.classList.add("active");
+        if (index === activeChap) dot.classList.add("active");
         else dot.classList.remove("active");
       });
 
       const navbar = document.getElementById("navbar");
       if (navbar) {
-        if (scrollY > 50) {
+        if (window.scrollY > 40) {
           navbar.style.backgroundColor = "rgba(7,11,23,0.92)";
           navbar.style.backdropFilter = "blur(12px)";
           navbar.style.borderBottom = "1px solid rgba(255,255,255,0.07)";
@@ -105,25 +134,38 @@ export const LandingPage: React.FC = () => {
         }
       }
 
-      tickingRef.current = false;
-    }
-
-    const onScroll = () => {
-      if (!tickingRef.current) {
-        window.requestAnimationFrame(updateScroll);
-        tickingRef.current = true;
-      }
+      animFrameId = requestAnimationFrame(physicsLoop);
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    updateScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("scroll", updateTargetScroll, { passive: true });
+    updateTargetScroll();
+    animFrameId = requestAnimationFrame(physicsLoop);
+
+    return () => {
+      window.removeEventListener("scroll", updateTargetScroll);
+      cancelAnimationFrame(animFrameId);
+    };
   }, []);
 
   return (
     <div className="landing-page-root">
+      {/* ── High-Impact Cinematic Initial Preloader ─── */}
+      <InitialLoader minDuration={2200} />
+
+      {/* ── Top Neon Laser Progress Stream ─── */}
+      <div className="fixed top-0 left-0 w-full h-[2px] z-[60] pointer-events-none bg-white/5">
+        <div
+          className="h-full bg-gradient-to-r from-[#5B5BF7] via-[#c1c1ff] to-[#6ee7b7] shadow-[0_0_12px_rgba(193,193,255,0.9)]"
+          style={{ width: `calc(var(--scroll-progress, 0) * 100%)` }}
+        />
+      </div>
+
       {/* ── Scoped styles with responsive rules ─── */}
       <style>{`
+        html {
+          scroll-behavior: smooth;
+        }
+
         .landing-page-root {
           zoom: 0.9;
           background-color: #070B17;
@@ -180,27 +222,53 @@ export const LandingPage: React.FC = () => {
           align-items: center;
           justify-content: center;
           opacity: 0;
-          transition: opacity 0.5s ease-out, transform 0.5s ease-out;
           pointer-events: none;
           will-change: opacity, transform;
           padding: 1.5rem;
           padding-top: calc(5rem + 3vh);
         }
 
-        #layer-0 { opacity: var(--chap-0-opacity); transform: scale(calc(1 + (1 - var(--chap-0-opacity)) * 0.05)); }
-        #layer-1 { opacity: var(--chap-1-opacity); transform: translateY(calc((1 - var(--chap-1-opacity)) * 20px)); }
-        #layer-2 { opacity: var(--chap-2-opacity); transform: scale(calc(0.95 + var(--chap-2-opacity) * 0.05)); }
-        #layer-3 { opacity: var(--chap-3-opacity); }
-        #layer-4 { opacity: var(--chap-4-opacity); }
-        #layer-5 { opacity: var(--chap-5-opacity); transform: translateY(calc((1 - var(--chap-5-opacity)) * 20px)); }
-        #layer-6 { opacity: var(--chap-6-opacity); transform: scale(calc(0.9 + var(--chap-6-opacity) * 0.1)); }
-        #layer-7 { opacity: var(--chap-7-opacity); transform: translateY(calc((1 - var(--chap-7-opacity)) * 20px)); }
-        #layer-8 { opacity: var(--chap-8-opacity); transform: scale(calc(0.9 + var(--chap-8-opacity) * 0.1)); pointer-events: auto; }
+        #layer-0 { 
+          opacity: var(--chap-0-opacity); 
+          transform: translateY(calc((1 - var(--chap-0-opacity)) * -24px)) scale(calc(0.96 + var(--chap-0-opacity) * 0.04)); 
+        }
+        #layer-1 { 
+          opacity: var(--chap-1-opacity); 
+          transform: translateY(calc((1 - var(--chap-1-opacity)) * 28px)) scale(calc(0.95 + var(--chap-1-opacity) * 0.05)); 
+        }
+        #layer-2 { 
+          opacity: var(--chap-2-opacity); 
+          transform: translateY(calc((1 - var(--chap-2-opacity)) * 28px)) scale(calc(0.95 + var(--chap-2-opacity) * 0.05)); 
+        }
+        #layer-3 { 
+          opacity: var(--chap-3-opacity); 
+          transform: translateY(calc((1 - var(--chap-3-opacity)) * 28px)) scale(calc(0.95 + var(--chap-3-opacity) * 0.05)); 
+        }
+        #layer-4 { 
+          opacity: var(--chap-4-opacity); 
+          transform: translateY(calc((1 - var(--chap-4-opacity)) * 28px)) scale(calc(0.95 + var(--chap-4-opacity) * 0.05)); 
+        }
+        #layer-5 { 
+          opacity: var(--chap-5-opacity); 
+          transform: translateY(calc((1 - var(--chap-5-opacity)) * 28px)) scale(calc(0.95 + var(--chap-5-opacity) * 0.05)); 
+        }
+        #layer-6 { 
+          opacity: var(--chap-6-opacity); 
+          transform: translateY(calc((1 - var(--chap-6-opacity)) * 28px)) scale(calc(0.95 + var(--chap-6-opacity) * 0.05)); 
+        }
+        #layer-7 { 
+          opacity: var(--chap-7-opacity); 
+          transform: translateY(calc((1 - var(--chap-7-opacity)) * 28px)) scale(calc(0.95 + var(--chap-7-opacity) * 0.05)); 
+        }
+        #layer-8 { 
+          opacity: var(--chap-8-opacity); 
+          transform: translateY(calc((1 - var(--chap-8-opacity)) * 28px)) scale(calc(0.95 + var(--chap-8-opacity) * 0.05)); 
+          pointer-events: auto; 
+        }
 
         .hero-bg-container {
           transform: scale(var(--hero-scale));
           filter: blur(var(--hero-blur));
-          transition: transform 0.1s linear, filter 0.1s linear;
           will-change: transform, filter;
         }
 
@@ -223,18 +291,24 @@ export const LandingPage: React.FC = () => {
         }
 
         .chapter-dot {
-          width: 4px;
-          height: 4px;
-          background: rgba(255,255,255,0.2);
+          width: 5px;
+          height: 5px;
+          background: rgba(255,255,255,0.25);
           border-radius: 50%;
-          transition: all 0.3s ease;
+          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
           position: relative;
+          cursor: pointer;
+        }
+
+        .chapter-dot:hover {
+          background: #c1c1ff;
+          transform: scale(1.5);
         }
 
         .chapter-dot.active {
           background: #c1c1ff;
-          box-shadow: 0 0 10px #c1c1ff;
-          height: 24px;
+          box-shadow: 0 0 14px #c1c1ff;
+          height: 26px;
           border-radius: 4px;
         }
 
@@ -249,6 +323,7 @@ export const LandingPage: React.FC = () => {
           color: #c1c1ff;
           white-space: nowrap;
           letter-spacing: 0.1em;
+          font-weight: bold;
         }
 
         .material-symbols-outlined {
@@ -276,7 +351,6 @@ export const LandingPage: React.FC = () => {
 
         @media (prefers-reduced-motion: reduce) {
           .chapter-layer, .hero-bg-container {
-            transition: opacity 0.3s ease;
             transform: none !important;
             filter: none !important;
           }
@@ -331,15 +405,36 @@ export const LandingPage: React.FC = () => {
 
           {/* Chapter Indicator (Desktop only) */}
           <div className="chapter-indicator hidden xl:flex">
-            <div className="chapter-dot active" data-label="00/HERO" id="nav-dot-0" />
-            <div className="chapter-dot" data-label="01/FAILURE" id="nav-dot-1" />
-            <div className="chapter-dot" data-label="02/DIAGNOSIS" id="nav-dot-2" />
-            <div className="chapter-dot" data-label="03/DECISION" id="nav-dot-3" />
-            <div className="chapter-dot" data-label="04/EXECUTION" id="nav-dot-4" />
-            <div className="chapter-dot" data-label="05/VERIFICATION" id="nav-dot-5" />
-            <div className="chapter-dot" data-label="06/RECOVERY" id="nav-dot-6" />
-            <div className="chapter-dot" data-label="07/ARCHITECTURE" id="nav-dot-7" />
-            <div className="chapter-dot" data-label="08/SANDBOX" id="nav-dot-8" />
+            {CHAPTERS.map((chap) => (
+              <div
+                key={chap.id}
+                onClick={() => scrollToChapter(chap.id)}
+                className={`chapter-dot ${activeChapterState === chap.id ? "active" : ""}`}
+                data-label={chap.label}
+                id={`nav-dot-${chap.id}`}
+                title={`Jump to ${chap.title}`}
+              />
+            ))}
+          </div>
+
+          {/* Dynamic Floating Story & Discovery HUD at bottom */}
+          <div
+            onClick={() => {
+              const nextChapter = (activeChapterState + 1) % CHAPTERS.length;
+              scrollToChapter(nextChapter);
+            }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 sm:gap-3 bg-[#0a1024]/85 hover:bg-[#10183b] border border-[#5B5BF7]/30 hover:border-[#c1c1ff]/60 px-3.5 sm:px-4 py-2 rounded-full shadow-[0_4px_25px_rgba(7,11,23,0.85)] backdrop-blur-md cursor-pointer transition-all duration-300 group hover:scale-105 select-none pointer-events-auto"
+          >
+            <div className="w-2 h-2 rounded-full bg-[#5B5BF7] group-hover:bg-[#c1c1ff] animate-ping" />
+            <span className="font-mono text-[10px] sm:text-xs text-[#c1c1ff] font-semibold tracking-wider uppercase">
+              {CHAPTERS[activeChapterState]?.label} • {CHAPTERS[activeChapterState]?.title}
+            </span>
+            <span className="hidden sm:inline-block font-mono text-[9px] text-[#c1c1ff]/70 border-l border-white/10 pl-2">
+              {CHAPTERS[activeChapterState]?.badge}
+            </span>
+            <span className="material-symbols-outlined text-[#c1c1ff] text-base group-hover:translate-y-0.5 transition-transform">
+              keyboard_arrow_down
+            </span>
           </div>
 
           {/* 00 / HERO */}

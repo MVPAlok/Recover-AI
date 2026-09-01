@@ -48,9 +48,15 @@ export const LandingPage: React.FC = () => {
         if (progress >= stage.start && progress <= stage.end) {
           const width = stage.end - stage.start;
           const localP = (progress - stage.start) / width;
-          if (localP < 0.2) opacity = localP / 0.2;
-          else if (localP > 0.8) opacity = (1 - localP) / 0.2;
-          else opacity = 1;
+          if (i === 0) {
+            // Chapter 0 starts fully visible at scrollY = 0 and fades out when scrolling into chapter 1
+            if (localP > 0.8) opacity = (1 - localP) / 0.2;
+            else opacity = 1;
+          } else {
+            if (localP < 0.2) opacity = localP / 0.2;
+            else if (localP > 0.8) opacity = (1 - localP) / 0.2;
+            else opacity = 1;
+          }
           if (opacity > 0.5) activeChapter = i;
         }
 
@@ -115,9 +121,18 @@ export const LandingPage: React.FC = () => {
   }, []);
 
   return (
-    <>
+    <div className="landing-page-root">
       {/* ── Scoped styles with responsive rules ─── */}
       <style>{`
+        .landing-page-root {
+          zoom: 0.9;
+          background-color: #070B17;
+          color: #dee1f9;
+          min-height: 100vh;
+          width: 100%;
+          position: relative;
+        }
+
         body {
           background-color: #070B17;
           color: #dee1f9;
@@ -168,7 +183,8 @@ export const LandingPage: React.FC = () => {
           transition: opacity 0.5s ease-out, transform 0.5s ease-out;
           pointer-events: none;
           will-change: opacity, transform;
-          padding: 1rem;
+          padding: 1.5rem;
+          padding-top: calc(5rem + 3vh);
         }
 
         #layer-0 { opacity: var(--chap-0-opacity); transform: scale(calc(1 + (1 - var(--chap-0-opacity)) * 0.05)); }
@@ -766,7 +782,7 @@ export const LandingPage: React.FC = () => {
 
         </div>
       </main>
-    </>
+    </div>
   );
 };
 

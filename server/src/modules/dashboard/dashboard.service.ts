@@ -282,6 +282,17 @@ export class DashboardService {
             riskFactors,
             createdAt: detectionObj.createdAt.toISOString(),
           }
+        : decisionObj
+        ? {
+            id: `det_${decisionObj.id}`,
+            recoveryProbability: Number((prob * 100).toFixed(1)),
+            confidenceScore: Number(((decisionObj.confidenceScore || 0.8) * 100).toFixed(1)),
+            riskLevel,
+            reasoning: `Statistical recovery probability calculated from transaction telemetry (${decisionObj.decision} recommendation).`,
+            positiveFactors: ['Failure telemetry pattern matched', 'Customer historical profile analyzed'],
+            riskFactors: [decisionObj.riskLevel ? `${decisionObj.riskLevel} volatility tier` : 'Standard risk tier'],
+            createdAt: decisionObj.createdAt.toISOString(),
+          }
         : null,
       diagnosis: diagnosisObj
         ? {

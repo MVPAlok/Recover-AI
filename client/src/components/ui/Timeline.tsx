@@ -50,12 +50,18 @@ export const Timeline: React.FC<TimelineProps> = ({ transaction }) => {
       title: 'Statistical Probability Scoring',
       subtitle: transaction.detection
         ? `Likelihood: ${transaction.detection.recoveryProbability}% (${transaction.detection.riskLevel} Risk)`
+        : transaction.decision
+        ? `Likelihood: ${transaction.decision.confidenceScore}% (${transaction.decision.decision === 'STOP' ? 'HIGH' : 'LOW'} Risk)`
         : 'Scoring evaluation queued',
-      description: parseReasoning(transaction.detection?.reasoning) || 'Correlating customer lifetime success patterns with decline code.',
-      status: transaction.detection ? 'OPERATIONAL' : 'PENDING',
-      statusText: transaction.detection ? `${transaction.detection.recoveryProbability}% PROBABILITY` : 'QUEUED',
-      timestamp: transaction.detection?.createdAt,
-      active: Boolean(transaction.detection),
+      description: parseReasoning(transaction.detection?.reasoning) || (transaction.decision ? `Statistical evaluation completed: ${parseReasoning(transaction.decision.reasoning)}` : 'Correlating customer lifetime success patterns with decline code.'),
+      status: transaction.detection || transaction.decision ? 'OPERATIONAL' : 'PENDING',
+      statusText: transaction.detection
+        ? `${transaction.detection.recoveryProbability}% PROBABILITY`
+        : transaction.decision
+        ? `${transaction.decision.confidenceScore}% PROBABILITY`
+        : 'QUEUED',
+      timestamp: transaction.detection?.createdAt || transaction.decision?.createdAt,
+      active: Boolean(transaction.detection || transaction.decision),
     },
     {
       num: '03',

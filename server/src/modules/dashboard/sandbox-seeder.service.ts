@@ -13,6 +13,7 @@ import { logger } from '../../utils/logger.js';
 import { DiagnosisService } from '../diagnosis/diagnosis.service.js';
 import { DecisionService } from '../recovery-decision/decision.service.js';
 import { RecoveryExecutorService } from '../recovery-executor/recovery-executor.service.js';
+import { DetectionService } from '../detection/detection.service.js';
 
 export interface SimulateEventOptions {
   scenario: string;
@@ -221,6 +222,46 @@ export class SandboxSeederService {
         updatedAt,
       });
 
+      const detectionId = randomUUID();
+      const diagnosisId = randomUUID();
+
+      // Step 02: Statistical Probability Scoring (DETECTION)
+      decisionsData.push({
+        id: detectionId,
+        merchantId,
+        transactionId: txnId,
+        agentType: AIAgentType.DETECTION,
+        decision: s.aiDecision,
+        confidenceScore: s.confidence,
+        recoveryProbability: isRecovered ? 0.94 : isRemind ? 0.84 : 0.05,
+        reasoning: `Positive signals: Decline code ${s.failureCode} categorized; Historical customer profile active. Risk factors: ${s.riskLevel} risk tier`,
+        failureCategory: s.failureCategory,
+        rootCause: s.rootCause,
+        riskLevel: s.riskLevel,
+        modelName: 'statistical-scoring-engine',
+        correlationId,
+        createdAt: new Date(createdAt.getTime() + 1000 * 10),
+      });
+
+      // Step 03: Google Gemini Diagnostics (DIAGNOSIS)
+      decisionsData.push({
+        id: diagnosisId,
+        merchantId,
+        transactionId: txnId,
+        agentType: AIAgentType.DIAGNOSIS,
+        decision: s.aiDecision,
+        confidenceScore: s.confidence,
+        recoveryProbability: isRecovered ? 0.94 : isRemind ? 0.84 : 0.05,
+        reasoning: s.reasoning,
+        failureCategory: s.failureCategory,
+        rootCause: s.rootCause,
+        riskLevel: s.riskLevel,
+        modelName: 'gemini-3.5-flash-lite',
+        correlationId,
+        createdAt: new Date(createdAt.getTime() + 1000 * 20),
+      });
+
+      // Step 04: Policy Decision Formulation (RECOVERY_DECISION)
       decisionsData.push({
         id: decisionId,
         merchantId,
@@ -233,7 +274,7 @@ export class SandboxSeederService {
         failureCategory: s.failureCategory,
         rootCause: s.rootCause,
         riskLevel: s.riskLevel,
-        modelName: 'gemini-3.5-flash-lite',
+        modelName: 'policy-guardrail-engine',
         correlationId,
         createdAt: new Date(createdAt.getTime() + 1000 * 30),
       });
@@ -522,8 +563,11 @@ export class SandboxSeederService {
       },
     });
 
-    // 4. Exercise real recovery pipeline (Diagnosis -> Decision -> Executor)
+    // 4. Exercise real recovery pipeline (Detection -> Diagnosis -> Decision -> Executor)
     try {
+      const detectionService = new DetectionService();
+      await detectionService.analyzeTransaction(txn.id, true);
+
       const diagnosisService = new DiagnosisService();
       await diagnosisService.diagnoseTransaction(txn.id, true);
 
@@ -582,7 +626,30 @@ export class SandboxSeederService {
       logger.warn(`[SandboxSimulator] Transaction status update: ${updateErr}`);
     }
 
-    // Ensure AIDecision record exists
+    // Ensure DETECTION AIDecision record exists
+    try {
+      await this.db.aIDecision.create({
+        data: {
+          merchantId,
+          transactionId: txn.id,
+          agentType: AIAgentType.DETECTION,
+          decision: expectedDecision,
+          confidenceScore: confidence,
+          recoveryProbability: isSuccess ? 0.95 : 0.8,
+          reasoning: `Positive signals: Live failure code ${scenarioKey} categorized; Telemetry evaluated. Risk factors: ${riskLevel} risk`,
+          failureCategory,
+          rootCause,
+          riskLevel,
+          modelName: 'statistical-scoring-engine',
+          correlationId,
+          createdAt: new Date(now.getTime() + 750),
+        },
+      });
+    } catch (detErr) {
+      logger.info(`[SandboxSimulator] Detection decision creation note: ${detErr}`);
+    }
+
+    // Ensure RECOVERY_DECISION AIDecision record exists
     let aiDecision = null;
     try {
       aiDecision = await this.db.aIDecision.create({

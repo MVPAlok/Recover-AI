@@ -99,11 +99,10 @@ export const InitialLoader: React.FC<InitialLoaderProps> = ({
   return (
     <div
       onClick={finishFast}
-      className={`fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#070B17] text-[#dee1f9] select-none cursor-pointer overflow-hidden transition-all duration-700 ease-out ${
-        isFadingOut
+      className={`fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#070B17] text-[#dee1f9] select-none cursor-pointer overflow-hidden transition-all duration-700 ease-out ${isFadingOut
           ? 'opacity-0 scale-105 pointer-events-none filter blur-[6px]'
           : 'opacity-100 scale-100'
-      }`}
+        }`}
       style={{
         background: 'radial-gradient(ellipse at center, #0e162e 0%, #070B17 70%, #03060d 100%)',
       }}

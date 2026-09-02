@@ -27,4 +27,9 @@ router.get('/audit-log', controller.getAuditLogs);
 // Integrations Status
 router.get('/integrations/razorpay/status', controller.getRazorpayStatus);
 
+// Sandbox Simulation & Data Management
+router.post('/sandbox/reset', controller.resetSandbox);
+router.post('/sandbox/simulate-event', controller.simulateEvent);
+router.get('/sandbox/stats', controller.getSandboxStats);
+
 export default router;

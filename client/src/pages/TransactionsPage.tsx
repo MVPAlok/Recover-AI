@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
-import { fetchTransactions } from '../services/api';
+import { Search, ChevronLeft, ChevronRight, RotateCcw, Zap, RefreshCw } from 'lucide-react';
+import { fetchTransactions, resetSandboxData } from '../services/api';
 import { TransactionSummary } from '../types';
 import { SectionTag } from '../components/system/SectionTag';
 import { SystemPanel } from '../components/system/SystemPanel';
@@ -10,6 +10,7 @@ import { formatINR } from '../components/ui/MetricCard';
 import { TableSkeleton } from '../components/ui/Skeleton';
 import { ErrorBanner } from '../components/ui/ErrorBanner';
 import { EmptyState } from '../components/ui/EmptyState';
+import { SimulateEventModal } from '../components/dashboard/SimulateEventModal';
 
 export const TransactionsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -31,6 +32,27 @@ export const TransactionsPage: React.FC = () => {
   const risk = searchParams.get('risk') || '';
 
   const [searchInput, setSearchInput] = useState(search);
+  const [isSimulateModalOpen, setIsSimulateModalOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [confirmingReset, setConfirmingReset] = useState(false);
+
+  const handleResetSandbox = async () => {
+    if (!confirmingReset) {
+      setConfirmingReset(true);
+      setTimeout(() => setConfirmingReset(false), 4000);
+      return;
+    }
+    setConfirmingReset(false);
+    try {
+      setResetting(true);
+      await resetSandboxData();
+      await loadTransactions();
+    } catch (err) {
+      console.error('Failed to reset sandbox data:', err);
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const loadTransactions = async () => {
     try {
@@ -133,13 +155,41 @@ export const TransactionsPage: React.FC = () => {
           </div>
         </div>
 
-        <div>
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-geist text-on-surface tracking-tight">
-            TRANSACTION EXPLORER
-          </h1>
-          <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-2xl mt-2 leading-relaxed">
-            Search and inspect payment failures, AI root-cause decisions, and cryptographic recovery outcomes.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold font-geist text-on-surface tracking-tight">
+              TRANSACTION EXPLORER
+            </h1>
+            <p className="text-xs sm:text-sm font-geist text-on-surface-variant/80 max-w-2xl mt-1.5 leading-relaxed">
+              Search and inspect payment failures, AI root-cause decisions, and cryptographic recovery outcomes.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => setIsSimulateModalOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded bg-primary/10 hover:bg-primary border border-primary/40 text-primary hover:text-surface-dim font-mono text-xs font-semibold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(91,91,247,0.2)]"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>Simulate Event</span>
+            </button>
+
+            <button
+              onClick={handleResetSandbox}
+              disabled={resetting}
+              className={`flex items-center gap-2 px-3 py-2 rounded border font-mono text-xs transition-all disabled:opacity-50 ${
+                confirmingReset
+                  ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold shadow-[0_0_12px_rgba(245,158,11,0.3)] animate-pulse'
+                  : 'bg-surface/50 hover:bg-surface border-white/10 text-on-surface-variant hover:text-white'
+              }`}
+              title="Reseed 42 clean scenario-driven transactions"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
+              <span className="hidden md:inline">
+                {resetting ? 'Resetting...' : confirmingReset ? 'Click to Confirm Reset' : 'Reset Data'}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -345,6 +395,15 @@ export const TransactionsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Interactive Scenario Simulator Modal */}
+      <SimulateEventModal
+        isOpen={isSimulateModalOpen}
+        onClose={() => setIsSimulateModalOpen(false)}
+        onSuccess={() => {
+          loadTransactions();
+        }}
+      />
     </div>
   );
 };

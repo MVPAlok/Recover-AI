@@ -10,6 +10,7 @@ import {
 } from '@prisma/client';
 import { prisma } from '../../config/prisma.js';
 import { RecoveryFilterParams, TransactionFilterParams } from './dashboard.types.js';
+import { sandboxSeeder } from './sandbox-seeder.service.js';
 
 export class DashboardRepository {
   private db: PrismaClient;
@@ -70,141 +71,43 @@ export class DashboardRepository {
       // Non-blocking for sandbox seed
     }
 
-    const now = new Date();
     const currency = data.currency || 'INR';
 
-    // Seed 1 default customer
-    const customer = await this.db.customer.create({
-      data: {
-        merchantId: merchant.id,
-        email: `customer_${Math.floor(Math.random() * 1000)}@example.test`,
-        name: 'Demo Customer',
-        phone: '+919876543210',
-      },
-    });
-
-    // 1. Seed Recovered Transaction
-    const tx1 = await this.db.transaction.create({
-      data: {
-        merchantId: merchant.id,
-        customerId: customer.id,
-        amount: 2499,
-        currency,
-        status: TransactionStatus.SUCCESS,
-        recoveryStatus: TransactionRecoveryStatus.RECOVERED,
-        failureCode: 'GATEWAY_TIMEOUT',
-        failureReason: 'Temporary bank server timeout',
-        createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000),
-      },
-    });
-
-    const aiDec1 = await this.db.aIDecision.create({
-      data: {
-        merchantId: merchant.id,
-        transactionId: tx1.id,
-        agentType: AIAgentType.RECOVERY_DECISION,
-        decision: RecoveryDecision.RETRY,
-        confidenceScore: 0.94,
-        reasoning: 'Transient gateway timeout with 94% recovery likelihood. RETRY recommended.',
-        failureCategory: 'TEMPORARY_INFRASTRUCTURE',
-        rootCause: 'TEMPORARY_GATEWAY_FAILURE',
-        riskLevel: 'LOW',
-        modelName: 'gemini-3.5-flash-lite',
-      },
-    });
-
-    const rpOrderId = `order_sandbox_${Math.floor(Math.random() * 100000)}`;
-    const rpPaymentId = `pay_sandbox_${Math.floor(Math.random() * 100000)}`;
-
-    const attempt1 = await this.db.recoveryAttempt.create({
-      data: {
-        merchantId: merchant.id,
-        transactionId: tx1.id,
-        attemptNumber: 1,
-        status: RecoveryStatus.SUCCESS,
-        actionType: RecoveryDecision.RETRY,
-        amountRecovered: 2499,
-        executedAt: new Date(now.getTime() - 90 * 60 * 1000),
-      },
-    });
-
-    await this.db.payment.create({
-      data: {
-        merchantId: merchant.id,
-        transactionId: tx1.id,
-        recoveryAttemptId: attempt1.id,
-        amount: 2499,
-        currency,
-        status: PaymentStatus.CAPTURED,
-        capturedAmount: 2499,
-        verified: true,
-        reconciled: true,
-        razorpayOrderId: rpOrderId,
-        razorpayPaymentId: rpPaymentId,
-      },
-    });
-
-    // 2. Seed In-Progress Reminder Opportunity
-    const tx2 = await this.db.transaction.create({
-      data: {
-        merchantId: merchant.id,
-        customerId: customer.id,
-        amount: 4850,
-        currency,
-        status: TransactionStatus.FAILED,
-        recoveryStatus: TransactionRecoveryStatus.IN_PROGRESS,
-        failureCode: 'AUTHENTICATION_FAILURE',
-        failureReason: 'Customer abandoned OTP 3DS challenge',
-        createdAt: new Date(now.getTime() - 45 * 60 * 1000),
-      },
-    });
-
-    await this.db.aIDecision.create({
-      data: {
-        merchantId: merchant.id,
-        transactionId: tx2.id,
-        agentType: AIAgentType.RECOVERY_DECISION,
-        decision: RecoveryDecision.REMIND,
-        confidenceScore: 0.82,
-        reasoning: 'Customer abandoned 3DS OTP verification. Dispatched payment link reminder.',
-        failureCategory: 'CUSTOMER_AUTHENTICATION',
-        rootCause: 'CUSTOMER_AUTH_FAILED',
-        riskLevel: 'LOW',
-        modelName: 'gemini-3.5-flash-lite',
-      },
-    });
-
-    // 3. Seed Stopped Fraud/Expired Card Transaction
-    const tx3 = await this.db.transaction.create({
-      data: {
-        merchantId: merchant.id,
-        customerId: customer.id,
-        amount: 12000,
-        currency,
-        status: TransactionStatus.FAILED,
-        recoveryStatus: TransactionRecoveryStatus.CANCELLED,
-        failureCode: 'EXPIRED_CARD',
-        failureReason: 'Payment card has expired',
-        createdAt: new Date(now.getTime() - 30 * 60 * 1000),
-      },
-    });
-
-    await this.db.aIDecision.create({
-      data: {
-        merchantId: merchant.id,
-        transactionId: tx3.id,
-        agentType: AIAgentType.RECOVERY_DECISION,
-        decision: RecoveryDecision.STOP,
-        confidenceScore: 0.99,
-        reasoning: 'Hard card expiration. Retries stopped by Authoritative Policy Guardrail.',
-        failureCategory: 'INSTRUMENT_EXPIRATION',
-        rootCause: 'CARD_EXPIRED',
-        riskLevel: 'HIGH',
-        modelName: 'gemini-3.5-flash-lite',
-      },
-    });
+    // Auto-seed structured synthetic sandbox transactions across diverse lifecycles
+    try {
+      await sandboxSeeder.seedMerchantSandbox(merchant.id, currency);
+    } catch (seedErr) {
+      // Non-blocking fallback for sandbox
+    }
 
     return merchant;
+  }
+
+  /**
+   * Resets all transactions and recovery records for a sandbox workspace and reseeds cleanly.
+   */
+  async resetMerchantSandbox(merchantId: string, currency: string = 'INR') {
+    const merchant = await this.getMerchant(merchantId);
+    if (!merchant) throw new Error(`Merchant ${merchantId} not found`);
+    return sandboxSeeder.resetMerchantSandbox(merchant.id, currency);
+  }
+
+  /**
+   * Simulates a single recovery event with realistic lifecycle.
+   */
+  async simulateSandboxEvent(merchantId: string, options: any) {
+    const merchant = await this.getMerchant(merchantId);
+    if (!merchant) throw new Error(`Merchant ${merchantId} not found`);
+    return sandboxSeeder.simulateSingleEvent(merchant.id, options);
+  }
+
+  /**
+   * Gets current sandbox statistics.
+   */
+  async getSandboxStats(merchantId: string) {
+    const merchant = await this.getMerchant(merchantId);
+    if (!merchant) throw new Error(`Merchant ${merchantId} not found`);
+    return sandboxSeeder.getSandboxStats(merchant.id);
   }
 
   /**

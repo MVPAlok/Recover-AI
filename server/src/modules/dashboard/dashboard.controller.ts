@@ -44,6 +44,52 @@ export class DashboardController {
   };
 
   /**
+   * POST /api/dashboard/sandbox/reset
+   */
+  resetSandbox = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const merchantId = this.getMerchantId(req);
+      const result = await this.service.resetSandbox(merchantId);
+      res.status(200).json({ success: true, data: result });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(`[DashboardController] Error in resetSandbox: ${message}`);
+      res.status(500).json({ success: false, error: { code: 'SANDBOX_RESET_ERROR', message } });
+    }
+  };
+
+  /**
+   * POST /api/dashboard/sandbox/simulate-event
+   */
+  simulateEvent = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const merchantId = this.getMerchantId(req);
+      const { scenario, amount, outcome, currency } = req.body;
+      const result = await this.service.simulateSandboxEvent(merchantId, { scenario, amount, outcome, currency });
+      res.status(201).json({ success: true, data: result });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(`[DashboardController] Error in simulateEvent: ${message}`);
+      res.status(500).json({ success: false, error: { code: 'SIMULATE_EVENT_ERROR', message } });
+    }
+  };
+
+  /**
+   * GET /api/dashboard/sandbox/stats
+   */
+  getSandboxStats = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const merchantId = this.getMerchantId(req);
+      const stats = await this.service.getSandboxStats(merchantId);
+      res.status(200).json({ success: true, data: stats });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(`[DashboardController] Error in getSandboxStats: ${message}`);
+      res.status(500).json({ success: false, error: { code: 'SANDBOX_STATS_ERROR', message } });
+    }
+  };
+
+  /**
    * GET /api/dashboard/overview
    */
   getOverview = async (req: Request, res: Response): Promise<void> => {

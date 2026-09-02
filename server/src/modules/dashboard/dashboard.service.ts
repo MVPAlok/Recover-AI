@@ -50,6 +50,30 @@ export class DashboardService {
   }
 
   /**
+   * Resets all transactions and recovery records for a sandbox workspace and reseeds cleanly.
+   */
+  async resetSandbox(merchantId?: string) {
+    const targetMerchantId = await this.resolveMerchantId(merchantId);
+    return this.repo.resetMerchantSandbox(targetMerchantId);
+  }
+
+  /**
+   * Simulates a single recovery event with realistic lifecycle.
+   */
+  async simulateSandboxEvent(merchantId: string | undefined, options: any) {
+    const targetMerchantId = await this.resolveMerchantId(merchantId);
+    return this.repo.simulateSandboxEvent(targetMerchantId, options);
+  }
+
+  /**
+   * Gets current sandbox statistics.
+   */
+  async getSandboxStats(merchantId?: string) {
+    const targetMerchantId = await this.resolveMerchantId(merchantId);
+    return this.repo.getSandboxStats(targetMerchantId);
+  }
+
+  /**
    * Calculates overall dashboard overview metrics.
    * Documented formula: Recovery Rate = (Recovered Revenue / Revenue At Risk) * 100
    */

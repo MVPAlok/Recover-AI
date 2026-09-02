@@ -289,3 +289,36 @@ export async function fetchSystemHealth(): Promise<SystemHealthData> {
   }
   return json;
 }
+
+export interface SandboxStats {
+  transactionsCount: number;
+  recoveryAttemptsCount: number;
+  auditLogsCount: number;
+  totalRecoveredAmount: number;
+}
+
+export async function resetSandboxData(): Promise<{
+  transactionsCount: number;
+  recoveryAttemptsCount: number;
+  auditLogsCount: number;
+  recoveredAmount: number;
+}> {
+  return request('/api/sandbox/reset', { method: 'POST' });
+}
+
+export async function simulateRecoveryEvent(payload: {
+  scenario: string;
+  amount?: number;
+  outcome?: string;
+  currency?: string;
+}): Promise<any> {
+  return request('/api/sandbox/simulate-event', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchSandboxStats(): Promise<SandboxStats> {
+  return request<SandboxStats>('/api/sandbox/stats');
+}
+

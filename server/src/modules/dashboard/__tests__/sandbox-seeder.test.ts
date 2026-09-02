@@ -54,6 +54,14 @@ function createMockPrisma() {
         transactions.push(...remaining);
         return { count: initial - remaining.length };
       },
+      update: async ({ where, data }: any) => {
+        const idx = transactions.findIndex(t => t.id === where.id);
+        if (idx >= 0) {
+          transactions[idx] = { ...transactions[idx], ...data };
+          return transactions[idx];
+        }
+        return null;
+      },
     },
     aIDecision: {
       create: async ({ data }: any) => {
@@ -205,7 +213,7 @@ describe('SandboxSeederService — Structured Scenario Generation & Simulation',
     });
 
     assert.equal(simResult.transaction.amount, 4850);
-    assert.equal(simResult.aiDecision.decision, RecoveryDecision.REMIND);
+    assert.equal(simResult.aiDecision?.decision, RecoveryDecision.REMIND);
     assert.equal(simResult.scenario, 'OTP_DROPOUT');
     assert.equal(simResult.outcome, 'PENDING');
     assert.equal(mock.transactions.length, 1);

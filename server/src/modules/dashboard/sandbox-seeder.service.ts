@@ -7,6 +7,7 @@ import {
   TransactionRecoveryStatus,
   TransactionStatus,
 } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 import { prisma } from '../../config/prisma.js';
 import { logger } from '../../utils/logger.js';
 
@@ -115,33 +116,52 @@ export class SandboxSeederService {
     auditLogsCount: number;
     recoveredAmount: number;
   }> {
-    logger.info(`[SandboxSeeder] Starting structured auto-seed for merchant ${merchantId}...`);
+    logger.info(`[SandboxSeeder] Starting ultra-fast bulk auto-seed for merchant ${merchantId}...`);
 
-    // 1. Create or ensure 10 distinct customers
-    const customers = [];
+    // 1. Create or ensure 10 distinct customers in bulk
+    const existingCustomers = await this.db.customer.findMany({
+      where: { merchantId },
+    });
+    const customerMap = new Map(existingCustomers.map((c) => [c.email, c]));
+
+    const missingCustomers: any[] = [];
     for (const c of CUSTOMER_SEEDS) {
-      let cust = await this.db.customer.findFirst({
-        where: { merchantId, email: c.email },
-      });
-      if (!cust) {
-        cust = await this.db.customer.create({
-          data: {
-            merchantId,
-            name: c.name,
-            email: c.email,
-            phone: c.phone,
-          },
+      if (!customerMap.has(c.email)) {
+        missingCustomers.push({
+          id: randomUUID(),
+          merchantId,
+          name: c.name,
+          email: c.email,
+          phone: c.phone,
         });
       }
-      customers.push(cust);
     }
+
+    if (missingCustomers.length > 0) {
+      if (typeof this.db.customer.createMany === 'function') {
+        await this.db.customer.createMany({ data: missingCustomers });
+      } else {
+        for (const mc of missingCustomers) {
+          await this.db.customer.create({ data: mc });
+        }
+      }
+      for (const mc of missingCustomers) {
+        customerMap.set(mc.email, mc as any);
+      }
+    }
+
+    const customers = CUSTOMER_SEEDS.map((c) => customerMap.get(c.email)!);
 
     const now = Date.now();
     let totalRecoveredAmount = 0;
-    let attemptsCount = 0;
-    let auditLogsCount = 0;
 
-    // 2. Iterate and create 42 structured scenario transactions
+    const transactionsData: any[] = [];
+    const decisionsData: any[] = [];
+    const attemptsData: any[] = [];
+    const paymentsData: any[] = [];
+    const auditLogsData: any[] = [];
+
+    // 2. Prepare all 42 structured scenario records in memory
     for (let i = 0; i < DEFAULT_SCENARIOS.length; i++) {
       const s = DEFAULT_SCENARIOS[i];
       const customer = customers[i % customers.length];
@@ -152,7 +172,6 @@ export class SandboxSeederService {
       const isRemind = s.category === 'REMIND';
       const isStop = s.category === 'STOP';
       const isFailed = s.category === 'FAILED';
-      const isReview = s.category === 'REVIEW';
 
       const status: TransactionStatus = isRecovered ? TransactionStatus.SUCCESS : TransactionStatus.FAILED;
       const paymentStatus: PaymentStatus = isRecovered
@@ -172,51 +191,49 @@ export class SandboxSeederService {
         : TransactionRecoveryStatus.REQUIRES_REVIEW;
 
       const correlationId = `sandbox_scenario_${i + 1}_${Math.floor(Math.random() * 10000)}`;
+      const txnId = randomUUID();
+      const decisionId = randomUUID();
+      const attemptId = randomUUID();
+      const paymentId = randomUUID();
 
-      // Create transaction
-      const txn = await this.db.transaction.create({
-        data: {
-          merchantId,
-          customerId: customer.id,
-          amount: s.amount,
-          currency,
-          status,
-          paymentStatus,
-          recoveryStatus,
-          paymentMethod: s.paymentMethod,
-          failureCode: s.failureCode,
-          failureReason: s.failureReason,
-          retryCount: isRecovered ? 1 : isFailed ? 3 : 0,
-          maxRetries: 3,
-          razorpayPaymentId: isRecovered ? `pay_synth_${Math.floor(Math.random() * 1000000)}` : null,
-          razorpayOrderId: `order_synth_${Math.floor(Math.random() * 1000000)}`,
-          correlationId,
-          createdAt,
-          updatedAt,
-        },
+      transactionsData.push({
+        id: txnId,
+        merchantId,
+        customerId: customer.id,
+        amount: s.amount,
+        currency,
+        status,
+        paymentStatus,
+        recoveryStatus,
+        paymentMethod: s.paymentMethod,
+        failureCode: s.failureCode,
+        failureReason: s.failureReason,
+        retryCount: isRecovered ? 1 : isFailed ? 3 : 0,
+        maxRetries: 3,
+        razorpayPaymentId: isRecovered ? `pay_synth_${Math.floor(Math.random() * 1000000)}` : null,
+        razorpayOrderId: `order_synth_${Math.floor(Math.random() * 1000000)}`,
+        correlationId,
+        createdAt,
+        updatedAt,
       });
 
-      // Create AI Decision
-      const aiDecision = await this.db.aIDecision.create({
-        data: {
-          merchantId,
-          transactionId: txn.id,
-          agentType: AIAgentType.RECOVERY_DECISION,
-          decision: s.aiDecision,
-          confidenceScore: s.confidence,
-          recoveryProbability: isRecovered ? 0.94 : isRemind ? 0.84 : 0.05,
-          reasoning: s.reasoning,
-          failureCategory: s.failureCategory,
-          rootCause: s.rootCause,
-          riskLevel: s.riskLevel,
-          modelName: 'gemini-3.5-flash-lite',
-          correlationId,
-          createdAt: new Date(createdAt.getTime() + 1000 * 30),
-        },
+      decisionsData.push({
+        id: decisionId,
+        merchantId,
+        transactionId: txnId,
+        agentType: AIAgentType.RECOVERY_DECISION,
+        decision: s.aiDecision,
+        confidenceScore: s.confidence,
+        recoveryProbability: isRecovered ? 0.94 : isRemind ? 0.84 : 0.05,
+        reasoning: s.reasoning,
+        failureCategory: s.failureCategory,
+        rootCause: s.rootCause,
+        riskLevel: s.riskLevel,
+        modelName: 'gemini-3.5-flash-lite',
+        correlationId,
+        createdAt: new Date(createdAt.getTime() + 1000 * 30),
       });
 
-      // Create Recovery Attempt if applicable
-      let attempt = null;
       if (isRecovered || isRemind || isFailed) {
         const attemptStatus: RecoveryStatus = isRecovered
           ? RecoveryStatus.SUCCESS
@@ -227,125 +244,133 @@ export class SandboxSeederService {
         const amountRec = isRecovered ? s.amount : 0;
         if (isRecovered) totalRecoveredAmount += s.amount;
 
-        attempt = await this.db.recoveryAttempt.create({
-          data: {
-            merchantId,
-            transactionId: txn.id,
-            aiDecisionId: aiDecision.id,
-            attemptNumber: isFailed ? 3 : 1,
-            idempotencyKey: `idemp_${txn.id}_${Math.floor(Math.random() * 10000)}`,
-            actionType: s.aiDecision,
-            status: attemptStatus,
-            amountRecovered: amountRec,
-            reason: s.reasoning,
-            scheduledAt: new Date(createdAt.getTime() + 1000 * 45),
-            executedAt: isRecovered ? new Date(createdAt.getTime() + 1000 * 120) : null,
-            completedAt: isRecovered ? new Date(createdAt.getTime() + 1000 * 180) : null,
-            correlationId,
-            createdAt: new Date(createdAt.getTime() + 1000 * 40),
-            updatedAt: new Date(createdAt.getTime() + 1000 * 180),
-          },
+        attemptsData.push({
+          id: attemptId,
+          merchantId,
+          transactionId: txnId,
+          aiDecisionId: decisionId,
+          attemptNumber: isFailed ? 3 : 1,
+          idempotencyKey: `idemp_${txnId}_${Math.floor(Math.random() * 10000)}`,
+          actionType: s.aiDecision,
+          status: attemptStatus,
+          amountRecovered: amountRec,
+          reason: s.reasoning,
+          scheduledAt: new Date(createdAt.getTime() + 1000 * 45),
+          executedAt: isRecovered ? new Date(createdAt.getTime() + 1000 * 120) : null,
+          completedAt: isRecovered ? new Date(createdAt.getTime() + 1000 * 180) : null,
+          correlationId,
+          createdAt: new Date(createdAt.getTime() + 1000 * 40),
+          updatedAt: new Date(createdAt.getTime() + 1000 * 180),
         });
-        attemptsCount++;
 
-        // Create Payment record for recovered items
         if (isRecovered) {
-          await this.db.payment.create({
-            data: {
-              merchantId,
-              transactionId: txn.id,
-              recoveryAttemptId: attempt.id,
-              razorpayOrderId: txn.razorpayOrderId,
-              razorpayPaymentId: txn.razorpayPaymentId,
-              amount: s.amount,
-              currency,
-              status: PaymentStatus.CAPTURED,
-              capturedAmount: s.amount,
-              verified: true,
-              reconciled: true,
-              correlationId,
-              createdAt: new Date(createdAt.getTime() + 1000 * 180),
-            },
+          paymentsData.push({
+            id: paymentId,
+            merchantId,
+            transactionId: txnId,
+            recoveryAttemptId: attemptId,
+            razorpayOrderId: `order_synth_${Math.floor(Math.random() * 1000000)}`,
+            razorpayPaymentId: `pay_synth_${Math.floor(Math.random() * 1000000)}`,
+            amount: s.amount,
+            currency,
+            status: PaymentStatus.CAPTURED,
+            capturedAmount: s.amount,
+            verified: true,
+            reconciled: true,
+            correlationId,
+            createdAt: new Date(createdAt.getTime() + 1000 * 180),
+            updatedAt: new Date(createdAt.getTime() + 1000 * 180),
           });
         }
       }
 
-      // Create structured Audit Logs for this transaction
-      await this.db.auditLog.create({
-        data: {
+      auditLogsData.push({
+        id: randomUUID(),
+        merchantId,
+        transactionId: txnId,
+        entityType: 'TRANSACTION',
+        entityId: txnId,
+        action: 'TRANSACTION_FAILED_DETECTED',
+        actor: 'RecoverAI Ingestion Daemon',
+        actorType: 'SYSTEM',
+        correlationId,
+        details: {
+          environment: 'SANDBOX',
+          dataSource: 'SYNTHETIC',
+          amount: s.amount,
+          failureCode: s.failureCode,
+          customer: customer.name,
+        },
+        createdAt: new Date(createdAt.getTime() + 1000 * 5),
+      });
+
+      auditLogsData.push({
+        id: randomUUID(),
+        merchantId,
+        transactionId: txnId,
+        entityType: 'AI_DECISION',
+        entityId: decisionId,
+        action: `AI_DECISION_${s.aiDecision}`,
+        actor: 'RecoverAI Neural Engine',
+        actorType: 'AI_AGENT',
+        correlationId,
+        details: {
+          environment: 'SANDBOX',
+          decision: s.aiDecision,
+          confidence: s.confidence,
+          category: s.failureCategory,
+        },
+        createdAt: new Date(createdAt.getTime() + 1000 * 35),
+      });
+
+      if (isRecovered) {
+        auditLogsData.push({
+          id: randomUUID(),
           merchantId,
-          transactionId: txn.id,
-          entityType: 'TRANSACTION',
-          entityId: txn.id,
-          action: 'TRANSACTION_FAILED_DETECTED',
-          actor: 'RecoverAI Ingestion Daemon',
+          transactionId: txnId,
+          recoveryAttemptId: attemptId,
+          entityType: 'RECOVERY_ATTEMPT',
+          entityId: attemptId,
+          action: 'PAYMENT_RECOVERED_AND_VERIFIED',
+          actor: 'RecoverAI Settlement Verifier',
           actorType: 'SYSTEM',
           correlationId,
           details: {
             environment: 'SANDBOX',
-            dataSource: 'SYNTHETIC',
-            amount: s.amount,
-            failureCode: s.failureCode,
-            customer: customer.name,
+            amountRecovered: s.amount,
+            status: 'SUCCESS',
           },
-          createdAt: new Date(createdAt.getTime() + 1000 * 5),
-        },
-      });
-      auditLogsCount++;
-
-      await this.db.auditLog.create({
-        data: {
-          merchantId,
-          transactionId: txn.id,
-          entityType: 'AI_DECISION',
-          entityId: aiDecision.id,
-          action: `AI_DECISION_${s.aiDecision}`,
-          actor: 'RecoverAI Neural Engine',
-          actorType: 'AI_AGENT',
-          correlationId,
-          details: {
-            environment: 'SANDBOX',
-            decision: s.aiDecision,
-            confidence: s.confidence,
-            category: s.failureCategory,
-          },
-          createdAt: new Date(createdAt.getTime() + 1000 * 35),
-        },
-      });
-      auditLogsCount++;
-
-      if (isRecovered) {
-        await this.db.auditLog.create({
-          data: {
-            merchantId,
-            transactionId: txn.id,
-            recoveryAttemptId: attempt ? attempt.id : null,
-            entityType: 'RECOVERY_ATTEMPT',
-            entityId: attempt ? attempt.id : txn.id,
-            action: 'PAYMENT_RECOVERED_AND_VERIFIED',
-            actor: 'RecoverAI Settlement Verifier',
-            actorType: 'SYSTEM',
-            correlationId,
-            details: {
-              environment: 'SANDBOX',
-              amountRecovered: s.amount,
-              status: 'SUCCESS',
-            },
-            createdAt: new Date(createdAt.getTime() + 1000 * 190),
-          },
+          createdAt: new Date(createdAt.getTime() + 1000 * 190),
         });
-        auditLogsCount++;
       }
     }
 
+    // 3. Execute bulk inserts in a single high-performance batch
+    if (typeof this.db.transaction.createMany === 'function') {
+      await this.db.$transaction([
+        this.db.transaction.createMany({ data: transactionsData }),
+        this.db.aIDecision.createMany({ data: decisionsData }),
+        this.db.recoveryAttempt.createMany({ data: attemptsData }),
+        this.db.payment.createMany({ data: paymentsData }),
+        this.db.auditLog.createMany({ data: auditLogsData }),
+      ]);
+    } else {
+      // Fallback for mock/non-Prisma testing environments
+      for (const t of transactionsData) await this.db.transaction.create({ data: t });
+      for (const d of decisionsData) await this.db.aIDecision.create({ data: d });
+      for (const a of attemptsData) await this.db.recoveryAttempt.create({ data: a });
+      for (const p of paymentsData) await this.db.payment.create({ data: p });
+      for (const l of auditLogsData) await this.db.auditLog.create({ data: l });
+    }
+
     logger.info(
-      `[SandboxSeeder] Successfully auto-seeded ${DEFAULT_SCENARIOS.length} transactions, ${attemptsCount} attempts, ${auditLogsCount} audit logs for merchant ${merchantId}.`
+      `[SandboxSeeder] Successfully bulk auto-seeded ${DEFAULT_SCENARIOS.length} transactions, ${attemptsData.length} attempts, ${auditLogsData.length} audit logs for merchant ${merchantId}.`
     );
 
     return {
       transactionsCount: DEFAULT_SCENARIOS.length,
-      recoveryAttemptsCount: attemptsCount,
-      auditLogsCount,
+      recoveryAttemptsCount: attemptsData.length,
+      auditLogsCount: auditLogsData.length,
       recoveredAmount: totalRecoveredAmount,
     };
   }

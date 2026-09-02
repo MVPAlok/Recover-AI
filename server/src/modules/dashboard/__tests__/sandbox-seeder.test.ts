@@ -17,17 +17,32 @@ function createMockPrisma() {
       findFirst: async ({ where }: any) => {
         return customers.find(c => c.merchantId === where.merchantId && (!where.email || c.email === where.email)) || null;
       },
+      findMany: async ({ where }: any) => {
+        return customers.filter(c => !where || !where.merchantId || c.merchantId === where.merchantId);
+      },
       create: async ({ data }: any) => {
-        const item = { id: `cust_${customers.length + 1}`, ...data, createdAt: new Date(), updatedAt: new Date() };
+        const item = { id: data.id || `cust_${customers.length + 1}`, ...data, createdAt: new Date(), updatedAt: new Date() };
         customers.push(item);
         return item;
+      },
+      createMany: async ({ data }: any) => {
+        for (const d of data) {
+          customers.push({ id: d.id || `cust_${customers.length + 1}`, ...d, createdAt: new Date(), updatedAt: new Date() });
+        }
+        return { count: data.length };
       },
     },
     transaction: {
       create: async ({ data }: any) => {
-        const item = { id: `txn_${transactions.length + 1}`, ...data };
+        const item = { id: data.id || `txn_${transactions.length + 1}`, ...data };
         transactions.push(item);
         return item;
+      },
+      createMany: async ({ data }: any) => {
+        for (const d of data) {
+          transactions.push({ id: d.id || `txn_${transactions.length + 1}`, ...d });
+        }
+        return { count: data.length };
       },
       count: async ({ where }: any) => {
         return transactions.filter(t => t.merchantId === where.merchantId).length;
@@ -42,9 +57,15 @@ function createMockPrisma() {
     },
     aIDecision: {
       create: async ({ data }: any) => {
-        const item = { id: `dec_${aiDecisions.length + 1}`, ...data };
+        const item = { id: data.id || `dec_${aiDecisions.length + 1}`, ...data };
         aiDecisions.push(item);
         return item;
+      },
+      createMany: async ({ data }: any) => {
+        for (const d of data) {
+          aiDecisions.push({ id: d.id || `dec_${aiDecisions.length + 1}`, ...d });
+        }
+        return { count: data.length };
       },
       deleteMany: async ({ where }: any) => {
         const initial = aiDecisions.length;
@@ -56,9 +77,15 @@ function createMockPrisma() {
     },
     recoveryAttempt: {
       create: async ({ data }: any) => {
-        const item = { id: `att_${recoveryAttempts.length + 1}`, ...data };
+        const item = { id: data.id || `att_${recoveryAttempts.length + 1}`, ...data };
         recoveryAttempts.push(item);
         return item;
+      },
+      createMany: async ({ data }: any) => {
+        for (const d of data) {
+          recoveryAttempts.push({ id: d.id || `att_${recoveryAttempts.length + 1}`, ...d });
+        }
+        return { count: data.length };
       },
       count: async ({ where }: any) => {
         return recoveryAttempts.filter(a => a.merchantId === where.merchantId).length;
@@ -73,9 +100,15 @@ function createMockPrisma() {
     },
     payment: {
       create: async ({ data }: any) => {
-        const item = { id: `pay_${payments.length + 1}`, ...data };
+        const item = { id: data.id || `pay_${payments.length + 1}`, ...data };
         payments.push(item);
         return item;
+      },
+      createMany: async ({ data }: any) => {
+        for (const d of data) {
+          payments.push({ id: d.id || `pay_${payments.length + 1}`, ...d });
+        }
+        return { count: data.length };
       },
       deleteMany: async ({ where }: any) => {
         const initial = payments.length;
@@ -92,9 +125,15 @@ function createMockPrisma() {
     },
     auditLog: {
       create: async ({ data }: any) => {
-        const item = { id: `aud_${auditLogs.length + 1}`, ...data };
+        const item = { id: data.id || `aud_${auditLogs.length + 1}`, ...data };
         auditLogs.push(item);
         return item;
+      },
+      createMany: async ({ data }: any) => {
+        for (const d of data) {
+          auditLogs.push({ id: d.id || `aud_${auditLogs.length + 1}`, ...d });
+        }
+        return { count: data.length };
       },
       count: async ({ where }: any) => {
         return auditLogs.filter(a => a.merchantId === where.merchantId).length;

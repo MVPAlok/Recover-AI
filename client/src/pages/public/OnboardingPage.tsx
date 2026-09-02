@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   setActiveMerchantId,
+  getActiveMerchantId,
   getOnboardingProfile,
   setOnboardingProfile,
   createMerchantWorkspace,
@@ -91,20 +92,23 @@ export const OnboardingPage: React.FC = () => {
       policyProfile,
     });
 
-    try {
-      const merchant = await createMerchantWorkspace({
-        name: profile.businessName,
-        email: profile.email,
-        currency: profile.currency,
-      });
-      if (merchant?.id) {
-        setActiveMerchantId(merchant.id);
+    const activeId = getActiveMerchantId();
+    if (!activeId) {
+      try {
+        const merchant = await createMerchantWorkspace({
+          name: profile.businessName,
+          email: profile.email,
+          currency: profile.currency,
+        });
+        if (merchant?.id) {
+          setActiveMerchantId(merchant.id);
+        }
+      } catch (err) {
+        console.warn('Sandbox merchant registration warning:', err);
       }
-    } catch (err) {
-      console.warn('Sandbox merchant registration warning:', err);
-    } finally {
-      navigate('/dashboard');
     }
+
+    navigate('/dashboard');
   };
 
   const steps = [
